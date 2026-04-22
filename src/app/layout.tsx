@@ -36,10 +36,28 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
-        <footer className="border-t border-gray-200 bg-white py-8">
-          <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-            <p>&copy; 2024 알레띠 KR. All rights reserved.</p>
-            <p className="mt-2 italic">"사울(Seoul)과 코레아(Korea)를 잇는 아틀레티코의 다리"</p>
+        <footer className="border-t border-gray-100 bg-white py-12">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="text-center">
+                <p className="text-sm font-bold text-gray-900 mb-1">알레띠 KR</p>
+                <p className="text-xs text-gray-400">© 2024 Alleti KR. All rights reserved.</p>
+              </div>
+              
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Contact & Feedback</p>
+                <a 
+                  href="mailto:upscman@gmail.com"
+                  className="text-sm font-medium text-gray-600 hover:text-aleti-red transition-colors border-b border-gray-100 hover:border-aleti-red pb-0.5"
+                >
+                  upscman@gmail.com
+                </a>
+              </div>
+
+              <p className="text-[11px] italic text-gray-300">
+                "위 메일로 연락주시길 바랍니다."
+              </p>
+            </div>
           </div>
         </footer>
       </body>
