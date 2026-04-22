@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Saúl-Correa Bridge | Atletico Madrid News",
-  description: "The ultimate news portal for Atletico Madrid fans. Get latest news, squad updates, and match results.",
+  title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+  description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석. 사울과 코레아가 전해주는 가장 빠른 소식.",
   other: {
     referrer: 'no-referrer',
   },
@@ -28,18 +28,18 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+      <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-sans">
         <Header />
         <main className="flex-grow">
           {children}
         </main>
         <footer className="border-t border-gray-200 bg-white py-8">
           <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-            <p>&copy; 2024 Saúl-Correa Bridge. Made with passion for Atleti.</p>
-            <p className="mt-2 italic">"Seoul and Korea bringing you the latest from Madrid."</p>
+            <p>&copy; 2024 알레띠 KR. All rights reserved.</p>
+            <p className="mt-2 italic">"사울(Seoul)과 코레아(Korea)를 잇는 아틀레티코의 다리"</p>
           </div>
         </footer>
       </body>

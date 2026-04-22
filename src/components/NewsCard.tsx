@@ -1,84 +1,66 @@
 import Image from 'next/image';
-import { ExternalLink, MessageSquare, Share2 } from 'lucide-react';
-import { Tweet } from 'react-tweet';
+import Link from 'next/link';
+import { ExternalLink, User, ImageIcon } from 'lucide-react';
 
 interface NewsCardProps {
   news: {
     id: string;
     title: string;
-    summary: string[];
+    author: string;
     source: string;
-    imageUrl: string;
+    imageUrl?: string;
     publishedAt: string;
-    tweetId?: string;
   };
 }
 
 export default function NewsCard({ news }: NewsCardProps) {
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition-all hover:shadow-md">
-      <div className="relative h-56 w-full">
-        <Image
-          src={news.imageUrl}
-          alt={news.title}
-          fill
-          className="object-cover"
-          unoptimized // To bypass potential referrer issues for external images
-        />
-        <div className="absolute top-4 left-4 rounded-full bg-aleti-red px-3 py-1 text-xs font-bold text-white shadow-lg">
-          {news.source}
-        </div>
+    <Link href={`/news/${news.id}`} className="group flex items-center gap-4 sm:gap-8 py-6 border-b border-gray-100 hover:bg-gray-50/50 transition-colors px-2 sm:px-6 -mx-2 sm:-mx-6 rounded-2xl block">
+      {/* 이미지 영역 */}
+      <div className="relative h-20 w-28 sm:h-32 sm:w-52 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
+        {news.imageUrl ? (
+          <Image
+            src={news.imageUrl}
+            alt={news.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            unoptimized 
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
+            <ImageIcon size={20} className="text-gray-200" />
+          </div>
+        )}
       </div>
 
-      <div className="p-6">
-        <div className="mb-2 text-xs text-gray-500">{news.publishedAt}</div>
-        <h3 className="mb-4 text-xl font-bold leading-tight text-aleti-navy hover:text-aleti-red cursor-pointer">
+      {/* 콘텐츠 영역 */}
+      <div className="flex flex-col flex-grow min-w-0">
+        <div className="mb-2 flex items-center gap-3">
+          <span className="text-[10px] font-bold text-aleti-red bg-aleti-red/5 px-2 py-0.5 rounded uppercase tracking-tighter">
+            {news.source}
+          </span>
+          <div className="h-1 w-1 rounded-full bg-gray-300"></div>
+          <span className="text-[11px] font-medium text-gray-400">{news.publishedAt}</span>
+        </div>
+        
+        <h3 className="mb-3 text-base sm:text-xl font-bold text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-tight tracking-tight">
           {news.title}
         </h3>
 
-        {/* AI Summary Section */}
-        <div className="mb-6 rounded-xl bg-gray-50 p-4 border-l-4 border-aleti-red">
-          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-aleti-red flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-aleti-red animate-pulse"></span>
-            AI 3-Line Summary
-          </h4>
-          <ul className="space-y-2 text-sm text-gray-600">
-            {news.summary.map((point, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300"></span>
-                {point}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Tweet Integration if available */}
-        {news.tweetId && (
-          <div className="mb-6 rounded-xl border border-gray-100 overflow-hidden shadow-inner bg-gray-50/30">
-             <div className="p-2 pb-0 text-[10px] uppercase font-bold text-gray-400 text-center">Official Response</div>
-             <div className="scale-90 origin-top -mt-4">
-                <Tweet id={news.tweetId} />
-             </div>
+        <div className="mt-auto flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[12px] font-semibold text-gray-500">
+            <div className="h-6 w-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center">
+              <User size={12} className="text-gray-400" />
+            </div>
+            <span className="hidden sm:inline font-medium">기자</span> {news.author}
           </div>
-        )}
-
-        <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-          <div className="flex items-center gap-4 text-gray-400">
-            <button className="flex items-center gap-1 hover:text-aleti-red transition-colors">
-              <MessageSquare size={18} />
-              <span className="text-xs">12</span>
-            </button>
-            <button className="flex items-center gap-1 hover:text-aleti-red transition-colors">
-              <Share2 size={18} />
-              <span className="text-xs">Share</span>
-            </button>
+          
+          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 group-hover:text-aleti-red transition-colors uppercase tracking-widest">
+            <span className="hidden sm:inline">상세보기</span>
+            <ExternalLink size={14} />
           </div>
-          <button className="flex items-center gap-1 text-sm font-bold text-aleti-navy hover:text-aleti-red transition-colors">
-            Read More
-            <ExternalLink size={16} />
-          </button>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
