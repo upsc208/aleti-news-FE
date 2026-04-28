@@ -1,11 +1,31 @@
+'use client';
+
 import { Search } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, KeyboardEvent } from 'react';
 
-interface SearchBarProps {
-  value: string;
-  onChange: (value: string) => void;
-}
+export default function SearchBar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get('query') || '');
 
-export default function SearchBar({ value, onChange }: SearchBarProps) {
+  const handleSearch = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (query) {
+      params.set('query', query);
+    } else {
+      params.delete('query');
+    }
+    params.set('page', '1'); // 검색 시 1페이지로 이동
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto mb-12 w-full relative">
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -14,10 +34,17 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
       <input 
         type="text"
         placeholder="찾으시는 소식의 제목이나 기자 이름을 검색해보세요"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
         className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 soft-shadow focus:outline-none focus:ring-2 focus:ring-aleti-red/20 focus:border-aleti-red transition-all font-medium placeholder:text-gray-400"
       />
+      <button 
+        onClick={handleSearch}
+        className="absolute inset-y-2 right-2 px-6 bg-aleti-red text-white rounded-xl font-bold text-sm hover:bg-aleti-red/90 transition-colors"
+      >
+        검색
+      </button>
     </div>
   );
 }
