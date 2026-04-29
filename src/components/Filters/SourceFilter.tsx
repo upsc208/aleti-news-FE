@@ -1,41 +1,49 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Check } from 'lucide-react';
+import { NewsSource } from '@/client/types.gen';
 
 interface SourceFilterProps {
-  allSources: string[];
+  allSources: NewsSource[];
 }
 
 export default function SourceFilter({ allSources }: SourceFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedSources, setSelectedSources] = useState<string[]>([]);
-
-  // Initialize from URL
-  useEffect(() => {
+  
+  const selectedInternalIdsFromUrl = useMemo(() => {
     const sourcesParam = searchParams.get('sources');
-    if (sourcesParam) {
-      setSelectedSources(sourcesParam.split(','));
+    if (!sourcesParam) return allSources.map(s => s.internalId); // Default to all if no param
+    if (sourcesParam === 'none') return [];
+    return sourcesParam.split(',');
+  }, [searchParams, allSources]);
+
+  const toggleSource = (internalId: string) => {
+    let nextInternalIds: string[];
+    
+    if (selectedInternalIdsFromUrl.includes(internalId)) {
+      // Unchecking
+      nextInternalIds = selectedInternalIdsFromUrl.filter((id) => id !== internalId);
     } else {
-      setSelectedSources([]);
+      // Checking
+      nextInternalIds = [...selectedInternalIdsFromUrl, internalId];
     }
-  }, [searchParams]);
-
-  const toggleSource = (source: string) => {
-    const nextSources = selectedSources.includes(source)
-      ? selectedSources.filter((s) => s !== source)
-      : [...selectedSources, source];
-
-    setSelectedSources(nextSources);
 
     const params = new URLSearchParams(searchParams.toString());
-    if (nextSources.length > 0) {
-      params.set('sources', nextSources.join(','));
-    } else {
+    
+    // Logic for URL param
+    if (nextInternalIds.length === allSources.length && nextInternalIds.length > 0) {
+      // All selected -> clear param for clean URL
       params.delete('sources');
+    } else if (nextInternalIds.length === 0) {
+      // None selected
+      params.set('sources', 'none');
+    } else {
+      params.set('sources', nextInternalIds.join(','));
     }
+    
     params.set('page', '1');
     router.push(`?${params.toString()}`);
   };
@@ -67,10 +75,10 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
         <div className="flex flex-col gap-3">
           {allSources.length > 0 ? (
             allSources.map((source) => {
-              const isSelected = selectedSources.includes(source);
+              const isSelected = selectedInternalIdsFromUrl.includes(source.internalId);
               return (
                 <label 
-                  key={source} 
+                  key={source.internalId} 
                   className={`
                     flex items-center justify-between px-5 py-3.5 rounded-xl cursor-pointer transition-all border
                     ${isSelected 
@@ -86,24 +94,24 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
                       {isSelected && <Check size={10} className="text-white stroke-[4px]" />}
                     </div>
                     <span className={`text-[13px] font-bold tracking-tight ${isSelected ? 'text-aleti-red' : 'text-gray-600'}`}>
-                      {source}
+                      {source.displayName}
                     </span>
                   </div>
                   <input 
                     type="checkbox" 
                     className="hidden"
                     checked={isSelected}
-                    onChange={() => toggleSource(source)}
+                    onChange={() => toggleSource(source.internalId)}
                   />
                 </label>
               );
             })
           ) : (
-            <p className="text-[10px] font-bold text-gray-300 italic text-center">Loading sources...</p>
+            <p className="text-[10px] font-bold text-gray-300 italic text-center">No sources available.</p>
           )}
         </div>
 
-        {selectedSources.length > 0 && (
+        {selectedInternalIdsFromUrl.length !== allSources.length && (
           <button 
             onClick={() => {
               const params = new URLSearchParams(searchParams.toString());
@@ -112,7 +120,7 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
             }}
             className="mt-8 w-full py-3 rounded-lg bg-aleti-navy text-white text-[10px] font-black uppercase tracking-widest hover:bg-aleti-red transition-all shadow-md"
           >
-            Reset
+            Select All
           </button>
         )}
       </div>

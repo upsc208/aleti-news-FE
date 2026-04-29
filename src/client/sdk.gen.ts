@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
+import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetSourcesData, GetSourcesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -26,9 +26,9 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const triggerPipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerPipelineData, ThrowOnError>) => (options?.client ?? client).post<TriggerPipelineResponses, unknown, ThrowOnError>({ url: '/api/news/trigger', ...options });
 
 /**
- * 뉴스 목록 조회 (이미지 제외)
+ * 뉴스 목록 조회 (필터링 포함)
  *
- * 이미지 정보를 제외한 가벼운 뉴스 목록을 최신순으로 가져옵니다.
+ * 이미지 정보를 제외한 가벼운 뉴스 목록을 가져옵니다. 소스 ID 리스트로 필터링이 가능합니다.
  */
 export const getNews = <ThrowOnError extends boolean = false>(options?: Options<GetNewsData, ThrowOnError>) => (options?.client ?? client).get<GetNewsResponses, unknown, ThrowOnError>({ url: '/api/news', ...options });
 
@@ -38,6 +38,13 @@ export const getNews = <ThrowOnError extends boolean = false>(options?: Options<
  * 특정 기사의 상세 정보(이미지, 본문 포함)를 가져옵니다.
  */
 export const getNewsDetail = <ThrowOnError extends boolean = false>(options: Options<GetNewsDetailData, ThrowOnError>) => (options.client ?? client).get<GetNewsDetailResponses, unknown, ThrowOnError>({ url: '/api/news/{id}', ...options });
+
+/**
+ * 수집 소스 목록 조회
+ *
+ * 시스템에서 관리 중인 모든 뉴스 수집원 리스트를 가져옵니다.
+ */
+export const getSources = <ThrowOnError extends boolean = false>(options?: Options<GetSourcesData, ThrowOnError>) => (options?.client ?? client).get<GetSourcesResponses, unknown, ThrowOnError>({ url: '/api/news/sources', ...options });
 
 /**
  * 수집 로그 조회

@@ -30,16 +30,16 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
+    unpaged?: boolean;
+    pageNumber?: number;
     pageSize?: number;
     paged?: boolean;
-    pageNumber?: number;
-    unpaged?: boolean;
 };
 
 export type SortObject = {
     empty?: boolean;
-    sorted?: boolean;
     unsorted?: boolean;
+    sorted?: boolean;
 };
 
 export type NewsDetailResponse = {
@@ -53,6 +53,16 @@ export type NewsDetailResponse = {
     originalUrl: string;
     publishedAt?: string;
     articleType: 'WEB_ARTICLE' | 'SNS_POST';
+};
+
+export type NewsSource = {
+    id?: number;
+    internalId: string;
+    displayName: string;
+    sourceUrl?: string;
+    iconUrl?: string;
+    category: string;
+    isActive: boolean;
 };
 
 export type CollectionLog = {
@@ -80,6 +90,17 @@ export type PageCollectionLog = {
     empty?: boolean;
 };
 
+export type NewsSourceWritable = {
+    id?: number;
+    internalId: string;
+    displayName: string;
+    sourceUrl?: string;
+    iconUrl?: string;
+    category: string;
+    isActive: boolean;
+    active?: boolean;
+};
+
 export type TriggerPipelineData = {
     body?: never;
     path?: never;
@@ -100,6 +121,7 @@ export type GetNewsData = {
     query?: {
         page?: number;
         size?: number;
+        sources?: Array<string>;
     };
     url: '/api/news';
 };
@@ -130,6 +152,22 @@ export type GetNewsDetailResponses = {
 };
 
 export type GetNewsDetailResponse = GetNewsDetailResponses[keyof GetNewsDetailResponses];
+
+export type GetSourcesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/news/sources';
+};
+
+export type GetSourcesResponses = {
+    /**
+     * OK
+     */
+    200: Array<NewsSource>;
+};
+
+export type GetSourcesResponse = GetSourcesResponses[keyof GetSourcesResponses];
 
 export type GetLogsData = {
     body?: never;

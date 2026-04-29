@@ -1,4 +1,4 @@
-import { getNews } from '@/client/sdk.gen';
+import { getNews, getSources } from '@/client/sdk.gen';
 import NewsCard from '@/components/NewsCard';
 import SourceFilter from '@/components/Filters/SourceFilter';
 import SearchBar from '@/components/Filters/SearchBar';
@@ -15,30 +15,35 @@ export default async function Home({
   const page = searchParams.page ? parseInt(searchParams.page) - 1 : 0;
   const size = searchParams.size ? parseInt(searchParams.size) : 10;
   const query = searchParams.query || '';
-  const sources = searchParams.sources || '';
+  const sourcesParam = searchParams.sources || '';
+  const sources = sourcesParam ? sourcesParam.split(',') : [];
   
   let newsData;
+  let sourcesData: any[] = [];
+
   try {
-    const response = await getNews({
-      query: { 
-        page, 
-        size, 
-        ...(query && { query }),
-        ...(sources && { sources }) // 백엔드에서 sources 파라미터를 지원한다고 가정
-      }
-    } as any); // SDK 타입에 query/sources가 없을 경우를 대비해 as any 처리
-    newsData = response.data;
+    // Fetch news and sources in parallel
+    const [newsResponse, sourcesResponse] = await Promise.all([
+      getNews({
+        query: { 
+          page, 
+          size, 
+          ...(query && { query }),
+          ...(sourcesParam && sourcesParam !== 'none' && { sources })
+        }
+      } as any),
+      getSources()
+    ]);
+    
+    newsData = newsResponse.data;
+    sourcesData = sourcesResponse.data || [];
   } catch (error) {
-    console.error('Failed to fetch news:', error);
+    console.error('Failed to fetch data:', error);
   }
 
   const newsList = newsData?.content || [];
   const totalPages = newsData?.totalPages || 0;
   const currentPage = (newsData?.number || 0) + 1;
-
-  // 전체 소스 목록 (백엔드에서 전체 소스 목록을 따로 주지 않으므로 현재 리스트에서 추출하거나 별도 API 필요)
-  // 여기서는 현재 페이지의 데이터에서 추출하지만, 실제로는 전체 소스 목록 API가 있는 것이 좋습니다.
-  const allSources = Array.from(new Set(newsList.map(n => n.sourceName)));
 
   return (
     <div className="flex flex-col gap-0 pb-32">
@@ -65,7 +70,7 @@ export default async function Home({
 
         <div className="flex flex-col md:flex-row gap-16 mt-12">
           <div className="hidden md:block w-80 shrink-0">
-             <SourceFilter allSources={allSources} />
+             <SourceFilter allSources={sourcesData} />
           </div>
 
           <div className="flex flex-col flex-grow min-w-0">
