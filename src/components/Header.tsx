@@ -1,34 +1,70 @@
 import Link from 'next/link';
-import { Newspaper, Info } from 'lucide-react';
+import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 border-b border-gray-100 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-aleti-red">
-               <span className="text-xs font-bold text-white">KR</span>
+    <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+      <div className="container mx-auto flex h-20 items-center justify-between px-6 lg:px-12">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-aleti-red to-red-600 shadow-lg group-hover:scale-105 transition-transform">
+               <span className="text-sm font-black text-white italic">KR</span>
+               <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gemini-purple text-white shadow-sm">
+                 <Sparkles size={8} />
+               </div>
             </div>
-            <span className="text-lg font-bold tracking-tight text-gray-900">
-              알레띠 <span className="text-aleti-red">KR</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl font-black tracking-tighter text-gray-900 uppercase leading-none">
+                ATLÉTICO <span className="text-aleti-red">NEWS</span>
+              </span>
+              <span className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase leading-none mt-1">
+                Saúl-Correa Bridge
+              </span>
+            </div>
           </Link>
         </div>
         
-        <nav className="flex items-center space-x-6 text-sm font-semibold">
-          <Link href="/" className="flex items-center gap-1.5 text-gray-600 transition-colors hover:text-aleti-red">
-            <Newspaper size={18} />
-            <span>뉴스</span>
+        <nav className="flex items-center space-x-6 text-base font-bold">
+          <Link href="/" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
+            <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
+              <Newspaper size={20} />
+            </div>
+            <span className="tracking-tight underline-offset-8 decoration-2 hover:underline">뉴스</span>
           </Link>
-          <Link href="/about" className="flex items-center gap-1.5 text-gray-600 transition-colors hover:text-aleti-red">
-            <Info size={18} />
-            <span>소개</span>
+          <Link href="/about" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
+            <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
+              <Info size={20} />
+            </div>
+            <span className="tracking-tight underline-offset-8 decoration-2 hover:underline">소개</span>
           </Link>
+          <div className="h-6 w-[1px] bg-gray-200 mx-2"></div>
+          <a 
+            href="https://en.atleticodemadrid.com/listado-de-entradas" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 text-aleti-red hover:bg-aleti-red hover:text-white px-4 py-2 rounded-xl transition-all border border-aleti-red/20 shadow-sm shadow-aleti-red/5"
+          >
+            <Ticket size={18} className="group-hover:rotate-12 transition-transform" />
+            <span className="tracking-tight">공식 티켓 예매</span>
+          </a>
+          <a 
+            href="https://shop.atleticodemadrid.com/en/home" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="group flex items-center gap-2 text-gray-700 hover:bg-gray-900 hover:text-white px-4 py-2 rounded-xl transition-all border border-gray-200 shadow-sm"
+          >
+            <ShoppingBag size={18} className="group-hover:scale-110 transition-transform" />
+            <span className="tracking-tight font-bold">공식 스토어</span>
+          </a>
         </nav>
 
-        <div className="hidden sm:block">
-           <span className="text-[11px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded">
+        <div className="hidden lg:flex items-center gap-3">
+           <div className="flex flex-col items-end">
+             <span className="text-[10px] font-black text-gemini-indigo uppercase tracking-widest">Powered by</span>
+             <span className="text-xs font-bold text-gray-400">Gemini Design</span>
+           </div>
+           <div className="h-8 w-[1px] bg-gray-200 mx-2"></div>
+           <span className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-[10px] font-black uppercase tracking-tighter shadow-md">
              Uno di Noi
            </span>
         </div>

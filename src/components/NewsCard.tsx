@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, User, ImageIcon } from 'lucide-react';
+import { ExternalLink, User, ImageIcon, Sparkles, Clock } from 'lucide-react';
 import { NewsListResponse } from '@/client/types.gen';
 
 interface NewsCardProps {
@@ -10,50 +10,67 @@ interface NewsCardProps {
 
 export default function NewsCard({ news, showImage = false }: NewsCardProps) {
   return (
-    <Link href={`/news/${news.id}`} className="group flex items-center gap-3 sm:gap-8 py-5 sm:py-6 border-b border-gray-100 hover:bg-gray-50/50 transition-colors px-2 sm:px-6 -mx-2 sm:-mx-6 rounded-2xl block">
-      {/* 이미지 영역 - showImage가 true일 때만 표시 */}
+    <Link 
+      href={`/news/${news.id}`} 
+      className="group relative flex flex-col sm:flex-row items-start gap-6 sm:gap-10 py-10 sm:py-12 border-b border-gray-100 hover:bg-gray-50/30 transition-all px-4 sm:px-8 rounded-3xl block"
+    >
+      {/* 이미지 영역 */}
       {showImage && (
-        <div className="relative h-20 w-24 sm:h-32 sm:w-52 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
-          {/* List Response에는 이미지가 없으므로 fallback 표시 */}
+        <div className="relative h-48 w-full sm:h-56 sm:w-80 shrink-0 overflow-hidden rounded-2xl bg-gray-100 border border-gray-100 shadow-md group-hover:shadow-xl transition-shadow">
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
-            <ImageIcon size={20} className="text-gray-200" />
+            <ImageIcon size={32} className="text-gray-200" />
+          </div>
+          <div className="absolute top-4 left-4 z-10">
+            <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-black text-aleti-red shadow-sm uppercase tracking-widest border border-white">
+              {news.sourceName}
+            </span>
           </div>
         </div>
       )}
 
       {/* 콘텐츠 영역 */}
       <div className="flex flex-col flex-grow min-w-0">
-        <div className="mb-1.5 sm:mb-2 flex items-center gap-2 sm:gap-3">
-          <span className="text-[9px] sm:text-[10px] font-bold text-aleti-red bg-aleti-red/5 px-1.5 sm:px-2 py-0.5 rounded uppercase tracking-tighter">
-            {news.sourceName}
-          </span>
-          <div className="h-0.5 w-0.5 sm:h-1 sm:w-1 rounded-full bg-gray-300"></div>
-          <span className="text-[10px] sm:text-[11px] font-medium text-gray-400">
-            {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '날짜 없음'}
-          </span>
+        <div className="mb-4 flex items-center gap-4">
+          {!showImage && (
+            <span className="text-[10px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.15em]">
+              {news.sourceName}
+            </span>
+          )}
+          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
+            <Clock size={14} />
+            <span>{news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '날짜 없음'}</span>
+          </div>
         </div>
         
-        <h3 className="mb-2 sm:mb-3 text-sm sm:text-xl font-bold text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-tight tracking-tight">
+        <h3 className="mb-5 text-2xl sm:text-4xl font-black text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-[1.15] tracking-tight">
           {news.titleKo}
         </h3>
 
         {news.summaryKo && (
-          <p className="text-xs sm:text-sm text-gray-500 line-clamp-2 mb-3 font-medium">
-            {news.summaryKo}
-          </p>
+          <div className="relative mb-6 p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 ai-summary-glow">
+            <div className="flex items-center gap-2 mb-2 text-gemini-purple">
+              <Sparkles size={14} className="fill-current" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Gemini AI Summary</span>
+            </div>
+            <p className="text-sm sm:text-base text-gray-600 line-clamp-3 font-medium leading-relaxed">
+              {news.summaryKo}
+            </p>
+          </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[12px] font-semibold text-gray-500">
-            <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center">
-              <User size={10} className="text-gray-400 sm:size-[12px]" />
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div className="flex items-center gap-3 text-sm font-bold text-gray-500">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-50 border border-gray-200 flex items-center justify-center shadow-sm">
+              <User size={14} className="text-gray-400" />
             </div>
-            <span className="font-medium">알레티 뉴스</span>
+            <span className="text-gray-900">알레티 뉴스 <span className="text-gray-300 mx-1 font-light">|</span> <span className="text-gray-400 font-medium">에디터</span></span>
           </div>
           
-          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-gray-400 group-hover:text-aleti-red transition-colors uppercase tracking-widest">
-            <span className="hidden sm:inline">상세보기</span>
-            <ExternalLink size={12} className="sm:size-[14px]" />
+          <div className="flex items-center gap-2 text-xs font-black text-gray-300 group-hover:text-aleti-red transition-all uppercase tracking-[0.2em]">
+            <span className="hidden sm:inline">READ STORY</span>
+            <div className="p-2 rounded-full border border-gray-100 group-hover:border-aleti-red/20 group-hover:bg-aleti-red/5 transition-colors">
+              <ExternalLink size={16} />
+            </div>
           </div>
         </div>
       </div>
