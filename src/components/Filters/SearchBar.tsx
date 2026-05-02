@@ -31,7 +31,7 @@ export default function SearchBar() {
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
         <Search size={20} className="text-gray-400" />
       </div>
-      <input 
+      <input
         type="text"
         placeholder="찾으시는 소식의 제목이나 기자 이름을 검색해보세요"
         value={query}
@@ -39,7 +39,7 @@ export default function SearchBar() {
         onKeyDown={handleKeyDown}
         className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 soft-shadow focus:outline-none focus:ring-2 focus:ring-aleti-red/20 focus:border-aleti-red transition-all font-medium placeholder:text-gray-400"
       />
-      <button 
+      <button
         onClick={handleSearch}
         className="absolute inset-y-2 right-2 px-6 bg-aleti-red text-white rounded-xl font-bold text-sm hover:bg-aleti-red/90 transition-colors"
       >

@@ -16,12 +16,12 @@ export type NewsListResponse = {
 export type PageNewsListResponse = {
     totalElements?: number;
     totalPages?: number;
+    first?: boolean;
+    last?: boolean;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
     sort?: SortObject;
-    first?: boolean;
-    last?: boolean;
     numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
@@ -30,9 +30,9 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
+    paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
-    paged?: boolean;
     unpaged?: boolean;
 };
 
@@ -80,12 +80,12 @@ export type CollectionLog = {
 export type PageCollectionLog = {
     totalElements?: number;
     totalPages?: number;
+    first?: boolean;
+    last?: boolean;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
     sort?: SortObject;
-    first?: boolean;
-    last?: boolean;
     numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;

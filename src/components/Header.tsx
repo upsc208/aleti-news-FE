@@ -60,15 +60,9 @@ export default function Header() {
           </a>
         </nav>
 
+        {/* Right side placeholder (e.g. Social links, Dark mode toggle) */}
         <div className="hidden lg:flex items-center gap-3">
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] font-black text-gemini-indigo uppercase tracking-widest">Powered by</span>
-            <span className="text-xs font-bold text-gray-400">Gemini Design</span>
-          </div>
-          <div className="h-8 w-[1px] bg-gray-200 mx-2"></div>
-          <span className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-[10px] font-black uppercase tracking-tighter shadow-md">
-            Uno di Noi
-          </span>
+          {/* We will add new elements here based on user preference */}
         </div>
       </div>
     </header>

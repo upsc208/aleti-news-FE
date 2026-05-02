@@ -49,25 +49,11 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
   };
 
   return (
-    <div className="relative sticky top-28 group w-full max-w-[320px] mx-auto">
-      {/* The "Shield" Outer Border (Blue) */}
-      <div
-        className="absolute -inset-[2px] bg-aleti-navy pointer-events-none shadow-2xl"
-        style={{
-          clipPath: 'polygon(0% 0%, 100% 0%, 100% 80%, 50% 100%, 0% 80%)'
-        }}
-      ></div>
-
-      {/* The "Shield" Inner Body (White) */}
-      <div
-        className="relative bg-white pt-10 px-8 pb-24"
-        style={{
-          clipPath: 'polygon(0% 0%, 100% 0%, 100% 80%, 50% 100%, 0% 80%)'
-        }}
-      >
-        <div className="flex flex-col items-center mb-8">
-          <div className="h-1.5 w-12 bg-aleti-red rounded-full mb-4"></div>
-          <h3 className="text-sm font-black text-gray-900 uppercase tracking-[0.25em] text-center">
+    <div className="relative sticky top-28 w-full max-w-[320px] mx-auto">
+      <div className="relative bg-white rounded-3xl border border-gray-200 shadow-xl pt-8 px-6 pb-10">
+        <div className="flex flex-col items-center mb-6">
+          <div className="h-1 w-10 bg-gray-200 rounded-full mb-4"></div>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest text-center">
             필터
           </h3>
         </div>
@@ -125,10 +111,6 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
         )}
       </div>
 
-      {/* Subtle Bottom Glow to emphasize the point */}
-      <div
-        className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-24 bg-aleti-navy/10 blur-3xl -z-20 pointer-events-none"
-      ></div>
     </div>
   );
 }

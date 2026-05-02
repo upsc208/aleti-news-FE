@@ -41,7 +41,7 @@ export default function RootLayout({
             <div className="flex flex-col items-center justify-center space-y-6">
               <div className="text-center">
                 <p className="text-sm font-bold text-white mb-1">알레띠 KR</p>
-                <p className="text-xs text-blue-100">© 2024 Alleti KR. All rights reserved.</p>
+                <p className="text-xs text-blue-100">&copy; {new Date().getFullYear()} Alleti KR. All rights reserved.</p>
               </div>
               
               <div className="flex flex-col items-center gap-2">
