@@ -9,6 +9,14 @@ interface NewsCardProps {
 }
 
 export default function NewsCard({ news, showImage = false }: NewsCardProps) {
+  const getArticleTypeText = (type: string) => {
+    switch(type) {
+      case 'WEB_ARTICLE': return '웹 기사';
+      case 'SNS_POST': return 'X 기사';
+      default: return '기타';
+    }
+  };
+
   return (
     <Link 
       href={`/news/${news.id}`} 
@@ -30,12 +38,12 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
 
       {/* 콘텐츠 영역 */}
       <div className="flex flex-col flex-grow min-w-0">
-        <div className="mb-4 flex items-center gap-4">
-          {!showImage && (
-            <span className="text-[10px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.15em]">
-              {news.sourceName}
-            </span>
-          )}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          {/* Article Type Badge (Red) */}
+          <span className="text-[10px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.15em] shadow-sm">
+            {getArticleTypeText(news.articleType)}
+          </span>
+
           <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
             <Clock size={14} />
             <span>{news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '날짜 없음'}</span>
@@ -63,7 +71,7 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
             <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-50 border border-gray-200 flex items-center justify-center shadow-sm">
               <User size={14} className="text-gray-400" />
             </div>
-            <span className="text-gray-900">알레티 뉴스 <span className="text-gray-300 mx-1 font-light">|</span> <span className="text-gray-400 font-medium">에디터</span></span>
+            <span className="text-gray-900">{news.sourceName} <span className="text-gray-300 mx-1 font-light">|</span> <span className="text-gray-400 font-medium">에디터</span></span>
           </div>
           
           <div className="flex items-center gap-2 text-xs font-black text-gray-300 group-hover:text-aleti-red transition-all uppercase tracking-[0.2em]">

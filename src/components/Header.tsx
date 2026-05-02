@@ -7,7 +7,7 @@ export default function Header() {
       {/* Red & White Stripe Decoration at the top */}
       <div className="absolute top-0 left-0 w-full h-3 bg-[repeating-linear-gradient(to_right,#b92629,#b92629_75px,#ffffff_75px,#ffffff_150px)]"></div>
       <div className="container mx-auto flex h-20 items-center justify-between px-6 lg:px-12 mt-1.5">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 items-center gap-4">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-aleti-red to-red-600 shadow-lg group-hover:scale-105 transition-transform">
               <span className="text-sm font-black text-white italic">KR</span>
@@ -26,7 +26,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className="flex items-center space-x-6 text-base font-bold">
+        <nav className="flex justify-center items-center space-x-6 text-base font-bold">
           <Link href="/" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
             <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Newspaper size={20} />
@@ -60,9 +60,22 @@ export default function Header() {
           </a>
         </nav>
 
-        {/* Right side placeholder (e.g. Social links, Dark mode toggle) */}
-        <div className="hidden lg:flex items-center gap-3">
-          {/* We will add new elements here based on user preference */}
+        {/* Right side Beta Badge */}
+        <div className="hidden lg:flex flex-1 items-center justify-end">
+          <div className="relative group cursor-default">
+            {/* Soft background glow */}
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-aleti-red to-orange-400 rounded-full blur-md opacity-40 group-hover:opacity-80 transition duration-500"></div>
+            {/* Badge body */}
+            <div className="relative px-5 py-2.5 rounded-full bg-gradient-to-r from-aleti-red via-rose-500 to-orange-500 border border-white/20 text-white shadow-xl flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
+              </span>
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-white drop-shadow-md">
+                BETA
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </header>
