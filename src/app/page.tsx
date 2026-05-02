@@ -1,10 +1,11 @@
-import { getNews, getSources } from '@/client/sdk.gen';
+import { getNews, getSources, getRecentMatch, getUpcomingMatches } from '@/client/sdk.gen';
 import NewsCard from '@/components/NewsCard';
 import SourceFilter from '@/components/Filters/SourceFilter';
 import SearchBar from '@/components/Filters/SearchBar';
 import Hero from '@/components/Home/Hero';
 import Pagination from '@/components/Pagination';
 import { Filter, Newspaper, Sparkles } from 'lucide-react';
+import MatchResultCard from '@/components/Home/MatchResultCard';
 
 export default async function Home({
   searchParams: searchParamsPromise,
@@ -17,26 +18,32 @@ export default async function Home({
   const query = searchParams.query || '';
   const sourcesParam = searchParams.sources || '';
   const sources = sourcesParam ? sourcesParam.split(',') : [];
-  
+
   let newsData;
   let sourcesData: any[] = [];
+  let recentMatchData = null;
+  let upcomingMatchesData: any[] = [];
 
   try {
     // Fetch news and sources in parallel
-    const [newsResponse, sourcesResponse] = await Promise.all([
+    const [newsResponse, sourcesResponse, recentMatchResponse, upcomingMatchesResponse] = await Promise.all([
       getNews({
-        query: { 
-          page, 
-          size, 
+        query: {
+          page,
+          size,
           ...(query && { query }),
           ...(sourcesParam && sourcesParam !== 'none' && { sources })
         }
       } as any),
-      getSources()
+      getSources(),
+      getRecentMatch(),
+      getUpcomingMatches()
     ]);
-    
+
     newsData = newsResponse.data;
     sourcesData = sourcesResponse.data || [];
+    recentMatchData = recentMatchResponse.data || null;
+    upcomingMatchesData = upcomingMatchesResponse.data || [];
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }
@@ -46,19 +53,13 @@ export default async function Home({
   const currentPage = (newsData?.number || 0) + 1;
 
   return (
-    <div className="flex flex-col gap-0 pb-32">
+    <div className="flex flex-col gap-0">
       <section className="container mx-auto px-6 lg:px-12 pt-20">
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-aleti-red/5 text-aleti-red text-[10px] font-black uppercase tracking-widest mb-4">
-              Live Feed
-            </div>
-            <h2 className="text-4xl lg:text-6xl font-black text-gray-900 tracking-tighter uppercase leading-none">
-              최신 <span className="text-aleti-red italic">ROJIBLANCO</span> 소식
-            </h2>
-            <p className="text-lg lg:text-xl text-gray-400 mt-4 tracking-tight font-medium">아틀레티코 마드리드의 실시간 업데이트</p>
+          <div className="w-full">
+            <MatchResultCard recentMatch={recentMatchData} upcomingMatches={upcomingMatchesData} />
           </div>
-          <button 
+          <button
             className="md:hidden flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl"
           >
             <Filter size={18} />
@@ -70,7 +71,7 @@ export default async function Home({
 
         <div className="flex flex-col md:flex-row gap-16 mt-12">
           <div className="hidden md:block w-80 shrink-0">
-             <SourceFilter allSources={sourcesData} />
+            <SourceFilter allSources={sourcesData} />
           </div>
 
           <div className="flex flex-col flex-grow min-w-0">
@@ -81,8 +82,8 @@ export default async function Home({
                     <NewsCard key={news.id} news={news} showImage={false} />
                   ))}
                 </div>
-                
-                <Pagination 
+
+                <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                 />

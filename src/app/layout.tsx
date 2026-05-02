@@ -36,25 +36,25 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
-        <footer className="border-t border-gray-100 bg-white py-12">
+        <footer className="bg-blue-600 text-white py-12">
           <div className="container mx-auto px-4">
             <div className="flex flex-col items-center justify-center space-y-6">
               <div className="text-center">
-                <p className="text-sm font-bold text-gray-900 mb-1">알레띠 KR</p>
-                <p className="text-xs text-gray-400">© 2024 Alleti KR. All rights reserved.</p>
+                <p className="text-sm font-bold text-white mb-1">알레띠 KR</p>
+                <p className="text-xs text-blue-100">© 2024 Alleti KR. All rights reserved.</p>
               </div>
               
               <div className="flex flex-col items-center gap-2">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Contact & Feedback</p>
+                <p className="text-[11px] font-bold text-blue-200 uppercase tracking-widest">Contact & Feedback</p>
                 <a 
                   href="mailto:upscman@gmail.com"
-                  className="text-sm font-medium text-gray-600 hover:text-aleti-red transition-colors border-b border-gray-100 hover:border-aleti-red pb-0.5"
+                  className="text-sm font-medium text-white hover:text-blue-200 transition-colors border-b border-blue-300 hover:border-blue-100 pb-0.5"
                 >
                   upscman@gmail.com
                 </a>
               </div>
 
-              <p className="text-[11px] italic text-gray-300">
+              <p className="text-[11px] italic text-blue-200">
                 "위 메일로 연락주시길 바랍니다."
               </p>
             </div>

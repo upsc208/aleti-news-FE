@@ -5,21 +5,16 @@ export default function Hero() {
     <section className="relative overflow-hidden bg-white py-40 lg:py-60">
       {/* Vibrant Navy and Red Aurora for a true Atlético feel */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(226,50,42,0.05)_0%,transparent_50%),radial-gradient(circle_at_100%_100%,rgba(0,69,149,0.05)_0%,transparent_50%)] pointer-events-none"></div>
-      
+
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-aleti-navy/5 text-aleti-navy text-[10px] font-black mb-12 tracking-[0.4em] uppercase border border-aleti-navy/10">
-            <Sparkles size={12} className="text-aleti-red" />
-            Eternal Rojiblanco Wisdom
-          </div>
-          
           <div className="relative mb-8">
             <h2 className="text-6xl lg:text-9xl font-black text-aleti-red tracking-tighter leading-[0.95] uppercase italic">
               "GANAR, GANAR, GANAR <br />
               Y VOLVER A GANAR."
             </h2>
           </div>
-          
+
           <div className="flex flex-col items-center gap-4">
             <p className="text-3xl lg:text-5xl font-black text-aleti-navy uppercase tracking-widest italic drop-shadow-sm">
               Luis Aragonés
@@ -32,7 +27,7 @@ export default function Hero() {
           </p>
         </div>
       </div>
-      
+
       {/* Madrid Symbol: El Oso y el Madroño (The Bear and the Strawberry Tree) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none w-[500px] lg:w-[800px]">
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-aleti-navy">
@@ -40,10 +35,10 @@ export default function Hero() {
           <circle cx="65" cy="35" r="20" fill="currentColor" fillOpacity="0.4" />
           <circle cx="50" cy="25" r="15" fill="currentColor" fillOpacity="0.6" />
           <circle cx="75" cy="25" r="12" fill="currentColor" fillOpacity="0.5" />
-          
+
           {/* Trunk */}
           <path d="M60 85 V50 Q60 40 55 35" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-          
+
           {/* The Bear (Silhouette) */}
           <path d="M25 85 
                    L30 65 
@@ -56,14 +51,14 @@ export default function Hero() {
                    L33 40 
                    L22 50 
                    Q18 55 20 65 
-                   L22 85 Z" 
-                fill="currentColor" />
-          
+                   L22 85 Z"
+            fill="currentColor" />
+
           {/* Base */}
           <path d="M15 85 H85" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
         </svg>
       </div>
-      
+
       {/* Side Color Stripes */}
       <div className="absolute left-0 top-0 h-full w-2 bg-aleti-red opacity-10"></div>
       <div className="absolute right-0 top-0 h-full w-2 bg-aleti-navy opacity-10"></div>

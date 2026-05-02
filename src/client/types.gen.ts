@@ -30,16 +30,16 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
-    unpaged?: boolean;
     pageNumber?: number;
     pageSize?: number;
     paged?: boolean;
+    unpaged?: boolean;
 };
 
 export type SortObject = {
     empty?: boolean;
-    unsorted?: boolean;
     sorted?: boolean;
+    unsorted?: boolean;
 };
 
 export type NewsDetailResponse = {
@@ -71,6 +71,7 @@ export type CollectionLog = {
     scannedCount: number;
     aiProcessedCount: number;
     twitterApiCallCount: number;
+    footballApiCallCount: number;
     errorMsg?: string;
     executionTimeMs: number;
     createdAt: string;
@@ -88,6 +89,31 @@ export type PageCollectionLog = {
     numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
+};
+
+export type UpcomingMatch = {
+    opponent: string;
+    matchDate: string;
+    isHome: boolean;
+    tournament: string;
+};
+
+export type RecentMatch = {
+    matchId: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+    scorers: Array<Scorer>;
+    matchDate: string;
+    isHome: boolean;
+    tournament: string;
+};
+
+export type Scorer = {
+    name: string;
+    minute: string;
+    isHome: boolean;
 };
 
 export type NewsSourceWritable = {
@@ -187,3 +213,35 @@ export type GetLogsResponses = {
 };
 
 export type GetLogsResponse = GetLogsResponses[keyof GetLogsResponses];
+
+export type GetUpcomingMatchesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/matches/upcoming';
+};
+
+export type GetUpcomingMatchesResponses = {
+    /**
+     * OK
+     */
+    200: Array<UpcomingMatch>;
+};
+
+export type GetUpcomingMatchesResponse = GetUpcomingMatchesResponses[keyof GetUpcomingMatchesResponses];
+
+export type GetRecentMatchData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/matches/recent';
+};
+
+export type GetRecentMatchResponses = {
+    /**
+     * OK
+     */
+    200: RecentMatch;
+};
+
+export type GetRecentMatchResponse = GetRecentMatchResponses[keyof GetRecentMatchResponses];

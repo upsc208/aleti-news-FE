@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetSourcesData, GetSourcesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
+import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -52,3 +52,17 @@ export const getSources = <ThrowOnError extends boolean = false>(options?: Optio
  * 뉴스 수집 배치 실행 기록을 확인합니다.
  */
 export const getLogs = <ThrowOnError extends boolean = false>(options?: Options<GetLogsData, ThrowOnError>) => (options?.client ?? client).get<GetLogsResponses, unknown, ThrowOnError>({ url: '/api/news/logs', ...options });
+
+/**
+ * 향후 경기 일정 조회
+ *
+ * 다가올 3경기의 일정을 가져옵니다.
+ */
+export const getUpcomingMatches = <ThrowOnError extends boolean = false>(options?: Options<GetUpcomingMatchesData, ThrowOnError>) => (options?.client ?? client).get<GetUpcomingMatchesResponses, unknown, ThrowOnError>({ url: '/api/matches/upcoming', ...options });
+
+/**
+ * 최근 경기 결과 조회
+ *
+ * 가장 최근 종료된 경기 1개의 상세 결과를 가져옵니다.
+ */
+export const getRecentMatch = <ThrowOnError extends boolean = false>(options?: Options<GetRecentMatchData, ThrowOnError>) => (options?.client ?? client).get<GetRecentMatchResponses, unknown, ThrowOnError>({ url: '/api/matches/recent', ...options });
