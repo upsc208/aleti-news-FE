@@ -1,4 +1,5 @@
 import React from 'react';
+import { PawPrint } from 'lucide-react';
 import type { RecentMatch, UpcomingMatch } from '@/client/types.gen';
 
 const SoccerBall = () => (
@@ -38,12 +39,26 @@ interface MatchResultCardProps {
 
 export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchResultCardProps) {
   if (!recentMatch) {
-    return null; // Don't render if no recent match is available
+    return (
+      <div className="bg-[#b92629] text-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col items-center justify-center min-h-[250px] border border-white/10">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="scale-[2.5] mb-2 opacity-50 animate-bounce">
+            <PawPrint />
+          </div>
+          <h3 className="text-xl md:text-2xl font-black tracking-tighter opacity-90 animate-pulse">
+            준비중입니다....
+          </h3>
+          <p className="text-xs md:text-sm font-medium opacity-60 uppercase tracking-widest">
+            Data loading or currently unavailable
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="bg-[#b92629] text-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col md:flex-row gap-8 md:gap-12 min-h-[250px]">
-      
+
       {/* Left side: Match Result (70%) */}
       <div className="w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-white/20">
         {/* Header */}
@@ -53,14 +68,14 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         </div>
 
         {/* Score Section */}
-        <div className="flex items-center justify-between mb-10 px-2 md:px-8 w-full gap-4">
-          <div className="flex-1 text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-left leading-none break-words">
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between mb-10 px-2 md:px-8 w-full gap-4 sm:gap-6">
+          <div className="w-full sm:flex-1 text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-center sm:text-left leading-none break-words">
             {recentMatch.homeTeam}
           </div>
-          <div className="shrink-0 text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-center">
-            {recentMatch.homeScore}-{recentMatch.awayScore}
+          <div className="shrink-0 text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-center my-2 sm:my-0">
+            {recentMatch.homeScore} - {recentMatch.awayScore}
           </div>
-          <div className="flex-1 text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-right leading-none break-words">
+          <div className="w-full sm:flex-1 text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-center sm:text-right leading-none break-words">
             {recentMatch.awayTeam}
           </div>
         </div>
@@ -84,7 +99,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 opacity-70">
           Upcoming Matches
         </div>
-        
+
         <div className="flex flex-col gap-6">
           {upcomingMatches && upcomingMatches.slice(0, 3).map((match, idx) => (
             <div key={idx} className="flex flex-col gap-1">

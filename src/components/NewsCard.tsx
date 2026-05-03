@@ -20,7 +20,7 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
   return (
     <Link 
       href={`/news/${news.id}`} 
-      className="group relative flex flex-col sm:flex-row items-start gap-6 sm:gap-10 py-10 sm:py-12 border-b border-gray-100 hover:bg-gray-50/30 transition-all px-4 sm:px-8 rounded-3xl block"
+      className="group relative flex flex-col sm:flex-row items-start gap-6 sm:gap-10 py-10 sm:py-12 border-b border-gray-100 hover:bg-gray-50/30 transition-all px-4 sm:px-8 rounded-3xl"
     >
       {/* 이미지 영역 */}
       {showImage && (

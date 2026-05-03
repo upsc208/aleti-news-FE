@@ -6,8 +6,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
       {/* Red & White Stripe Decoration at the top */}
       <div className="absolute top-0 left-0 w-full h-3 bg-[repeating-linear-gradient(to_right,#b92629,#b92629_75px,#ffffff_75px,#ffffff_150px)]"></div>
-      <div className="container mx-auto flex h-20 items-center justify-between px-6 lg:px-12 mt-1.5">
-        <div className="flex flex-1 items-center gap-4">
+      <div className="container mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-0 mt-1.5 gap-y-4 md:gap-y-0">
+        <div className="flex w-full md:flex-1 items-center justify-center sm:justify-start gap-4">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-aleti-red to-red-600 shadow-lg group-hover:scale-105 transition-transform">
               <span className="text-sm font-black text-white italic">KR</span>
@@ -26,7 +26,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className="flex justify-center items-center space-x-6 text-base font-bold">
+        <nav className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-6 gap-y-2 text-sm md:text-base font-bold w-full md:w-auto">
           <Link href="/" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
             <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Newspaper size={20} />

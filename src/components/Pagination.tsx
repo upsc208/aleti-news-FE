@@ -39,7 +39,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
         </Link>
       )}
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 flex-wrap justify-center">
         {getVisiblePages().map((page, index) => (
           page === '...' ? (
             <span key={index} className="min-w-[40px] h-10 flex items-center justify-center text-gray-300 font-bold">

@@ -9,20 +9,20 @@ export default function Hero() {
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
           <div className="relative mb-8">
-            <h2 className="text-6xl lg:text-9xl font-black text-aleti-red tracking-tighter leading-[0.95] uppercase italic">
+            <h2 className="text-4xl sm:text-6xl lg:text-9xl font-black text-aleti-red tracking-tighter leading-[0.95] uppercase italic px-2">
               "GANAR, GANAR, GANAR <br />
               Y VOLVER A GANAR."
             </h2>
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <p className="text-3xl lg:text-5xl font-black text-aleti-navy uppercase tracking-widest italic drop-shadow-sm">
+            <p className="text-2xl sm:text-3xl lg:text-5xl font-black text-aleti-navy uppercase tracking-widest italic drop-shadow-sm">
               Luis Aragonés
             </p>
-            <div className="h-1.5 w-32 bg-gradient-to-r from-aleti-red via-aleti-white to-aleti-navy rounded-full"></div>
+            <div className="h-1.5 w-24 sm:w-32 bg-gradient-to-r from-aleti-red via-aleti-white to-aleti-navy rounded-full"></div>
           </div>
 
-          <p className="text-2xl lg:text-3xl text-aleti-navy/70 leading-relaxed mt-20 max-w-3xl font-black tracking-tighter">
+          <p className="text-xl sm:text-2xl lg:text-3xl text-aleti-navy/70 leading-relaxed mt-12 sm:mt-20 max-w-3xl font-black tracking-tighter px-4">
             이기고, 이기고, 또 이기고, <span className="text-aleti-red">다시 이기는 것.</span>
           </p>
         </div>
