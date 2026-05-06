@@ -62,20 +62,20 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
       {/* Left side: Match Result (70%) */}
       <div className="w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-white/20">
         {/* Header */}
-        <div className="flex justify-between items-center text-[10px] md:text-xs font-bold tracking-widest uppercase mb-10">
-          <span>Full Time</span>
-          <span>{formatKST(recentMatch.matchDate)} &middot; {recentMatch.tournament} &middot; {recentMatch.isHome ? 'HOME' : 'AWAY'}</span>
+        <div className="flex justify-between items-start text-[10px] md:text-xs font-bold tracking-widest uppercase mb-10 gap-4">
+          <span className="shrink-0">Full Time</span>
+          <span className="text-right break-words">{formatKST(recentMatch.matchDate)} &middot; {recentMatch.tournament} &middot; {recentMatch.isHome ? 'HOME' : 'AWAY'}</span>
         </div>
 
         {/* Score Section */}
-        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between mb-10 px-2 md:px-8 w-full gap-4 sm:gap-6">
-          <div className="w-full sm:flex-1 text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-center sm:text-left leading-none break-words">
+        <div className="flex flex-col md:flex-row items-center justify-center md:justify-between mb-10 px-2 w-full gap-4 md:gap-6">
+          <div className="w-full md:flex-1 text-3xl sm:text-4xl md:text-3xl lg:text-5xl font-black tracking-tighter text-white text-center md:text-left leading-tight break-words min-w-0">
             {recentMatch.homeTeam}
           </div>
-          <div className="shrink-0 text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-center my-2 sm:my-0">
+          <div className="shrink-0 text-5xl sm:text-6xl md:text-5xl lg:text-7xl font-black tracking-tighter text-center my-2 md:my-0 whitespace-nowrap">
             {recentMatch.homeScore} - {recentMatch.awayScore}
           </div>
-          <div className="w-full sm:flex-1 text-4xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter text-white text-center sm:text-right leading-none break-words">
+          <div className="w-full md:flex-1 text-3xl sm:text-4xl md:text-3xl lg:text-5xl font-black tracking-tighter text-white text-center md:text-right leading-tight break-words min-w-0">
             {recentMatch.awayTeam}
           </div>
         </div>
@@ -86,9 +86,9 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         {/* Goalscorers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm md:text-base font-bold tracking-wide max-h-[80px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {recentMatch.scorers && recentMatch.scorers.map((scorer, idx) => (
-            <div key={idx} className="flex justify-between items-center">
-              <span>{scorer.minute}' {scorer.name}</span>
-              <SoccerBall />
+            <div key={idx} className="flex justify-between items-center gap-2">
+              <span className="truncate">{scorer.minute}' {scorer.name}</span>
+              <span className="shrink-0"><SoccerBall /></span>
             </div>
           ))}
         </div>
@@ -103,11 +103,11 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         <div className="flex flex-col gap-6">
           {upcomingMatches && upcomingMatches.slice(0, 3).map((match, idx) => (
             <div key={idx} className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 text-xl md:text-2xl font-black tracking-tight">
-                <span>vs</span>
-                <span>{match.opponent}</span>
+              <div className="flex items-start gap-2 text-lg sm:text-xl md:text-2xl font-black tracking-tight leading-tight">
+                <span className="shrink-0 mt-0.5">vs</span>
+                <span className="break-words min-w-0">{match.opponent}</span>
               </div>
-              <div className="text-xs md:text-sm font-medium opacity-80 uppercase tracking-widest">
+              <div className="text-[10px] md:text-xs font-medium opacity-80 uppercase tracking-widest break-words mt-1">
                 {formatKST(match.matchDate)} &middot; {match.tournament} &middot; {match.isHome ? 'HOME' : 'AWAY'}
               </div>
             </div>
