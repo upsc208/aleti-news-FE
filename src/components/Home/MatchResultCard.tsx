@@ -2,18 +2,6 @@ import React from 'react';
 import { PawPrint } from 'lucide-react';
 import type { RecentMatch, UpcomingMatch } from '@/client/types.gen';
 
-const SoccerBall = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10" />
-    <polygon points="12 7 9 10 10 14 14 14 15 10" strokeLinejoin="round" />
-    <line x1="12" y1="7" x2="12" y2="2" />
-    <line x1="9" y1="10" x2="3" y2="9" />
-    <line x1="15" y1="10" x2="21" y2="9" />
-    <line x1="10" y1="14" x2="7" y2="19" />
-    <line x1="14" y1="14" x2="17" y2="19" />
-  </svg>
-);
-
 const formatKST = (dateStr: string) => {
   if (!dateStr) return '';
   try {
@@ -62,35 +50,22 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
       {/* Left side: Match Result (70%) */}
       <div className="w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-white/20">
         {/* Header */}
-        <div className="flex justify-between items-start text-[10px] md:text-xs font-bold tracking-widest uppercase mb-10 gap-4">
+        <div className="flex justify-between items-start text-[10px] md:text-xs font-bold tracking-widest uppercase mb-8 md:mb-6 gap-4">
           <span className="shrink-0">Full Time</span>
           <span className="text-right break-words">{formatKST(recentMatch.matchDate)} &middot; {recentMatch.tournament} &middot; {recentMatch.isHome ? 'HOME' : 'AWAY'}</span>
         </div>
 
-        {/* Score Section */}
-        <div className="flex flex-col md:flex-row items-center justify-center md:justify-between mb-10 px-2 w-full gap-4 md:gap-6">
-          <div className="w-full md:flex-1 text-3xl sm:text-4xl md:text-3xl lg:text-5xl font-black tracking-tighter text-white text-center md:text-left leading-tight break-words min-w-0">
+        {/* Score Section - Centered Vertically */}
+        <div className="flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between pb-6 md:pb-12 px-2 w-full gap-4 md:gap-6">
+          <div className="w-full md:flex-1 text-4xl sm:text-5xl md:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-left leading-tight break-words min-w-0 transition-all duration-300">
             {recentMatch.homeTeam}
           </div>
-          <div className="shrink-0 text-5xl sm:text-6xl md:text-5xl lg:text-7xl font-black tracking-tighter text-center my-2 md:my-0 whitespace-nowrap">
+          <div className="shrink-0 text-6xl sm:text-7xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter text-center my-4 md:my-0 whitespace-nowrap transition-all duration-300">
             {recentMatch.homeScore} - {recentMatch.awayScore}
           </div>
-          <div className="w-full md:flex-1 text-3xl sm:text-4xl md:text-3xl lg:text-5xl font-black tracking-tighter text-white text-center md:text-right leading-tight break-words min-w-0">
+          <div className="w-full md:flex-1 text-4xl sm:text-5xl md:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-right leading-tight break-words min-w-0 transition-all duration-300">
             {recentMatch.awayTeam}
           </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-white/20 mb-6"></div>
-
-        {/* Goalscorers */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm md:text-base font-bold tracking-wide max-h-[80px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {recentMatch.scorers && recentMatch.scorers.map((scorer, idx) => (
-            <div key={idx} className="flex justify-between items-center gap-2">
-              <span className="truncate">{scorer.minute}' {scorer.name}</span>
-              <span className="shrink-0"><SoccerBall /></span>
-            </div>
-          ))}
         </div>
       </div>
 
