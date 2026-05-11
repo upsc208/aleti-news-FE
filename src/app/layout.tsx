@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import { Analytics } from "@vercel/analytics/react"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,10 +44,10 @@ export default function RootLayout({
                 <p className="text-sm font-bold text-white mb-1">알레띠 KR</p>
                 <p className="text-xs text-blue-100">&copy; {new Date().getFullYear()} Alleti KR. All rights reserved.</p>
               </div>
-              
+
               <div className="flex flex-col items-center gap-2">
                 <p className="text-[11px] font-bold text-blue-200 uppercase tracking-widest">Contact & Feedback</p>
-                <a 
+                <a
                   href="mailto:upscman@gmail.com"
                   className="text-sm font-medium text-white hover:text-blue-200 transition-colors border-b border-blue-300 hover:border-blue-100 pb-0.5"
                 >
