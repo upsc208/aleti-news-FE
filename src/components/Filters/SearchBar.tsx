@@ -17,7 +17,7 @@ export default function SearchBar() {
       params.delete('query');
     }
     params.set('page', '1'); // 검색 시 1페이지로 이동
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {

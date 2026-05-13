@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
   description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석. 사울과 코레아가 전해주는 가장 빠른 소식.",
+  icons: {
+    icon: "/icon.png",
+  },
   other: {
     referrer: 'no-referrer',
   },

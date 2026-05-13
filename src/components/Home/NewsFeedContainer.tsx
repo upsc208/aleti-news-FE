@@ -1,0 +1,60 @@
+'use client';
+
+import { useState } from 'react';
+import { ChevronRight } from 'lucide-react';
+import SourceFilter from '@/components/Filters/SourceFilter';
+
+interface NewsFeedContainerProps {
+  sourcesData: any[];
+  children: React.ReactNode;
+}
+
+export default function NewsFeedContainer({ sourcesData, children }: NewsFeedContainerProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div className="flex flex-col md:flex-row gap-8 lg:gap-16 mt-12 relative">
+      {/* Desktop Sidebar Container */}
+      <div 
+        className={`
+          hidden md:block shrink-0 transition-all duration-500 ease-in-out overflow-visible
+          ${isExpanded ? 'w-80 opacity-100' : 'w-0 opacity-0 pointer-events-none'}
+        `}
+      >
+        <div className={`w-80 transition-transform duration-500 ${isExpanded ? 'translate-x-0' : '-translate-x-full'}`}>
+          <SourceFilter allSources={sourcesData} />
+        </div>
+      </div>
+
+      {/* Toggle Button (Visible when collapsed) */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[60] group items-center"
+        >
+          <div className="h-32 w-2 bg-gray-200 rounded-r-full group-hover:bg-aleti-red transition-all duration-300" />
+          <div className="flex items-center justify-center w-10 h-16 bg-white border-2 border-l-0 border-gray-100 rounded-r-2xl shadow-2xl -ml-0.5 transition-all duration-300 group-hover:pl-2">
+            <ChevronRight size={24} className="text-gray-400 group-hover:text-aleti-red" strokeWidth={3} />
+          </div>
+        </button>
+      )}
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-grow min-w-0 transition-all duration-500">
+        {children}
+      </div>
+
+      {/* Close Button Trigger (We can also handle this inside SourceFilter) */}
+      {isExpanded && (
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="hidden md:flex fixed left-[320px] lg:left-[calc(320px+4rem)] top-1/2 -translate-y-1/2 z-[60] group items-center opacity-0 hover:opacity-100 transition-opacity duration-300"
+          title="필터 접기"
+        >
+           {/* Subtle handle to close */}
+           <div className="h-16 w-1 bg-gray-100 rounded-full group-hover:bg-aleti-red/30 transition-colors" />
+        </button>
+      )}
+    </div>
+  );
+}
