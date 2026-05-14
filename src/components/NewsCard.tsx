@@ -10,91 +10,93 @@ interface NewsCardProps {
 
 export default function NewsCard({ news, showImage = false }: NewsCardProps) {
   const getArticleTypeText = (type: string) => {
-    switch(type) {
+    switch (type) {
       case 'WEB_ARTICLE': return '웹 기사';
       case 'SNS_POST': return 'X 기사';
       default: return '기타';
     }
   };
 
+  // Type assertion for imageUrl since it's missing in NewsListResponse type but expected in data
+  const imageUrl = (news as any).imageUrl;
+
   return (
-    <Link 
-      href={`/news/${news.id}`} 
-      className="group relative flex flex-col sm:flex-row items-start gap-6 sm:gap-10 py-10 sm:py-12 border-b border-gray-100 hover:bg-gray-50/30 transition-all px-4 sm:px-8 rounded-3xl"
+    <Link
+      href={`/news/${news.id}`}
+      className="group relative flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden mb-8"
     >
-      {/* 이미지 영역 */}
-      {showImage && (
-        <div className="relative h-48 w-full sm:h-56 sm:w-80 shrink-0 overflow-hidden rounded-2xl bg-gray-100 border border-gray-100 shadow-md group-hover:shadow-xl transition-shadow">
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
-            <ImageIcon size={32} className="text-gray-200" />
-          </div>
-          <div className="absolute top-4 left-4 z-10">
-            <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-black text-aleti-red shadow-sm uppercase tracking-widest border border-white">
-              {news.sourceName}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* 상단 액센트 라인 */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-aleti-red via-aleti-red/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      {/* 콘텐츠 영역 */}
-      <div className="flex flex-col flex-grow min-w-0">
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          {/* Article Type Badge (Red) */}
-          <span className="text-[10px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.15em] shadow-sm">
-            {getArticleTypeText(news.articleType)}
-          </span>
+      <div className="p-6 sm:p-7 flex flex-col sm:flex-row gap-6">
+        {/* 이미지 영역 - 웹 기사만 표시 */}
+        {showImage && news.articleType === 'WEB_ARTICLE' && (
+          <div className="relative h-44 w-full sm:h-48 sm:w-64 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-inner group/img">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={news.titleKo || ''}
+                className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50">
+                <ImageIcon size={32} className="text-gray-200" />
+              </div>
+            )}
+          </div>
+        )}
 
-          <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
-            <Clock size={14} />
-            <span>
-              {news.publishedAt 
-                ? new Date(news.publishedAt).toLocaleString('ko-KR', {
-                    year: 'numeric',
+        {/* 콘텐츠 영역 */}
+        <div className="flex flex-col flex-grow min-w-0 justify-center">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.1em] shadow-md border border-aleti-red/20">
+                {news.sourceName}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-[12px] font-black text-aleti-navy uppercase tracking-tight">
+              <User size={16} className="text-aleti-red" />
+              <span>{news.authorName || '알레티 뉴스'}</span>
+            </div>
+
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+
+            <div className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600">
+              <Clock size={14} className="text-gray-400" />
+              <span>
+                {news.publishedAt
+                  ? new Date(news.publishedAt).toLocaleString('ko-KR', {
                     month: '2-digit',
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
                   }) + ' KST'
-                : '날짜 없음'}
-            </span>
+                  : '날짜 없음'}
+              </span>
+            </div>
           </div>
-        </div>
-        
-        <h3 className="mb-5 text-2xl sm:text-4xl font-black text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-[1.15] tracking-tight">
-          {news.titleKo}
-        </h3>
 
-        {news.summaryKo && (
-          <div className="relative mb-6 p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 ai-summary-glow">
-            <div className="flex items-center gap-2 mb-2 text-gemini-purple">
-              <Sparkles size={14} className="fill-current" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Gemini AI Summary</span>
-            </div>
-            <p className="text-sm sm:text-base text-gray-600 line-clamp-3 font-medium leading-relaxed">
-              {news.summaryKo}
-            </p>
-          </div>
-        )}
+          <h3 className="mb-4 text-2xl sm:text-3xl font-black text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-tight tracking-tight">
+            {news.titleKo}
+          </h3>
 
-        <div className="mt-auto flex items-center justify-between pt-2">
-          <div className="flex items-center gap-4 text-base">
-            {/* Typography Only Style */}
-            <span className="text-gray-900 font-black tracking-[0.15em] uppercase text-sm sm:text-base">{news.sourceName}</span>
-            
-            <div className="h-4 w-px bg-gray-200" />
-            
-            <div className="flex items-center gap-1.5">
-              <User size={16} className="text-slate-400" />
-              <span className="text-slate-700 font-bold leading-none">{news.authorName || '알레티 뉴스'}</span>
+          {news.summaryKo && (
+            <div className="relative p-5 rounded-xl bg-gray-50/50 border border-gray-100/50 group-hover:border-aleti-red/10 transition-all">
+              <div className="flex items-center gap-2 mb-2 text-aleti-red/60">
+                <Sparkles size={14} className="fill-current" />
+                <span className="text-[10px] font-black uppercase tracking-widest">AI Summary</span>
+              </div>
+              <p className="text-sm sm:text-base text-gray-600 line-clamp-2 font-medium leading-relaxed">
+                {news.summaryKo}
+              </p>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 text-xs font-black text-gray-400 group-hover:text-aleti-red transition-all uppercase tracking-[0.2em] shrink-0 ml-4">
-            <span className="hidden sm:inline">READ STORY</span>
-            <div className="p-2 rounded-full border border-gray-100 group-hover:border-aleti-red/20 group-hover:bg-aleti-red/5 transition-colors">
-              <ExternalLink size={16} />
-            </div>
+          )}
+
+          <div className="mt-6 flex items-center gap-2 text-[11px] font-black text-aleti-red opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 uppercase tracking-[0.2em]">
+            <span>Read Full Story</span>
+            <ExternalLink size={12} />
           </div>
         </div>
       </div>

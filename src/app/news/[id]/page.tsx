@@ -72,6 +72,17 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                       : '날짜 정보 없음'}
                       </div>            </div>
             <div className="flex items-center gap-3">
+              <a
+                href={news.originalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 hover:text-aleti-red hover:bg-aleti-red/5 rounded-xl text-sm font-bold transition-all border border-gray-100 hover:border-aleti-red/20"
+                title="원문 출처 보기"
+              >
+                <span>원문 보기</span>
+                <ExternalLink size={16} />
+              </a>
+              <div className="h-6 w-px bg-gray-100 hidden sm:block mx-1" />
               <button className="p-2 text-gray-400 hover:text-aleti-red transition-colors rounded-full hover:bg-gray-50">
                 <Share2 size={20} />
               </button>
@@ -100,14 +111,21 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
         )}
 
         {news.imageUrl && (
-          <div className="mb-12 relative h-[300px] sm:h-[450px] w-full overflow-hidden rounded-3xl shadow-xl shadow-gray-200/50">
-            <Image
-              src={news.imageUrl}
-              alt={news.titleKo || '뉴스 이미지'}
-              fill
-              className="object-cover"
-              unoptimized
-            />
+          <div className="mb-12">
+            <div className="relative h-[300px] sm:h-[450px] w-full overflow-hidden rounded-3xl shadow-xl shadow-gray-200/50 mb-3">
+              <Image
+                src={news.imageUrl}
+                alt={news.titleKo || '뉴스 이미지'}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+            <div className="px-2 text-center">
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-tight">
+                출처: {news.sourceName}{news.authorName ? `, ${news.authorName}` : ''}
+              </p>
+            </div>
           </div>
         )}
 
@@ -132,18 +150,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
         )}
 
         <footer className="pt-10 border-t border-gray-100">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <a
-                href={news.originalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-200 transition-all flex items-center gap-2"
-              >
-                원문 출처 보기
-                <ExternalLink size={14} />
-              </a>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <p className="text-gray-400 text-sm font-medium">© 알레티 뉴스. All rights reserved.</p>
           </div>
         </footer>
       </article>
