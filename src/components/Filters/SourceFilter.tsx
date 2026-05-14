@@ -13,123 +13,134 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const selectedIdsFromUrl = useMemo(() => {
+  // URL 파라미터에서 현재 선택된 ID들을 가져옵니다.
+  // 이 때, allSources의 internalId와 대조하여 정확한 케이싱을 유지한 목록을 관리합니다.
+  const selectedInternalIdsFromUrl = useMemo(() => {
     const sourcesParam = searchParams.get('sources');
-    if (!sourcesParam) return allSources.map(s => s.id?.toString() || ''); // Default to all if no param
+    if (!sourcesParam) return allSources.map(s => s.internalId); // 파라미터 없으면 전체 선택
     if (sourcesParam === 'none') return [];
-    return sourcesParam.split(',');
+    
+    // URL에 있는 값들 중 실제 존재하는 internalId만 필터링 (대소문자 무시 비교 후 실제 값 반환)
+    const urlIds = sourcesParam.split(',');
+    return urlIds.map(urlId => {
+      const found = allSources.find(s => s.internalId.toLowerCase() === urlId.toLowerCase());
+      return found ? found.internalId : urlId;
+    });
   }, [searchParams, allSources]);
 
-  const toggleSource = (id: number) => {
-    const idStr = id.toString();
-    let nextIds: string[];
+  const toggleSource = (internalId: string) => {
+    let nextInternalIds: string[];
 
-    if (selectedIdsFromUrl.includes(idStr)) {
+    if (selectedInternalIdsFromUrl.includes(internalId)) {
       // Unchecking
-      nextIds = selectedIdsFromUrl.filter((sId) => sId !== idStr);
+      nextInternalIds = selectedInternalIdsFromUrl.filter((id) => id !== internalId);
     } else {
       // Checking
-      nextIds = [...selectedIdsFromUrl, idStr];
+      nextInternalIds = [...selectedInternalIdsFromUrl, internalId];
     }
 
-    const params = new URLSearchParams(searchParams.toString());
+    const searchParamsObj: Record<string, string> = {};
+    
+    // query 파라미터가 있다면 유지
+    const currentQuery = searchParams.get('query');
+    if (currentQuery) searchParamsObj.query = currentQuery;
 
     // Logic for URL param
-    if (nextIds.length === allSources.length && nextIds.length > 0) {
+    if (nextInternalIds.length === allSources.length && nextInternalIds.length > 0) {
       // All selected -> clear param for clean URL
-      params.delete('sources');
-    } else if (nextIds.length === 0) {
+    } else if (nextInternalIds.length === 0) {
       // None selected
-      params.set('sources', 'none');
+      searchParamsObj.sources = 'none';
     } else {
-      params.set('sources', nextIds.join(','));
+      // URL에는 백엔드가 원하는 정확한 대소문자(internalId)를 넣습니다.
+      searchParamsObj.sources = nextInternalIds.join(',');
     }
 
-    params.set('page', '1');
-    router.push(`?${params.toString()}`, { scroll: false });
+    searchParamsObj.page = '1';
+    
+    // URLSearchParams를 쓰되, 최종 문자열을 직접 확인
+    const newParams = new URLSearchParams(searchParamsObj);
+    const queryString = newParams.toString();
+    
+    router.push(`?${queryString}`, { scroll: false });
   };
 
   return (
-    <div className="relative md:sticky md:top-28 w-full mx-auto">
-      <div className="relative bg-white rounded-3xl border border-gray-200 shadow-xl pt-8 px-6 pb-10">
-        <div className="flex flex-col items-center mb-6">
-          <div className="h-1 w-10 bg-gray-200 rounded-full mb-4"></div>
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest text-center">
-            필터
-          </h3>
-        </div>
+    <div className="flex flex-col gap-3 pb-12 sm:pb-0">
+      {allSources.length > 0 ? (
+        allSources.map((source) => {
+          const isSelected = selectedInternalIdsFromUrl.includes(source.internalId);
+          return (
+            <label
+              key={source.internalId}
+              className={`
+                flex items-center justify-between px-5 py-3.5 rounded-xl cursor-pointer transition-all border
+                ${isSelected
+                  ? 'bg-aleti-red/5 border-aleti-red/30 text-aleti-red shadow-sm'
+                  : 'bg-gray-50 border-gray-100 text-gray-500 hover:border-aleti-navy/20'}
+              `}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`
+                  w-4 h-4 rounded-md flex items-center justify-center border transition-all
+                  ${isSelected ? 'bg-aleti-red border-aleti-red' : 'bg-white border-gray-200'}
+                `}>
+                  {isSelected && <Check size={10} className="text-white stroke-[4px]" />}
+                </div>
+                <span className={`text-[13px] font-bold tracking-tight ${isSelected ? 'text-aleti-red' : 'text-gray-600'}`}>
+                  {source.displayName}
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={isSelected}
+                onChange={() => toggleSource(source.internalId)}
+              />
+            </label>
+          );
+        })
+      ) : (
+        <p className="text-[10px] font-bold text-gray-300 italic text-center">등록된 소스가 없습니다.</p>
+      )}
 
-        <div className="flex flex-col gap-3">
-          {allSources.length > 0 ? (
-            allSources.map((source) => {
-              const isSelected = selectedIdsFromUrl.includes(source.id?.toString() || '');
-              return (
-                <label
-                  key={source.internalId}
-                  className={`
-                    flex items-center justify-between px-5 py-3.5 rounded-xl cursor-pointer transition-all border
-                    ${isSelected
-                      ? 'bg-aleti-red/5 border-aleti-red/30 text-aleti-red shadow-sm'
-                      : 'bg-gray-50 border-gray-100 text-gray-500 hover:border-aleti-navy/20'}
-                  `}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`
-                      w-4 h-4 rounded-md flex items-center justify-center border transition-all
-                      ${isSelected ? 'bg-aleti-red border-aleti-red' : 'bg-white border-gray-200'}
-                    `}>
-                      {isSelected && <Check size={10} className="text-white stroke-[4px]" />}
-                    </div>
-                    <span className={`text-[13px] font-bold tracking-tight ${isSelected ? 'text-aleti-red' : 'text-gray-600'}`}>
-                      {source.displayName}
-                    </span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={isSelected}
-                    onChange={() => toggleSource(source.id!)}
-                  />
-                </label>
-              );
-            })
-          ) : (
-            <p className="text-[10px] font-bold text-gray-300 italic text-center">No sources available.</p>
-          )}
-        </div>
-
-        <div className="flex gap-2 mt-8">
+      <div className="flex flex-col gap-2 mt-4 sm:mt-6">
+        <div className="flex gap-2">
           <button
             onClick={() => {
-              const params = new URLSearchParams(searchParams.toString());
+              const params = new URLSearchParams();
+              const currentQuery = searchParams.get('query');
+              if (currentQuery) params.set('query', currentQuery);
               params.delete('sources');
               router.push(`?${params.toString()}`, { scroll: false });
             }}
-            disabled={selectedIdsFromUrl.length === allSources.length}
+            disabled={selectedInternalIdsFromUrl.length === allSources.length}
             className={`
-              flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all
-              ${selectedIdsFromUrl.length === allSources.length
+              flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+              ${selectedInternalIdsFromUrl.length === allSources.length
                 ? 'bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100'
                 : 'bg-aleti-navy text-white hover:bg-aleti-red shadow-md'}
             `}
           >
-            Select All
+            전체 선택
           </button>
           <button
             onClick={() => {
-              const params = new URLSearchParams(searchParams.toString());
+              const params = new URLSearchParams();
+              const currentQuery = searchParams.get('query');
+              if (currentQuery) params.set('query', currentQuery);
               params.set('sources', 'none');
               router.push(`?${params.toString()}`, { scroll: false });
             }}
-            disabled={selectedIdsFromUrl.length === 0}
+            disabled={selectedInternalIdsFromUrl.length === 0}
             className={`
-              flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all
-              ${selectedIdsFromUrl.length === 0
+              flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+              ${selectedInternalIdsFromUrl.length === 0
                 ? 'bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-aleti-red hover:text-aleti-red shadow-md'}
             `}
           >
-            Clear All
+            전체 해제
           </button>
         </div>
       </div>

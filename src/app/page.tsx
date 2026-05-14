@@ -31,8 +31,9 @@ export default async function Home({
     const [newsResponse, sourcesResponse, recentMatchResponse, upcomingMatchesResponse] = await Promise.all([
       getNews({
         query: {
-          page: query ? 0 : page,
-          size: query ? 100 : size, // 임시로 클라이언트 측 검색을 위해 크게 잡음
+          page: page, // page already has (searchParams.page - 1) logic above
+          size: size,
+          search: query,
           ...(sourcesParam && sourcesParam !== 'none' && { sources })
         }
       } as any),
@@ -52,17 +53,6 @@ export default async function Home({
   let newsList = newsData?.content || [];
   let totalPages = newsData?.totalPages || 0;
   const currentPage = (newsData?.number || 0) + 1;
-
-  // 임시 클라이언트 사이드 검색 필터링 로직 (백엔드 지원 전까지)
-  if (query) {
-    const q = query.toLowerCase();
-    newsList = newsList.filter((news: any) => 
-      news.titleKo?.toLowerCase().includes(q) || 
-      news.summaryKo?.toLowerCase().includes(q) ||
-      news.authorName?.toLowerCase().includes(q)
-    );
-    totalPages = 1;
-  }
 
   return (
     <div className="flex flex-col gap-0">

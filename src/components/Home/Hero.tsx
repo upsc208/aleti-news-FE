@@ -6,6 +6,10 @@ export default function Hero() {
       {/* Vibrant Navy and Red Aurora for a true Atlético feel */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(226,50,42,0.05)_0%,transparent_50%),radial-gradient(circle_at_100%_100%,rgba(0,69,149,0.05)_0%,transparent_50%)] pointer-events-none"></div>
 
+      {/* Smooth transition to blend with white background above and below */}
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent pointer-events-none z-[1]"></div>
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none z-[1]"></div>
+
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
           <div className="relative mb-8">

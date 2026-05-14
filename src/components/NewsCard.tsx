@@ -46,7 +46,18 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
 
           <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
             <Clock size={14} />
-            <span>{news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '날짜 없음'}</span>
+            <span>
+              {news.publishedAt 
+                ? new Date(news.publishedAt).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }) + ' KST'
+                : '날짜 없음'}
+            </span>
           </div>
         </div>
         
@@ -67,14 +78,19 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
         )}
 
         <div className="mt-auto flex items-center justify-between pt-2">
-          <div className="flex items-center gap-3 text-sm font-bold text-gray-500">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-50 border border-gray-200 flex items-center justify-center shadow-sm">
-              <User size={14} className="text-gray-400" />
+          <div className="flex items-center gap-4 text-base">
+            {/* Typography Only Style */}
+            <span className="text-gray-900 font-black tracking-[0.15em] uppercase text-sm sm:text-base">{news.sourceName}</span>
+            
+            <div className="h-4 w-px bg-gray-200" />
+            
+            <div className="flex items-center gap-1.5">
+              <User size={16} className="text-slate-400" />
+              <span className="text-slate-700 font-bold leading-none">{news.authorName || '알레티 뉴스'}</span>
             </div>
-            <span className="text-gray-900">{news.sourceName} <span className="text-gray-300 mx-1 font-light">|</span> <span className="text-gray-400 font-medium">에디터</span></span>
           </div>
           
-          <div className="flex items-center gap-2 text-xs font-black text-gray-300 group-hover:text-aleti-red transition-all uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 text-xs font-black text-gray-400 group-hover:text-aleti-red transition-all uppercase tracking-[0.2em] shrink-0 ml-4">
             <span className="hidden sm:inline">READ STORY</span>
             <div className="p-2 rounded-full border border-gray-100 group-hover:border-aleti-red/20 group-hover:bg-aleti-red/5 transition-colors">
               <ExternalLink size={16} />

@@ -21,8 +21,18 @@ export default function NewsFeedContainer({ sourcesData, children }: NewsFeedCon
           ${isExpanded ? 'w-80 opacity-100' : 'w-0 opacity-0 pointer-events-none'}
         `}
       >
-        <div className={`w-80 transition-transform duration-500 ${isExpanded ? 'translate-x-0' : '-translate-x-full'}`}>
-          <SourceFilter allSources={sourcesData} />
+        <div className={`sticky top-28 self-start w-80 transition-transform duration-500 ${isExpanded ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="relative bg-white rounded-3xl border border-gray-200 shadow-xl pt-8 px-6 pb-10">
+            {/* Desktop Header */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="h-1 w-10 bg-gray-200 rounded-full mb-4"></div>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest text-center">
+                필터
+              </h3>
+            </div>
+            
+            <SourceFilter allSources={sourcesData} />
+          </div>
         </div>
       </div>
 
@@ -44,14 +54,13 @@ export default function NewsFeedContainer({ sourcesData, children }: NewsFeedCon
         {children}
       </div>
 
-      {/* Close Button Trigger (We can also handle this inside SourceFilter) */}
+      {/* Close Button Trigger */}
       {isExpanded && (
         <button
           onClick={() => setIsExpanded(false)}
           className="hidden md:flex fixed left-[320px] lg:left-[calc(320px+4rem)] top-1/2 -translate-y-1/2 z-[60] group items-center opacity-0 hover:opacity-100 transition-opacity duration-300"
           title="필터 접기"
         >
-           {/* Subtle handle to close */}
            <div className="h-16 w-1 bg-gray-100 rounded-full group-hover:bg-aleti-red/30 transition-colors" />
         </button>
       )}

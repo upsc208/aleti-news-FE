@@ -26,9 +26,9 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const triggerPipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerPipelineData, ThrowOnError>) => (options?.client ?? client).post<TriggerPipelineResponses, unknown, ThrowOnError>({ url: '/api/news/trigger', ...options });
 
 /**
- * 뉴스 목록 조회 (필터링 포함)
+ * 뉴스 목록 조회 (필터링 및 검색 포함)
  *
- * 이미지 정보를 제외한 가벼운 뉴스 목록을 가져옵니다. 소스 ID 리스트로 필터링이 가능합니다.
+ * 뉴스 목록을 가져옵니다. 소스 리스트, 카테고리, 그리고 검색어(제목/본문) 필터링이 가능합니다.
  */
 export const getNews = <ThrowOnError extends boolean = false>(options?: Options<GetNewsData, ThrowOnError>) => (options?.client ?? client).get<GetNewsResponses, unknown, ThrowOnError>({ url: '/api/news', ...options });
 

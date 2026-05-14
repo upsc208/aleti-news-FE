@@ -8,20 +8,22 @@ export type NewsListResponse = {
     id: number;
     titleKo?: string;
     sourceName: string;
+    authorName?: string;
     publishedAt?: string;
     articleType: 'WEB_ARTICLE' | 'SNS_POST';
     summaryKo?: string;
+    category?: string;
 };
 
 export type PageNewsListResponse = {
     totalElements?: number;
     totalPages?: number;
-    first?: boolean;
-    last?: boolean;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
     sort?: SortObject;
+    first?: boolean;
+    last?: boolean;
     numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
@@ -30,16 +32,16 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
+    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
-    unpaged?: boolean;
 };
 
 export type SortObject = {
     empty?: boolean;
-    sorted?: boolean;
     unsorted?: boolean;
+    sorted?: boolean;
 };
 
 export type NewsDetailResponse = {
@@ -53,6 +55,7 @@ export type NewsDetailResponse = {
     originalUrl: string;
     publishedAt?: string;
     articleType: 'WEB_ARTICLE' | 'SNS_POST';
+    category?: string;
 };
 
 export type NewsSource = {
@@ -80,12 +83,12 @@ export type CollectionLog = {
 export type PageCollectionLog = {
     totalElements?: number;
     totalPages?: number;
-    first?: boolean;
-    last?: boolean;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
     sort?: SortObject;
+    first?: boolean;
+    last?: boolean;
     numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
@@ -104,16 +107,9 @@ export type RecentMatch = {
     awayTeam: string;
     homeScore: number;
     awayScore: number;
-    scorers: Array<Scorer>;
     matchDate: string;
     isHome: boolean;
     tournament: string;
-};
-
-export type Scorer = {
-    name: string;
-    minute: string;
-    isHome: boolean;
 };
 
 export type NewsSourceWritable = {
@@ -148,6 +144,8 @@ export type GetNewsData = {
         page?: number;
         size?: number;
         sources?: Array<string>;
+        category?: string;
+        search?: string;
     };
     url: '/api/news';
 };

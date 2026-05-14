@@ -60,9 +60,17 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
               </div>
               <div className="flex items-center gap-2 text-base text-gray-400 font-medium">
                 <Calendar size={18} className="text-gray-300" />
-                {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('ko-KR') : '날짜 정보 없음'}
-              </div>
-            </div>
+                {news.publishedAt 
+                  ? new Date(news.publishedAt).toLocaleString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                      }) + ' KST'
+                      : '날짜 정보 없음'}
+                      </div>            </div>
             <div className="flex items-center gap-3">
               <button className="p-2 text-gray-400 hover:text-aleti-red transition-colors rounded-full hover:bg-gray-50">
                 <Share2 size={20} />

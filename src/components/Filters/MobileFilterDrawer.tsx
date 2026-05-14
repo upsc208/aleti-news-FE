@@ -32,7 +32,7 @@ export default function MobileFilterDrawer({ allSources }: MobileFilterDrawerPro
         className="md:hidden flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl active:scale-95 transition-transform"
       >
         <Filter size={18} />
-        Filter
+        필터
       </button>
 
       {/* Drawer Overlay */}
@@ -63,18 +63,18 @@ export default function MobileFilterDrawer({ allSources }: MobileFilterDrawerPro
             </button>
           </div>
 
-          {/* Filter Content */}
-          <div className="flex-grow overflow-y-auto p-6 pb-24">
+          {/* Filter Content - Scrollable Area */}
+          <div className="flex-grow overflow-y-auto px-6 py-4">
             <SourceFilter allSources={allSources} />
           </div>
 
-          {/* Footer / Apply Button (Optional, as filter updates URL immediately) */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100">
+          {/* Footer - Fixed at bottom */}
+          <div className="bg-white border-t border-gray-100 p-6">
             <button
               onClick={() => setIsOpen(false)}
-              className="w-full py-4 bg-aleti-red text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-aleti-red/20"
+              className="w-full py-4 bg-aleti-red text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-aleti-red/20 active:scale-[0.98] transition-transform"
             >
-              적용 완료
+              필터 적용
             </button>
           </div>
         </div>
