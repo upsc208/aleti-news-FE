@@ -13,11 +13,12 @@ export type NewsListResponse = {
     articleType: 'WEB_ARTICLE' | 'SNS_POST';
     summaryKo?: string;
     category?: string;
+    imageUrl?: string;
 };
 
 export type PageNewsListResponse = {
-    totalElements?: number;
     totalPages?: number;
+    totalElements?: number;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
@@ -32,16 +33,16 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
-    unpaged?: boolean;
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    unpaged?: boolean;
 };
 
 export type SortObject = {
     empty?: boolean;
-    unsorted?: boolean;
     sorted?: boolean;
+    unsorted?: boolean;
 };
 
 export type NewsDetailResponse = {
@@ -81,8 +82,8 @@ export type CollectionLog = {
 };
 
 export type PageCollectionLog = {
-    totalElements?: number;
     totalPages?: number;
+    totalElements?: number;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;

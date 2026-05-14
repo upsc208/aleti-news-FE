@@ -1,8 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, User, Calendar, Share2, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
+import { ChevronLeft, User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
 import { Tweet } from 'react-tweet';
 import { getNewsDetail } from '@/client/sdk.gen';
+import ShareButton from '@/components/ShareButton';
 
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,34 +44,35 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
       <article className="container mx-auto px-4 pt-12 max-w-3xl">
         <header className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="bg-aleti-red text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-tighter">
-              {news.sourceName}
-            </span>
-          </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-8 tracking-tight">
             {news.titleKo}
           </h1>
 
           <div className="flex items-center justify-between border-y border-gray-100 py-6">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-base text-gray-700 font-semibold">
-                <User size={18} className="text-gray-400" />
-                {news.authorName || '알레티 뉴스'}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-black text-aleti-red uppercase tracking-widest">
+                  {news.sourceName}
+                </span>
+                <div className="h-4 w-px bg-gray-200" />
+                <div className="flex items-center gap-2 text-base text-gray-700 font-semibold">
+                  <User size={18} className="text-gray-400" />
+                  {news.authorName || '알레티 뉴스'}
+                </div>
               </div>
               <div className="flex items-center gap-2 text-base text-gray-400 font-medium">
                 <Calendar size={18} className="text-gray-300" />
-                {news.publishedAt 
+                {news.publishedAt
                   ? new Date(news.publishedAt).toLocaleString('ko-KR', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                      }) + ' KST'
-                      : '날짜 정보 없음'}
-                      </div>            </div>
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  }) + ' KST'
+                  : '날짜 정보 없음'}
+              </div>            </div>
             <div className="flex items-center gap-3">
               <a
                 href={news.originalUrl}
@@ -83,9 +85,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 <ExternalLink size={16} />
               </a>
               <div className="h-6 w-px bg-gray-100 hidden sm:block mx-1" />
-              <button className="p-2 text-gray-400 hover:text-aleti-red transition-colors rounded-full hover:bg-gray-50">
-                <Share2 size={20} />
-              </button>
+              <ShareButton title={news.titleKo || ''} />
             </div>
           </div>
         </header>
@@ -123,7 +123,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             </div>
             <div className="px-2 text-center">
               <p className="text-sm font-bold text-gray-400 uppercase tracking-tight">
-                출처: {news.sourceName}{news.authorName ? `, ${news.authorName}` : ''}
+                사진 출처: {news.sourceName}{news.authorName ? `, ${news.authorName}` : ''}
               </p>
             </div>
           </div>
