@@ -4,6 +4,7 @@ import SourceFilter from '@/components/Filters/SourceFilter';
 import MobileFilterDrawer from '@/components/Filters/MobileFilterDrawer';
 import NewsFeedContainer from '@/components/Home/NewsFeedContainer';
 import SearchBar from '@/components/Filters/SearchBar';
+import CategoryFilter from '@/components/Filters/CategoryFilter';
 import Hero from '@/components/Home/Hero';
 import Pagination from '@/components/Pagination';
 import { Filter, Newspaper, Sparkles } from 'lucide-react';
@@ -12,12 +13,13 @@ import MatchResultCard from '@/components/Home/MatchResultCard';
 export default async function Home({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ page?: string; size?: string; query?: string; sources?: string }>;
+  searchParams: Promise<{ page?: string; size?: string; query?: string; sources?: string; category?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const page = searchParams.page ? parseInt(searchParams.page) - 1 : 0;
   const size = searchParams.size ? parseInt(searchParams.size) : 10;
   const query = searchParams.query || '';
+  const category = searchParams.category || '';
   const sourcesParam = searchParams.sources || '';
   const sources = sourcesParam ? sourcesParam.split(',') : [];
 
@@ -31,10 +33,11 @@ export default async function Home({
     const [newsResponse, sourcesResponse, recentMatchResponse, upcomingMatchesResponse] = await Promise.all([
       getNews({
         query: {
-          page: page, // page already has (searchParams.page - 1) logic above
+          page: page,
           size: size,
           search: query,
-          ...(sourcesParam && sourcesParam !== 'none' && { sources })
+          ...(category && category !== 'all' ? { category } : {}),
+          ...(sourcesParam && sourcesParam !== 'none' ? { sources } : {})
         }
       } as any),
       getSources(),
@@ -65,6 +68,7 @@ export default async function Home({
         </div>
 
         <SearchBar />
+        <CategoryFilter />
 
         <NewsFeedContainer sourcesData={sourcesData}>
           {newsList.length > 0 ? (
