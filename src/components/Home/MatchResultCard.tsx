@@ -56,14 +56,14 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         </div>
 
         {/* Score Section - Centered Vertically */}
-        <div className="flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between pb-6 md:pb-12 px-2 w-full gap-4 md:gap-6">
-          <div className="w-full md:flex-1 text-4xl sm:text-5xl md:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-left leading-tight break-words min-w-0 transition-all duration-300">
+        <div className="flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between pb-6 md:pb-12 px-2 w-full gap-2 md:gap-6">
+          <div className="w-full md:flex-1 text-2xl sm:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-left leading-tight break-words min-w-0 transition-all duration-300 uppercase">
             {recentMatch.homeTeam}
           </div>
-          <div className="shrink-0 text-6xl sm:text-7xl md:text-5xl lg:text-7xl xl:text-8xl font-black tracking-tighter text-center my-4 md:my-0 whitespace-nowrap transition-all duration-300">
+          <div className="shrink-0 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter text-center my-2 md:my-0 whitespace-nowrap transition-all duration-300">
             {recentMatch.homeScore} - {recentMatch.awayScore}
           </div>
-          <div className="w-full md:flex-1 text-4xl sm:text-5xl md:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-right leading-tight break-words min-w-0 transition-all duration-300">
+          <div className="w-full md:flex-1 text-2xl sm:text-3xl lg:text-5xl xl:text-6xl font-black tracking-tighter text-white text-center md:text-right leading-tight break-words min-w-0 transition-all duration-300 uppercase">
             {recentMatch.awayTeam}
           </div>
         </div>

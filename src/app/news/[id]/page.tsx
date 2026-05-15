@@ -81,8 +81,8 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             {news.titleKo}
           </h1>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 py-4 sm:py-6 gap-4">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 py-4 sm:py-6 gap-6">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <div className="flex items-center gap-3">
                 <span className="text-xs sm:text-sm font-black text-aleti-red uppercase tracking-widest">
                   {news.sourceName}
@@ -90,7 +90,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 <div className="h-4 w-px bg-gray-200" />
                 <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 font-semibold">
                   <User size={18} className="text-gray-400" />
-                  <span className="truncate max-w-[120px] sm:max-w-none">{news.authorName || '알레티 뉴스'}</span>
+                  <span className="truncate max-w-[120px] sm:max-w-none">{news.authorName || '알레띠 뉴스'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-sm sm:text-base text-gray-400 font-medium">
@@ -108,7 +108,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0">
+            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-50">
               <a
                 href={news.originalUrl}
                 target="_blank"
@@ -119,8 +119,10 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 <span className="whitespace-nowrap">원문 보기</span>
                 <ExternalLink size={14} />
               </a>
-              <div className="h-6 w-px bg-gray-100 mx-1" />
-              <ShareButton title={news.titleKo || ''} />
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-px bg-gray-100 sm:mx-1" />
+                <ShareButton title={news.titleKo || ''} />
+              </div>
             </div>
           </div>
         </header>
@@ -185,11 +187,10 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
         <footer className="pt-10 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <p className="text-gray-400 text-sm font-medium">© 알레티 뉴스. All rights reserved.</p>
+            <p className="text-gray-400 text-sm font-medium">© 알레띠 뉴스. All rights reserved.</p>
           </div>
         </footer>
       </article>
     </div>
   );
 }
-

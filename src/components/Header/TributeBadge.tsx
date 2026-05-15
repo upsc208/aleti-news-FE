@@ -17,12 +17,20 @@ interface TributeBadgeProps {
 export default function TributeBadge({ image, name, subText, number, stats }: TributeBadgeProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
+  const handleFlip = () => {
+    // Only toggle flip state on mobile (touch devices)
+    // Desktop will rely on CSS hover
+    if (window.innerWidth < 768) {
+      setIsFlipped(!isFlipped);
+    }
+  };
+
   return (
     <div 
-      className="relative group cursor-pointer w-48 h-14 [perspective:1000px] shrink-0"
-      onClick={() => setIsFlipped(!isFlipped)}
+      className="relative group cursor-pointer w-40 md:w-48 h-12 md:h-14 [perspective:1000px] shrink-0"
+      onClick={handleFlip}
     >
-      <div className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''} md:group-hover:[transform:rotateY(180deg)]`}>
+      <div className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''} md:group-hover:[transform:rotateY(180deg)] md:group-hover:!rotate-y-180`}>
         {/* Front: Image + Text */}
         <div className="absolute inset-0 [backface-visibility:hidden] flex items-center gap-3 bg-white px-3 rounded-2xl border border-gray-100 shadow-sm transition-all md:group-hover:border-aleti-red/20">
           <div className="relative h-11 w-11 grayscale md:group-hover:grayscale-0 transition-all duration-500 shrink-0">
