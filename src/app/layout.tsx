@@ -15,10 +15,49 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+  metadataBase: new URL('https://alleti.kr'),
+  title: {
+    default: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+    template: "%s | 알레띠 KR"
+  },
   description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석. 사울과 코레아가 전해주는 가장 빠른 소식.",
+  keywords: ["아틀레티코 마드리드", "Atlético de Madrid", "알레띠", "Atleti", "라리가", "Laliga", "축구 뉴스", "아틀마", "마드리드", "로히블랑코", "꼬마"],
+  authors: [{ name: "알레띠 KR" }],
+  creator: "알레띠 KR",
+  publisher: "알레띠 KR",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   icons: {
     icon: "/icon.png",
+    apple: "/icon.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "https://alleti.kr",
+    siteName: "알레띠 KR",
+    title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+    description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석.",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "알레띠 KR 로고",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+    description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석.",
+    images: ["/icon.png"],
+  },
+  alternates: {
+    canonical: "/",
   },
   other: {
     referrer: 'no-referrer',

@@ -17,8 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!news) return { title: '뉴스를 찾을 수 없습니다 | 알레띠 KR' };
 
     return {
-      title: `${news.titleKo} | 알레띠 KR`,
+      title: news.titleKo || '뉴스 상세',
       description: news.summaryKo || news.contentKo?.substring(0, 150),
+      alternates: {
+        canonical: `/news/${id}`,
+      },
       openGraph: {
         title: news.titleKo || undefined,
         description: news.summaryKo || news.contentKo?.substring(0, 150),
@@ -26,6 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         type: 'article',
         publishedTime: news.publishedAt || undefined,
         authors: [news.authorName || '알레띠 뉴스'],
+        url: `https://alleti.kr/news/${id}`,
       },
       twitter: {
         card: 'summary_large_image',
