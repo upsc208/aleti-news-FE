@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
+import TributeBadge from './Header/TributeBadge';
+import GriziImg from '@/app/AG.png';
 
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       {/* Red & White Stripe Decoration at the top */}
       <div className="absolute top-0 left-0 w-full h-3 bg-[repeating-linear-gradient(to_right,#b92629,#b92629_75px,#ffffff_75px,#ffffff_150px)]"></div>
-      <div className="container mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-0 mt-1.5 gap-y-4 md:gap-y-0">
-        <div className="flex w-full md:flex-1 items-center justify-center sm:justify-start gap-4">
+      <div className="container mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-4 sm:px-6 lg:px-6 py-4 md:py-0 mt-1.5 gap-y-4 md:gap-y-0">
+        {/* Top Section: Logo & Tribute (Mobile) / Logo only (Desktop) */}
+        <div className="flex w-full items-center justify-between md:justify-start md:flex-1 gap-4">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-aleti-red to-red-600 shadow-lg group-hover:scale-105 transition-transform">
               <span className="text-sm font-black text-white italic">KR</span>
@@ -24,6 +27,21 @@ export default function Header() {
               </span>
             </div>
           </Link>
+
+          {/* TributeBadge for Mobile only */}
+          <div className="md:hidden scale-90 origin-right">
+            <TributeBadge 
+              image={GriziImg}
+              name="Grizi"
+              subText="Gracias"
+              number="7"
+              stats={[
+                { label: '출전', value: '499' },
+                { label: '골', value: '212' },
+                { label: '어시스트', value: '99' }
+              ]}
+            />
+          </div>
         </div>
 
         <nav className="flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4 md:gap-x-6 gap-y-2 text-sm md:text-base font-bold w-full md:w-auto">
@@ -62,22 +80,19 @@ export default function Header() {
           </a>
         </nav>
 
-        {/* Right side Beta Badge */}
-        <div className="hidden lg:flex flex-1 items-center justify-end">
-          <div className="relative group cursor-default">
-            {/* Soft background glow */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-aleti-red to-orange-400 rounded-full blur-md opacity-40 group-hover:opacity-80 transition duration-500"></div>
-            {/* Badge body */}
-            <div className="relative px-5 py-2.5 rounded-full bg-gradient-to-r from-aleti-red via-rose-500 to-orange-500 border border-white/20 text-white shadow-xl flex items-center gap-2.5">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
-              </span>
-              <span className="text-xs font-black uppercase tracking-[0.2em] text-white drop-shadow-md">
-                BETA
-              </span>
-            </div>
-          </div>
+        {/* TributeBadge for Desktop only */}
+        <div className="hidden md:flex md:flex-1 justify-end">
+          <TributeBadge 
+            image={GriziImg}
+            name="Grizi"
+            subText="Gracias"
+            number="7"
+            stats={[
+              { label: '출전', value: '499' },
+              { label: '골', value: '212' },
+              { label: '어시스트', value: '99' }
+            ]}
+          />
         </div>
       </div>
     </header>

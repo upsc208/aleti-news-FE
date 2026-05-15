@@ -4,7 +4,40 @@ import { ChevronLeft, User, Calendar, MessageSquare, Newspaper, ExternalLink } f
 import { Tweet } from 'react-tweet';
 import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
+import { Metadata } from 'next';
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const response = await getNewsDetail({
+      path: { id: parseInt(id) }
+    });
+    const news = response.data;
+    
+    if (!news) return { title: '뉴스를 찾을 수 없습니다 | 알레띠 KR' };
+
+    return {
+      title: `${news.titleKo} | 알레띠 KR`,
+      description: news.summaryKo || news.contentKo?.substring(0, 150),
+      openGraph: {
+        title: news.titleKo || undefined,
+        description: news.summaryKo || news.contentKo?.substring(0, 150),
+        images: news.imageUrl ? [news.imageUrl] : [],
+        type: 'article',
+        publishedTime: news.publishedAt || undefined,
+        authors: [news.authorName || '알레띠 뉴스'],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: news.titleKo || undefined,
+        description: news.summaryKo || news.contentKo?.substring(0, 150),
+        images: news.imageUrl ? [news.imageUrl] : [],
+      },
+    };
+  } catch (error) {
+    return { title: '뉴스 상세 | 알레띠 KR' };
+  }
+}
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

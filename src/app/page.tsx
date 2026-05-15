@@ -59,7 +59,7 @@ export default async function Home({
 
   return (
     <div className="flex flex-col gap-0">
-      <section className="container mx-auto px-6 lg:px-12 pt-20">
+      <section className="container mx-auto px-6 lg:px-12 pt-20 pb-24">
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
           <div className="w-full">
             <MatchResultCard recentMatch={recentMatchData} upcomingMatches={upcomingMatchesData} />
