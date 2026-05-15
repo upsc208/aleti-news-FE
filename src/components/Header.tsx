@@ -3,7 +3,7 @@ import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       {/* Red & White Stripe Decoration at the top */}
       <div className="absolute top-0 left-0 w-full h-3 bg-[repeating-linear-gradient(to_right,#b92629,#b92629_75px,#ffffff_75px,#ffffff_150px)]"></div>
       <div className="container mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-4 sm:px-6 lg:px-12 py-4 md:py-0 mt-1.5 gap-y-4 md:gap-y-0">
@@ -26,37 +26,39 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className="flex flex-wrap justify-center items-center gap-x-4 md:gap-x-6 gap-y-2 text-sm md:text-base font-bold w-full md:w-auto">
-          <Link href="/" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
+        <nav className="flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4 md:gap-x-6 gap-y-2 text-sm md:text-base font-bold w-full md:w-auto">
+          <Link href="/" className="group flex items-center gap-1 sm:gap-2 text-gray-600 transition-all hover:text-aleti-red">
             <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Newspaper size={20} />
             </div>
             <span className="tracking-tight underline-offset-8 decoration-2 hover:underline">뉴스</span>
           </Link>
-          <Link href="/about" className="group flex items-center gap-2 text-gray-600 transition-all hover:text-aleti-red">
+          <Link href="/about" className="group flex items-center gap-1 sm:gap-2 text-gray-600 transition-all hover:text-aleti-red">
             <div className="p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Info size={20} />
             </div>
             <span className="tracking-tight underline-offset-8 decoration-2 hover:underline">소개</span>
           </Link>
-          <div className="h-6 w-[1px] bg-gray-200 mx-2"></div>
+          <div className="hidden sm:block h-6 w-[1px] bg-gray-200 mx-2"></div>
           <a
             href="https://en.atleticodemadrid.com/listado-de-entradas"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 text-aleti-red hover:bg-aleti-red hover:text-white px-4 py-2 rounded-xl transition-all border border-aleti-red/20 shadow-sm shadow-aleti-red/5"
+            className="group flex items-center gap-2 text-aleti-red hover:bg-aleti-red hover:text-white p-2.5 sm:px-4 sm:py-2 rounded-xl transition-all border border-aleti-red/20 shadow-sm shadow-aleti-red/5"
+            title="공식 티켓 예매"
           >
             <Ticket size={18} className="group-hover:rotate-12 transition-transform" />
-            <span className="tracking-tight">공식 티켓 예매</span>
+            <span className="hidden sm:inline tracking-tight">공식 티켓 예매</span>
           </a>
           <a
             href="https://shop.atleticodemadrid.com/en/home"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 text-gray-700 hover:bg-gray-900 hover:text-white px-4 py-2 rounded-xl transition-all border border-gray-200 shadow-sm"
+            className="group flex items-center gap-2 text-gray-700 hover:bg-gray-900 hover:text-white p-2.5 sm:px-4 sm:py-2 rounded-xl transition-all border border-gray-200 shadow-sm"
+            title="공식 스토어"
           >
             <ShoppingBag size={18} className="group-hover:scale-110 transition-transform" />
-            <span className="tracking-tight font-bold">공식 스토어</span>
+            <span className="hidden sm:inline tracking-tight font-bold">공식 스토어</span>
           </a>
         </nav>
 

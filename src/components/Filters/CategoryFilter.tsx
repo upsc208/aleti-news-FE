@@ -40,27 +40,35 @@ export default function CategoryFilter() {
   };
 
   return (
-    <div className="w-full mb-8 overflow-x-auto pb-2 scrollbar-hide">
-      <div className="flex items-center justify-start md:justify-center gap-2 min-w-max px-1">
-        {categories.map((category) => {
-          const isActive = currentCategory === category.id;
-          const Icon = category.icon;
-          return (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={`
-                flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap
-                ${isActive
-                  ? 'bg-aleti-red text-white shadow-xl shadow-aleti-red/20 scale-105'
-                  : 'bg-white border border-gray-100 text-gray-500 hover:border-aleti-red/30 hover:text-aleti-red hover:bg-aleti-red/5'}
-              `}
-            >
-              <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'} />
-              {category.label}
-            </button>
-          );
-        })}
+    <div className="w-full mb-8 relative group">
+      {/* Left Gradient Fade */}
+      <div className="absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity md:hidden"></div>
+      
+      {/* Right Gradient Fade */}
+      <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none md:hidden"></div>
+
+      <div className="overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center justify-start md:justify-center gap-2 min-w-max px-6 md:px-1">
+          {categories.map((category) => {
+            const isActive = currentCategory === category.id;
+            const Icon = category.icon;
+            return (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
+                className={`
+                  flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap
+                  ${isActive
+                    ? 'bg-aleti-red text-white shadow-xl shadow-aleti-red/20 scale-105'
+                    : 'bg-white border border-gray-100 text-gray-500 hover:border-aleti-red/30 hover:text-aleti-red hover:bg-aleti-red/5'}
+                `}
+              >
+                <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'} />
+                {category.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

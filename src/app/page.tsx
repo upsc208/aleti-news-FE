@@ -97,8 +97,6 @@ export default async function Home({
           )}
         </NewsFeedContainer>
       </section>
-
-      <Hero />
     </div>
   );
 }

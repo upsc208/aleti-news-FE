@@ -42,54 +42,55 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <article className="container mx-auto px-4 pt-12 max-w-3xl">
-        <header className="mb-10">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-8 tracking-tight">
+      <article className="container mx-auto px-4 pt-8 sm:pt-12 max-w-3xl">
+        <header className="mb-8 sm:mb-10">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-6 sm:mb-8 tracking-tight">
             {news.titleKo}
           </h1>
 
-          <div className="flex items-center justify-between border-y border-gray-100 py-6">
-            <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 py-4 sm:py-6 gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-black text-aleti-red uppercase tracking-widest">
+                <span className="text-xs sm:text-sm font-black text-aleti-red uppercase tracking-widest">
                   {news.sourceName}
                 </span>
                 <div className="h-4 w-px bg-gray-200" />
-                <div className="flex items-center gap-2 text-base text-gray-700 font-semibold">
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 font-semibold">
                   <User size={18} className="text-gray-400" />
-                  {news.authorName || '알레티 뉴스'}
+                  <span className="truncate max-w-[120px] sm:max-w-none">{news.authorName || '알레티 뉴스'}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-base text-gray-400 font-medium">
+              <div className="flex items-center gap-2 text-sm sm:text-base text-gray-400 font-medium">
                 <Calendar size={18} className="text-gray-300" />
-                {news.publishedAt
-                  ? new Date(news.publishedAt).toLocaleString('ko-KR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                  }) + ' KST'
-                  : '날짜 정보 없음'}
-              </div>            </div>
-            <div className="flex items-center gap-3">
+                <span className="whitespace-nowrap">
+                  {news.publishedAt 
+                    ? new Date(news.publishedAt).toLocaleString('ko-KR', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }) + ' KST'
+                    : '날짜 정보 없음'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0">
               <a
                 href={news.originalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-600 hover:text-aleti-red hover:bg-aleti-red/5 rounded-xl text-sm font-bold transition-all border border-gray-100 hover:border-aleti-red/20"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 text-gray-600 hover:text-aleti-red hover:bg-aleti-red/5 rounded-xl text-xs sm:text-sm font-bold transition-all border border-gray-100 hover:border-aleti-red/20"
                 title="원문 출처 보기"
               >
-                <span>원문 보기</span>
-                <ExternalLink size={16} />
+                <span className="whitespace-nowrap">원문 보기</span>
+                <ExternalLink size={14} />
               </a>
-              <div className="h-6 w-px bg-gray-100 hidden sm:block mx-1" />
+              <div className="h-6 w-px bg-gray-100 mx-1" />
               <ShareButton title={news.titleKo || ''} />
             </div>
           </div>
         </header>
-
         {summaryPoints.length > 0 && (
           <div className="mb-12 bg-gray-50 rounded-3xl p-6 lg:p-8 border border-gray-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">

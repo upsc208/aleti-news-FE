@@ -23,15 +23,15 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
   return (
     <Link
       href={`/news/${news.id}`}
-      className="group relative flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden mb-8"
+      className="group relative flex flex-col bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden mb-6 sm:mb-8"
     >
       {/* 상단 액센트 라인 */}
       <div className="h-1.5 w-full bg-gradient-to-r from-aleti-red via-aleti-red/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      <div className="p-6 sm:p-7 flex flex-col sm:flex-row gap-6">
+      <div className="p-5 sm:p-7 flex flex-col sm:flex-row gap-5 sm:gap-6">
         {/* 이미지 영역 - 웹 기사만 표시 */}
         {showImage && news.articleType === 'WEB_ARTICLE' && (
-          <div className="relative h-44 w-full sm:h-48 sm:w-64 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-inner group/img">
+          <div className="relative h-48 w-full sm:h-48 sm:w-64 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-inner group/img">
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -48,21 +48,21 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
 
         {/* 콘텐츠 영역 */}
         <div className="flex flex-col flex-grow min-w-0 justify-center">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] font-black text-white bg-aleti-red px-2.5 py-1 rounded-md uppercase tracking-[0.1em] shadow-md border border-aleti-red/20">
+              <span className="text-[11px] sm:text-[12px] font-black text-white bg-aleti-red px-2 sm:px-2.5 py-1 rounded-md uppercase tracking-[0.1em] shadow-md border border-aleti-red/20">
                 {news.sourceName}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-[12px] font-black text-aleti-navy uppercase tracking-tight">
-              <User size={16} className="text-aleti-red" />
-              <span>{news.authorName || '알레티 뉴스'}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-black text-aleti-navy uppercase tracking-tight">
+              <User size={14} className="text-aleti-red" />
+              <span className="truncate max-w-[100px] sm:max-w-none">{news.authorName || '알레티 뉴스'}</span>
             </div>
 
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+            <div className="w-1 h-1 rounded-full bg-gray-200" />
 
-            <div className="flex items-center gap-1.5 text-[12px] font-bold text-gray-600">
+            <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-[12px] font-bold text-gray-600">
               <Clock size={14} className="text-gray-400" />
               <span>
                 {news.publishedAt
@@ -78,15 +78,15 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
             </div>
           </div>
 
-          <h3 className="mb-4 text-2xl sm:text-3xl font-black text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-tight tracking-tight">
+          <h3 className="mb-3 sm:mb-4 text-xl sm:text-3xl font-black text-gray-900 group-hover:text-aleti-red transition-colors line-clamp-2 leading-tight tracking-tight">
             {news.titleKo}
           </h3>
 
           {news.summaryKo && (
-            <div className="relative p-5 rounded-xl bg-gray-50/50 border border-gray-100/50 group-hover:border-aleti-red/10 transition-all">
+            <div className="relative p-4 sm:p-5 rounded-2xl bg-gray-50/50 border border-gray-100/50 group-hover:border-aleti-red/10 transition-all">
               <div className="flex items-center gap-2 mb-2 text-aleti-red/60">
                 <Sparkles size={14} className="fill-current" />
-                <span className="text-[10px] font-black uppercase tracking-widest">AI Summary</span>
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">AI Summary</span>
               </div>
               <p className="text-sm sm:text-base text-gray-600 line-clamp-2 font-medium leading-relaxed">
                 {news.summaryKo}
@@ -94,7 +94,7 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
             </div>
           )}
 
-          <div className="mt-6 flex items-center gap-2 text-[11px] font-black text-aleti-red opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 uppercase tracking-[0.2em]">
+          <div className="mt-4 sm:mt-6 flex items-center gap-2 text-[10px] sm:text-[11px] font-black text-aleti-red opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all sm:translate-y-2 group-hover:translate-y-0 uppercase tracking-[0.2em]">
             <span>Read Full Story</span>
             <ExternalLink size={12} />
           </div>
