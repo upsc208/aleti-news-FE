@@ -14,8 +14,6 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <Hero />
-
       <main className="container mx-auto px-4 pt-16 max-w-4xl">
         <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-12 tracking-tight">
           <span className="text-aleti-red">알레띠 KR</span>에 대해서
@@ -68,15 +66,12 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-
-          <div className="pt-10 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">
-              Dedicated to Los Colchoneros in Korea. <br/>
-              Made with passion by Saúl-Correa Bridge.
-            </p>
-          </div>
         </div>
       </main>
+
+      <div className="my-16">
+        <Hero />
+      </div>
     </div>
   );
 }

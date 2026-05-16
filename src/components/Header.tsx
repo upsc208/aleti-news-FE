@@ -33,7 +33,7 @@ export default function Header() {
 
           {/* TributeBadge for Mobile only */}
           <div className="md:hidden scale-90 xs:scale-100 origin-right transition-transform">
-            <TributeBadge 
+            <TributeBadge
               image={GriziImg}
               name="Grizi"
               subText="Gracias"
@@ -41,7 +41,7 @@ export default function Header() {
               stats={[
                 { label: '출전', value: '499' },
                 { label: '골', value: '212' },
-                { label: '어시스트', value: '99' }
+                { label: '도움', value: '99' }
               ]}
             />
           </div>
@@ -86,7 +86,7 @@ export default function Header() {
 
         {/* Right Section: Tribute (Desktop) */}
         <div className="hidden md:flex md:flex-1 justify-end shrink-0 ml-4">
-          <TributeBadge 
+          <TributeBadge
             image={GriziImg}
             name="Grizi"
             subText="Gracias"
@@ -94,7 +94,7 @@ export default function Header() {
             stats={[
               { label: '출전', value: '499' },
               { label: '골', value: '212' },
-              { label: '어시스트', value: '99' }
+              { label: '도움', value: '99' }
             ]}
           />
         </div>
