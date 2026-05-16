@@ -26,14 +26,14 @@ export default function TributeBadge({ image, name, subText, number, stats }: Tr
   };
 
   return (
-    <div 
-      className="relative group cursor-pointer w-40 md:w-48 h-12 md:h-14 [perspective:1000px] shrink-0"
+    <div
+      className="relative group cursor-pointer w-40 md:w-40 h-12 md:h-14 [perspective:1000px] shrink-0"
       onClick={handleFlip}
     >
       <div className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''} md:group-hover:[transform:rotateY(180deg)] md:group-hover:!rotate-y-180`}>
         {/* Front: Image + Text */}
         <div className="absolute inset-0 [backface-visibility:hidden] flex items-center gap-3 bg-white px-3 rounded-2xl border border-gray-100 shadow-sm transition-all md:group-hover:border-aleti-red/20">
-          <div className="relative h-11 w-11 grayscale md:group-hover:grayscale-0 transition-all duration-500 shrink-0">
+          <div className="relative h-11 w-11 transition-all duration-500 shrink-0">
             <Image
               src={image}
               alt={name}
@@ -42,7 +42,7 @@ export default function TributeBadge({ image, name, subText, number, stats }: Tr
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none md:group-hover:text-aleti-red transition-colors">
+            <span className="text-[13px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none md:group-hover:text-aleti-red transition-colors">
               {subText}
             </span>
             <span className="text-base font-black text-gray-900 uppercase tracking-tighter leading-none mt-1 whitespace-nowrap">

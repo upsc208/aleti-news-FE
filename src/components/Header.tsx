@@ -22,7 +22,7 @@ export default function Header() {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-base sm:text-xl font-black tracking-tighter text-gray-900 uppercase leading-none">
+              <span className="text-base sm:text-xl font-black tracking-tighter text-gray-900 uppercase leading-none font-bebas">
                 ATLÉTI <span className="text-aleti-red xs:inline">NEWS</span>
               </span>
               <span className="text-[8px] sm:text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase leading-none mt-1 hidden sm:block">
@@ -48,14 +48,14 @@ export default function Header() {
         </div>
 
         {/* Center Section: Navigation */}
-        <nav className="flex items-center justify-center gap-x-2 sm:gap-x-3 lg:gap-x-8 xl:gap-x-12 md:flex-1 md:justify-center gap-y-2 text-[10px] xs:text-xs sm:text-sm lg:text-base font-bold w-full md:w-auto mt-4 md:mt-0 whitespace-nowrap overflow-visible">
-          <Link href="/" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-600 transition-all hover:text-aleti-red shrink-0">
+        <nav className="flex items-center justify-center gap-x-2 sm:gap-x-3 lg:gap-x-8 xl:gap-x-12 md:flex-1 md:justify-center gap-y-2 text-[10px] xs:text-xs sm:text-sm lg:text-base font-extrabold w-full md:w-auto mt-4 md:mt-0 whitespace-nowrap overflow-visible">
+          <Link href="/" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
             <div className="p-1 sm:p-1 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Newspaper size={14} className="xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
             </div>
             <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">뉴스</span>
           </Link>
-          <Link href="/about" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-600 transition-all hover:text-aleti-red shrink-0">
+          <Link href="/about" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
             <div className="p-1 sm:p-1 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
               <Info size={14} className="xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
             </div>
@@ -70,17 +70,17 @@ export default function Header() {
             title="공식 티켓 예매"
           >
             <Ticket size={14} className="xs:w-4 xs:h-4 lg:w-[18px] lg:h-[18px] group-hover:rotate-12 transition-transform" />
-            <span className="tracking-tight">티켓 예매</span>
+            <span className="tracking-tighter font-extrabold">티켓 예매</span>
           </a>
           <a
             href="https://shop.atleticodemadrid.com/en/home"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-700 hover:bg-gray-900 hover:text-white px-2 sm:px-2.5 lg:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all border border-gray-200 shadow-sm shrink-0"
+            className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-900 hover:bg-gray-900 hover:text-white px-2 sm:px-2.5 lg:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all border border-gray-200 shadow-sm shrink-0"
             title="공식 스토어"
           >
             <ShoppingBag size={14} className="xs:w-4 xs:h-4 lg:w-[18px] lg:h-[18px] group-hover:scale-110 transition-transform" />
-            <span className="tracking-tight font-bold">스토어</span>
+            <span className="tracking-tighter font-extrabold">스토어</span>
           </a>
         </nav>
 

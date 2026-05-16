@@ -13,21 +13,21 @@ export default function Hero() {
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
           <div className="relative mb-8">
-            <h2 className="text-3xl sm:text-6xl lg:text-9xl font-black text-aleti-red tracking-tighter leading-[0.95] uppercase italic px-2">
+            <h2 className="text-4xl sm:text-7xl lg:text-[10rem] font-bebas text-aleti-red tracking-tighter leading-[0.85] italic px-2">
               "GANAR, GANAR, GANAR <br />
               Y VOLVER A GANAR."
             </h2>
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <p className="text-xl sm:text-3xl lg:text-5xl font-black text-aleti-navy uppercase tracking-widest italic drop-shadow-sm">
+            <p className="text-2xl sm:text-4xl lg:text-6xl font-bebas text-aleti-navy italic drop-shadow-sm">
               Luis Aragonés
             </p>
-            <div className="h-1 w-20 sm:h-1.5 sm:w-32 bg-gradient-to-r from-aleti-red via-aleti-white to-aleti-navy rounded-full"></div>
+            <div className="h-1.5 w-24 sm:h-2 sm:w-40 bg-gradient-to-r from-aleti-red via-aleti-white to-aleti-navy rounded-full"></div>
           </div>
 
-          <p className="text-lg sm:text-2xl lg:text-3xl text-aleti-navy/70 leading-relaxed mt-10 sm:mt-20 max-w-3xl font-black tracking-tighter px-4">
-            이기고, 이기고, 또 이기고, <span className="text-aleti-red">다시 이기는 것.</span>
+          <p className="text-xl sm:text-3xl lg:text-4xl text-aleti-navy/80 leading-relaxed mt-10 sm:mt-20 max-w-3xl font-black tracking-tight px-4">
+            이기고, 이기고, 또 이기고, <span className="text-aleti-red underline decoration-4 underline-offset-8">다시 이기는 것.</span>
           </p>
         </div>
       </div>
