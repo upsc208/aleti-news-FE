@@ -52,7 +52,13 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
         {/* Header */}
         <div className="flex justify-between items-start text-[10px] md:text-xs font-bold tracking-widest uppercase mb-8 md:mb-6 gap-4">
           <span className="shrink-0">Full Time</span>
-          <span className="text-right break-words">{formatKST(recentMatch.matchDate)} &middot; {recentMatch.tournament} &middot; {recentMatch.isHome ? 'HOME' : 'AWAY'}</span>
+          <div className="flex flex-wrap justify-end gap-x-1.5 text-right">
+            <span className="whitespace-nowrap">{formatKST(recentMatch.matchDate)}</span>
+            <span className="opacity-40">&middot;</span>
+            <span className="whitespace-nowrap">{recentMatch.tournament}</span>
+            <span className="opacity-40">&middot;</span>
+            <span className="whitespace-nowrap">{recentMatch.isHome ? 'HOME' : 'AWAY'}</span>
+          </div>
         </div>
 
         {/* Score Section - Centered Vertically */}
@@ -82,8 +88,12 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
                 <span className="shrink-0 mt-0.5">vs</span>
                 <span className="break-words min-w-0">{match.opponent}</span>
               </div>
-              <div className="text-[10px] md:text-xs font-medium opacity-80 uppercase tracking-widest break-words mt-1">
-                {formatKST(match.matchDate)} &middot; {match.tournament} &middot; {match.isHome ? 'HOME' : 'AWAY'}
+              <div className="text-[10px] md:text-xs font-medium opacity-80 uppercase tracking-widest mt-1 flex flex-wrap gap-x-1.5">
+                <span className="whitespace-nowrap">{formatKST(match.matchDate)}</span>
+                <span className="opacity-40">&middot;</span>
+                <span className="whitespace-nowrap">{match.tournament}</span>
+                <span className="opacity-40">&middot;</span>
+                <span className="whitespace-nowrap">{match.isHome ? 'HOME' : 'AWAY'}</span>
               </div>
             </div>
           ))}

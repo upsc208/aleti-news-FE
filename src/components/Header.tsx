@@ -39,9 +39,9 @@ export default function Header() {
               subText="Gracias"
               number="7"
               stats={[
-                { label: '출전', value: '499' },
+                { label: '출전', value: '500' },
                 { label: '골', value: '212' },
-                { label: '도움', value: '99' }
+                { label: '도움', value: '100' }
               ]}
             />
           </div>
