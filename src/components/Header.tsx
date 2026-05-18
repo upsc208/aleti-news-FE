@@ -48,16 +48,16 @@ export default function Header() {
         </div>
 
         {/* Center Section: Navigation */}
-        <nav className="flex items-center justify-center gap-x-2 sm:gap-x-3 lg:gap-x-8 xl:gap-x-12 md:flex-1 md:justify-center gap-y-2 text-[10px] xs:text-xs sm:text-sm lg:text-base font-extrabold w-full md:w-auto mt-4 md:mt-0 whitespace-nowrap overflow-visible">
-          <Link href="/" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
-            <div className="p-1 sm:p-1 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
-              <Newspaper size={14} className="xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
+        <nav className="flex items-center justify-center gap-x-2 min-[350px]:gap-x-4 sm:gap-x-6 lg:gap-x-8 xl:gap-x-12 md:flex-1 md:justify-center gap-y-2 text-[11px] min-[350px]:text-[13px] sm:text-sm lg:text-base font-extrabold w-full md:w-auto mt-4 md:mt-0 whitespace-nowrap overflow-visible px-1">
+          <Link href="/" className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
+            <div className="p-1 min-[350px]:p-1.5 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
+              <Newspaper className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5" />
             </div>
             <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">뉴스</span>
           </Link>
-          <Link href="/about" className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
-            <div className="p-1 sm:p-1 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
-              <Info size={14} className="xs:w-4 xs:h-4 lg:w-5 lg:h-5" />
+          <Link href="/about" className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-800 transition-all hover:text-aleti-red shrink-0">
+            <div className="p-1 min-[350px]:p-1.5 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 transition-colors">
+              <Info className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5" />
             </div>
             <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">소개</span>
           </Link>
@@ -66,20 +66,20 @@ export default function Header() {
             href="https://en.atleticodemadrid.com/listado-de-entradas"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-aleti-red hover:bg-aleti-red hover:text-white px-2 sm:px-2.5 lg:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all border border-aleti-red/20 shadow-sm shadow-aleti-red/5 shrink-0"
+            className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-aleti-red hover:bg-aleti-red hover:text-white px-1.5 min-[350px]:px-2.5 lg:px-4 py-1.5 min-[350px]:py-2 rounded-lg sm:rounded-xl transition-all border border-aleti-red/20 shadow-sm shadow-aleti-red/5 shrink-0"
             title="공식 티켓 예매"
           >
-            <Ticket size={14} className="xs:w-4 xs:h-4 lg:w-[18px] lg:h-[18px] group-hover:rotate-12 transition-transform" />
+            <Ticket className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
             <span className="tracking-tighter font-extrabold">티켓 예매</span>
           </a>
           <a
             href="https://shop.atleticodemadrid.com/en/home"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-1 sm:gap-1.5 lg:gap-2 text-gray-900 hover:bg-gray-900 hover:text-white px-2 sm:px-2.5 lg:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all border border-gray-200 shadow-sm shrink-0"
+            className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-900 hover:bg-gray-900 hover:text-white px-1.5 min-[350px]:px-2.5 lg:px-4 py-1.5 min-[350px]:py-2 rounded-lg sm:rounded-xl transition-all border border-gray-200 shadow-sm shrink-0"
             title="공식 스토어"
           >
-            <ShoppingBag size={14} className="xs:w-4 xs:h-4 lg:w-[18px] lg:h-[18px] group-hover:scale-110 transition-transform" />
+            <ShoppingBag className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5 group-hover:scale-110 transition-transform" />
             <span className="tracking-tighter font-extrabold">스토어</span>
           </a>
         </nav>
@@ -92,9 +92,9 @@ export default function Header() {
             subText="Gracias"
             number="7"
             stats={[
-              { label: '출전', value: '499' },
+              { label: '출전', value: '500' },
               { label: '골', value: '212' },
-              { label: '도움', value: '99' }
+              { label: '도움', value: '100' }
             ]}
           />
         </div>
