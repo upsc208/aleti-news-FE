@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/private/', // 예시: 비공개 페이지가 있다면 추가
     },
-    sitemap: 'https://alleti.kr/sitemap.xml',
+    sitemap: 'https://atleti.kr/sitemap.xml',
   };
 }

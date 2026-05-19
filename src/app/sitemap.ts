@@ -6,8 +6,8 @@ import { getNews } from '@/client/sdk.gen';
  * 페이지네이션을 순회하며 뉴스 URL 목록을 생성합니다.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://alleti.kr';
-  
+  const baseUrl = 'https://atleti.kr';
+
   // 1. 정적 페이지 정의
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -27,16 +27,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. 동적 뉴스 페이지 URL 수집
   let allNewsUrls: MetadataRoute.Sitemap = [];
   const size = 500; // 한 번에 가져올 양 (백엔드 부담 최소화)
-  
+
   try {
     // 첫 번째 페이지 호출하여 전체 페이지 수 확인
-    const firstResponse = await getNews({ 
-      query: { page: 0, size: size } 
+    const firstResponse = await getNews({
+      query: { page: 0, size: size }
     } as any);
 
     if (firstResponse.data && firstResponse.data.content) {
       const totalPages = firstResponse.data.totalPages || 1;
-      
+
       // 첫 페이지 데이터 추가
       const firstPageUrls = firstResponse.data.content.map((news) => ({
         url: `${baseUrl}/news/${news.id}`,

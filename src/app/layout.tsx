@@ -17,16 +17,16 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://alleti.kr'),
+  metadataBase: new URL('https://atleti.kr'),
   title: {
-    default: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
-    template: "%s | 알레띠 KR"
+    default: "아틀레티 KR | 아틀레티코 마드리드 뉴스 포털",
+    template: "%s | 아틀레티 KR"
   },
   description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석. 사울과 코레아가 전해주는 가장 빠른 소식.",
-  keywords: ["아틀레티코 마드리드", "Atlético de Madrid", "알레띠", "Atleti", "라리가", "Laliga", "축구 뉴스", "아틀마", "마드리드", "로히블랑코", "꼬마"],
-  authors: [{ name: "알레띠 KR" }],
-  creator: "알레띠 KR",
-  publisher: "알레띠 KR",
+  keywords: ["아틀레티코 마드리드", "Atlético de Madrid", "아틀레티", "Atleti", "라리가", "Laliga", "축구 뉴스", "아틀마", "마드리드", "로히블랑코", "꼬마"],
+  authors: [{ name: "아틀레티 KR" }],
+  creator: "아틀레티 KR",
+  publisher: "아틀레티 KR",
   formatDetection: {
     email: false,
     address: false,
@@ -39,22 +39,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://alleti.kr",
-    siteName: "알레띠 KR",
-    title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+    url: "https://atleti.kr",
+    siteName: "아틀레티 KR",
+    title: "아틀레티 KR | 아틀레티코 마드리드 뉴스 포털",
     description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석.",
     images: [
       {
         url: "/icon.png",
         width: 512,
         height: 512,
-        alt: "알레띠 KR 로고",
+        alt: "아틀레티 KR 로고",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "알레띠 KR | 아틀레티코 마드리드 뉴스 포털",
+    title: "아틀레티 KR | 아틀레티코 마드리드 뉴스 포털",
     description: "아틀레티코 마드리드 팬들을 위한 최신 뉴스, 경기 정보 및 분석.",
     images: ["/icon.png"],
   },
@@ -85,8 +85,8 @@ export default function RootLayout({
           <div className="container mx-auto px-4">
             <div className="flex flex-col items-center justify-center space-y-6">
               <div className="text-center">
-                <p className="text-sm font-bold text-white mb-1">알레띠 KR</p>
-                <p className="text-xs text-blue-100">&copy; {new Date().getFullYear()} Alleti KR. All rights reserved.</p>
+                <p className="text-sm font-bold text-white mb-1">아틀레티 KR</p>
+                <p className="text-xs text-blue-100">&copy; {new Date().getFullYear()} Atleti KR. All rights reserved.</p>
               </div>
 
               <div className="flex flex-col items-center gap-2">
