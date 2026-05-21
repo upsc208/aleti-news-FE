@@ -3,6 +3,7 @@ import { Bebas_Neue, Kanit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -81,6 +82,8 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
+        <Analytics />
+        <SpeedInsights />
         <footer className="bg-blue-600 text-white py-12">
           <div className="container mx-auto px-4">
             <div className="flex flex-col items-center justify-center space-y-6">
