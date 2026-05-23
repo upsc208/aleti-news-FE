@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
+import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, SyncMatchesData, SyncMatchesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -59,6 +59,13 @@ export const getLogs = <ThrowOnError extends boolean = false>(options?: Options<
  * 다가올 3경기의 일정을 가져옵니다.
  */
 export const getUpcomingMatches = <ThrowOnError extends boolean = false>(options?: Options<GetUpcomingMatchesData, ThrowOnError>) => (options?.client ?? client).get<GetUpcomingMatchesResponses, unknown, ThrowOnError>({ url: '/api/matches/upcoming', ...options });
+
+/**
+ * [테스트용] 경기 정보 강제 동기화
+ *
+ * 백그라운드가 아닌 즉시 API를 호출하여 데이터를 업데이트합니다.
+ */
+export const syncMatches = <ThrowOnError extends boolean = false>(options?: Options<SyncMatchesData, ThrowOnError>) => (options?.client ?? client).get<SyncMatchesResponses, unknown, ThrowOnError>({ url: '/api/matches/sync', ...options });
 
 /**
  * 최근 경기 결과 조회

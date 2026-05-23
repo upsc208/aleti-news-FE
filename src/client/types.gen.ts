@@ -17,8 +17,8 @@ export type NewsListResponse = {
 };
 
 export type PageNewsListResponse = {
-    totalPages?: number;
     totalElements?: number;
+    totalPages?: number;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
@@ -34,8 +34,8 @@ export type PageableObject = {
     offset?: number;
     sort?: SortObject;
     paged?: boolean;
-    pageNumber?: number;
     pageSize?: number;
+    pageNumber?: number;
     unpaged?: boolean;
 };
 
@@ -82,8 +82,8 @@ export type CollectionLog = {
 };
 
 export type PageCollectionLog = {
-    totalPages?: number;
     totalElements?: number;
+    totalPages?: number;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
@@ -102,6 +102,24 @@ export type UpcomingMatch = {
     tournament: string;
 };
 
+export type CardInfo = {
+    name: string;
+    time: string;
+    shirt?: string;
+    color: string;
+    isHome: boolean;
+};
+
+export type LineupInfo = {
+    home: TeamLineupInfo;
+    away: TeamLineupInfo;
+};
+
+export type PlayerInfo = {
+    name: string;
+    shirt?: string;
+};
+
 export type RecentMatch = {
     matchId: string;
     homeTeam: string;
@@ -111,6 +129,37 @@ export type RecentMatch = {
     matchDate: string;
     isHome: boolean;
     tournament: string;
+    scorers?: Array<ScorerInfo>;
+    lineup?: LineupInfo;
+    substitutions?: Array<SubstitutionInfo>;
+    cards?: Array<CardInfo>;
+    stats: {
+        [key: string]: StatValue;
+    };
+};
+
+export type ScorerInfo = {
+    name: string;
+    time: string;
+    assist?: string;
+    isHome: boolean;
+};
+
+export type StatValue = {
+    home: string;
+    away: string;
+};
+
+export type SubstitutionInfo = {
+    time: string;
+    outName: string;
+    inName: string;
+    isHome: boolean;
+};
+
+export type TeamLineupInfo = {
+    formation?: string;
+    starters: Array<PlayerInfo>;
 };
 
 export type NewsSourceWritable = {
@@ -228,6 +277,22 @@ export type GetUpcomingMatchesResponses = {
 };
 
 export type GetUpcomingMatchesResponse = GetUpcomingMatchesResponses[keyof GetUpcomingMatchesResponses];
+
+export type SyncMatchesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/matches/sync';
+};
+
+export type SyncMatchesResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type SyncMatchesResponse = SyncMatchesResponses[keyof SyncMatchesResponses];
 
 export type GetRecentMatchData = {
     body?: never;
