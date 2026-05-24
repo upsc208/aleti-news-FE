@@ -16,15 +16,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     
     if (!news) return { title: '뉴스를 찾을 수 없습니다 | 알레띠 KR' };
 
+    const title = news.titleKo || '뉴스 상세';
+    const description = news.summaryKo || news.contentKo?.substring(0, 150) || '';
+
     return {
-      title: news.titleKo || '뉴스 상세',
-      description: news.summaryKo || news.contentKo?.substring(0, 150),
+      title: `${title} | 알레띠 KR`,
+      description,
       alternates: {
         canonical: `/news/${id}`,
       },
       openGraph: {
-        title: news.titleKo || undefined,
-        description: news.summaryKo || news.contentKo?.substring(0, 150),
+        title,
+        description,
         images: news.imageUrl ? [news.imageUrl] : [],
         type: 'article',
         publishedTime: news.publishedAt || undefined,
@@ -33,12 +36,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
       twitter: {
         card: 'summary_large_image',
-        title: news.titleKo || undefined,
-        description: news.summaryKo || news.contentKo?.substring(0, 150),
+        title,
+        description,
         images: news.imageUrl ? [news.imageUrl] : [],
       },
     };
   } catch (error) {
+    console.error(`Metadata generation failed for id ${id}:`, error);
     return { title: '뉴스 상세 | 알레띠 KR' };
   }
 }
@@ -53,20 +57,36 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
     });
     news = response.data;
   } catch (error) {
-    console.error('Failed to fetch news detail:', error);
+    console.error(`Failed to fetch news detail for id ${id}:`, error);
   }
 
   if (!news) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-4">뉴스를 찾을 수 없습니다.</h1>
+        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">뉴스를 찾을 수 없습니다.</h1>
         <Link href="/" className="text-aleti-red dark:text-volt font-bold underline">홈으로 돌아가기</Link>
       </div>
     );
   }
 
-  // AI 요약이 문자열로 들어올 경우 리스트로 변환 (API 스펙에 따라 다를 수 있음)
-  const summaryPoints = news.summaryKo ? news.summaryKo.split('\n').filter(p => p.trim()) : [];
+  // AI 요약이 문자열로 들어올 경우 리스트로 변환
+  const summaryPoints = news.summaryKo ? news.summaryKo.split('\n').filter(p => p && p.trim()) : [];
+  
+  // 날짜 처리 안전하게
+  let formattedDate = '날짜 정보 없음';
+  try {
+    if (news.publishedAt) {
+      formattedDate = new Date(news.publishedAt).toLocaleString('ko-KR', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }) + ' KST';
+    }
+  } catch (e) {
+    console.error('Date formatting error:', e);
+  }
 
   return (
     <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
@@ -82,14 +102,14 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
       <article className="container mx-auto px-4 pt-8 sm:pt-12 max-w-3xl">
         <header className="mb-8 sm:mb-10">
           <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 sm:mb-8 tracking-tight">
-            {news.titleKo}
+            {news.titleKo || '제목 없음'}
           </h1>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 dark:border-volt/5 py-4 sm:py-6 gap-6">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <div className="flex items-center gap-3">
                 <span className="text-xs sm:text-sm font-black text-aleti-red dark:text-volt uppercase tracking-widest">
-                  {news.sourceName}
+                  {news.sourceName || '알 수 없는 출처'}
                 </span>
                 <div className="h-4 w-px bg-gray-200" />
                 <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 font-semibold">
@@ -99,30 +119,22 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
               </div>
               <div className="flex items-center gap-2 text-sm sm:text-base text-gray-400 font-medium">
                 <Calendar size={18} className="text-gray-300" />
-                <span className="whitespace-nowrap">
-                  {news.publishedAt 
-                    ? new Date(news.publishedAt).toLocaleString('ko-KR', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      }) + ' KST'
-                    : '날짜 정보 없음'}
-                </span>
+                <span className="whitespace-nowrap">{formattedDate}</span>
               </div>
             </div>
             <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-50">
-              <a
-                href={news.originalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 dark:bg-white/[0.03] text-gray-600 dark:text-gray-300 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5 rounded-xl text-xs sm:text-sm font-bold transition-all border border-gray-100 dark:border-white/[0.04] hover:border-aleti-red/20 dark:hover:border-volt/15"
-                title="원문 출처 보기"
-              >
-                <span className="whitespace-nowrap">원문 보기</span>
-                <ExternalLink size={14} />
-              </a>
+              {news.originalUrl && (
+                <a
+                  href={news.originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 dark:bg-white/[0.03] text-gray-600 dark:text-gray-300 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5 rounded-xl text-xs sm:text-sm font-bold transition-all border border-gray-100 dark:border-white/[0.04] hover:border-aleti-red/20 dark:hover:border-volt/15"
+                  title="원문 출처 보기"
+                >
+                  <span className="whitespace-nowrap">원문 보기</span>
+                  <ExternalLink size={14} />
+                </a>
+              )}
               <div className="flex items-center gap-2">
                 <div className="h-6 w-px bg-gray-100 sm:mx-1" />
                 <ShareButton title={news.titleKo || ''} />
@@ -130,6 +142,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
         </header>
+        
         {summaryPoints.length > 0 && (
           <div className="mb-12 bg-gray-50 dark:bg-[#111318] rounded-3xl p-6 lg:p-8 border border-gray-100 dark:border-volt/15 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">
@@ -163,14 +176,14 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             </div>
             <div className="px-2 text-center">
               <p className="text-sm font-bold text-gray-400 uppercase tracking-tight">
-                사진 출처: {news.sourceName}{news.authorName ? `, ${news.authorName}` : ''}
+                사진 출처: {news.sourceName || '알 수 없음'}{news.authorName ? `, ${news.authorName}` : ''}
               </p>
             </div>
           </div>
         )}
 
         <div className="prose prose-xl max-w-none text-gray-800 dark:text-gray-200 leading-[2] mb-20 whitespace-pre-wrap font-medium text-lg sm:text-xl">
-          {news.contentKo}
+          {news.contentKo || '내용이 없습니다.'}
         </div>
 
         {/* SNS 포스트인 경우 트윗 렌더링 */}
@@ -183,12 +196,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             <div className="flex justify-center">
               <div className="w-full max-w-[550px] min-h-[200px]">
                 {(() => {
-                  // URL에서 트윗 ID 추출 (정규식 사용)
-                  const match = news.originalUrl.match(/\/status\/(\d+)/);
-                  const tweetId = match ? match[1] : null;
-                  
-                  if (tweetId) {
-                    return <Tweet id={tweetId} />;
+                  try {
+                    const match = news.originalUrl.match(/\/status\/(\d+)/);
+                    const tweetId = match ? match[1] : null;
+                    
+                    if (tweetId) {
+                      return <Tweet id={tweetId} />;
+                    }
+                  } catch (e) {
+                    console.error('Tweet ID extraction or rendering failed:', e);
                   }
                   
                   return (
