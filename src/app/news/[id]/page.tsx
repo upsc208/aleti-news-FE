@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
-import { Tweet } from 'react-tweet';
+import { Suspense } from 'react';
+import TwitterEmbed from '@/components/TwitterEmbed';
 import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
 import { Metadata } from 'next';
@@ -196,15 +197,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             <div className="flex justify-center">
               <div className="w-full max-w-[550px] min-h-[200px]">
                 {(() => {
-                  try {
-                    const match = news.originalUrl.match(/\/status\/(\d+)/);
-                    const tweetId = match ? match[1] : null;
-                    
-                    if (tweetId) {
-                      return <Tweet id={tweetId} />;
-                    }
-                  } catch (e) {
-                    console.error('Tweet ID extraction or rendering failed:', e);
+                  const match = news.originalUrl.match(/\/status\/(\d+)/);
+                  const tweetId = match ? match[1] : null;
+                  
+                  if (tweetId) {
+                    return (
+                      <Suspense fallback={<div className="h-40 w-full animate-pulse bg-gray-50 dark:bg-white/5 rounded-2xl" />}>
+                        <TwitterEmbed id={tweetId} originalUrl={news.originalUrl} />
+                      </Suspense>
+                    );
                   }
                   
                   return (
