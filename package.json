@@ -21,7 +21,6 @@
     "react-tweet": "^3.3.0"
   },
   "devDependencies": {
-    "@hey-api/client-fetch": "^0.13.1",
     "@hey-api/openapi-ts": "^0.97.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
