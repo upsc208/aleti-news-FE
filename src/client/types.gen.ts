@@ -20,13 +20,13 @@ export type PageNewsListResponse = {
     totalElements?: number;
     totalPages?: number;
     pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
     sort?: SortObject;
     numberOfElements?: number;
+    first?: boolean;
+    last?: boolean;
     empty?: boolean;
 };
 
@@ -85,13 +85,13 @@ export type PageCollectionLog = {
     totalElements?: number;
     totalPages?: number;
     pageable?: PageableObject;
-    first?: boolean;
-    last?: boolean;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
     sort?: SortObject;
     numberOfElements?: number;
+    first?: boolean;
+    last?: boolean;
     empty?: boolean;
 };
 
