@@ -11,38 +11,62 @@ export default function ShareButton({ title }: ShareButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleShare = async () => {
-    const shareData = {
-      title: `알레띠 뉴스 | ${title}`,
-      text: title,
-      url: window.location.href,
-    };
+    // 윈도우 객체 확인
+    if (typeof window === 'undefined') return;
 
-    // 1. Web Share API 시도 (주로 모바일)
-    if (typeof navigator !== 'undefined' && navigator.share) {
+    const currentUrl = window.location.href;
+    const shareTitle = `알레띠 뉴스 | ${title || ''}`;
+    
+    // 1. Web Share API 시도
+    if (navigator.share) {
       try {
-        // 일부 브라우저에서 canShare가 비정상적으로 동작할 수 있으므로 간단한 체크만 수행
-        const canShare = navigator.canShare && navigator.canShare(shareData);
-        
-        if (canShare) {
-          await navigator.share(shareData);
+        // 공유 데이터 객체를 명시적으로 생성 (불필요한 속성 제거)
+        const data = {
+          title: shareTitle,
+          text: title || '',
+          url: currentUrl,
+        };
+
+        // canShare 체크 시 에러가 발생할 수 있으므로 try-catch 내부에서 수행
+        let canShare = false;
+        try {
+          canShare = !!(navigator.canShare && navigator.canShare(data));
+        } catch (e) {
+          console.warn('navigator.canShare failed:', e);
+        }
+
+        if (canShare || !navigator.canShare) {
+          await navigator.share(data);
           return;
         }
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Error sharing:', err);
-        } else {
-          return; // 사용자가 취소한 경우
+        // AbortError(사용자 취소)는 무시
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
         }
+        console.error('Web Share API error:', err);
       }
     }
 
-    // 2. 클립보드 복사 폴백 (PC 또는 미지원 브라우저)
+    // 2. 클립보드 복사 폴백
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(currentUrl);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } else {
+        // 구형 브라우저 대응 (execCommand)
+        const textArea = document.createElement('textarea');
+        textArea.value = currentUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      }
     } catch (err) {
-      console.error('Failed to copy link:', err);
+      console.error('Clipboard copy failed:', err);
     }
   };
 
