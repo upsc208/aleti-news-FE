@@ -22,11 +22,11 @@ export default function NewsFeedContainer({ sourcesData, children }: NewsFeedCon
         `}
       >
         <div className={`sticky top-28 self-start w-80 transition-transform duration-500 ${isExpanded ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="relative bg-white rounded-3xl border border-gray-200 shadow-xl pt-8 px-6 pb-10">
+          <div className="relative bg-white dark:bg-[#111318] rounded-3xl border border-gray-200 dark:border-white/[0.04] shadow-xl dark:shadow-black/40 pt-8 px-6 pb-10 dark-card-pattern">
             {/* Desktop Header */}
             <div className="flex flex-col items-center mb-6">
-              <div className="h-1 w-10 bg-gray-200 rounded-full mb-4"></div>
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest text-center">
+              <div className="h-1 w-10 bg-gray-200 dark:bg-volt/15 rounded-full mb-4"></div>
+              <h3 className="text-sm font-bold text-gray-700 dark:text-volt/40 uppercase tracking-widest text-center">
                 필터
               </h3>
             </div>
@@ -43,7 +43,7 @@ export default function NewsFeedContainer({ sourcesData, children }: NewsFeedCon
           className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[60] group items-center"
         >
           <div className="h-32 w-2 bg-gray-200 rounded-r-full group-hover:bg-aleti-red transition-all duration-300" />
-          <div className="flex items-center justify-center w-10 h-16 bg-white border-2 border-l-0 border-gray-100 rounded-r-2xl shadow-2xl -ml-0.5 transition-all duration-300 group-hover:pl-2">
+          <div className="flex items-center justify-center w-10 h-16 bg-white dark:bg-[#111318] border-2 border-l-0 border-gray-100 dark:border-white/[0.04] rounded-r-2xl shadow-2xl -ml-0.5 transition-all duration-300 group-hover:pl-2">
             <ChevronRight size={24} className="text-gray-400 group-hover:text-aleti-red" strokeWidth={3} />
           </div>
         </button>

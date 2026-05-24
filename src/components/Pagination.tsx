@@ -34,13 +34,13 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
   return (
     <nav className="flex items-center justify-center gap-2 mt-16">
       {currentPage === 1 ? (
-        <div className="p-2 rounded-xl border border-gray-200 text-gray-400 opacity-30 bg-white">
+        <div className="p-2 rounded-xl border border-gray-200 dark:border-white/[0.04] text-gray-400 opacity-30 bg-white dark:bg-[#111318]">
           <ChevronLeft size={20} />
         </div>
       ) : (
         <Link
           href={createPageUrl(currentPage - 1)}
-          className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:border-aleti-red hover:text-aleti-red transition-all bg-white soft-shadow"
+          className="p-2 rounded-xl border border-gray-200 dark:border-white/[0.04] text-gray-400 hover:border-aleti-red dark:hover:border-volt/20 hover:text-aleti-red dark:hover:text-volt transition-all bg-white dark:bg-[#111318] soft-shadow"
         >
           <ChevronLeft size={20} />
         </Link>
@@ -59,8 +59,8 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
               className={`
                 flex items-center justify-center min-w-[40px] h-10 rounded-xl font-bold text-sm transition-all
                 ${currentPage === page 
-                  ? 'bg-aleti-red text-white shadow-lg shadow-aleti-red/20' 
-                  : 'bg-white border border-gray-200 text-gray-500 hover:border-aleti-red hover:text-aleti-red'
+                  ? 'bg-aleti-red dark:bg-volt/90 text-white dark:text-black shadow-lg shadow-aleti-red/20 dark:shadow-volt/10' 
+                  : 'bg-white dark:bg-[#111318] border border-gray-200 dark:border-white/[0.04] text-gray-500 dark:text-gray-400 hover:border-aleti-red dark:hover:border-volt/20 hover:text-aleti-red dark:hover:text-volt'
                 }
               `}
             >
@@ -71,13 +71,13 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
       </div>
 
       {currentPage === totalPages ? (
-        <div className="p-2 rounded-xl border border-gray-200 text-gray-400 opacity-30 bg-white">
+        <div className="p-2 rounded-xl border border-gray-200 dark:border-[#2a3050] text-gray-400 opacity-30 bg-white dark:bg-[#141828]">
           <ChevronRight size={20} />
         </div>
       ) : (
         <Link
           href={createPageUrl(currentPage + 1)}
-          className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:border-aleti-red hover:text-aleti-red transition-all bg-white soft-shadow"
+          className="p-2 rounded-xl border border-gray-200 dark:border-[#2a3050] text-gray-400 hover:border-aleti-red hover:text-aleti-red transition-all bg-white dark:bg-[#141828] soft-shadow"
         >
           <ChevronRight size={20} />
         </Link>

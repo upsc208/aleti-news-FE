@@ -4,10 +4,10 @@ import Hero from '@/components/Home/Hero';
 
 export default function AboutPage() {
   return (
-    <div className="bg-white min-h-screen pb-20">
-      <div className="sticky top-16 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
+      <div className="sticky top-16 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
         <div className="container mx-auto px-4 h-12 flex items-center">
-          <Link href="/" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red transition-colors">
+          <Link href="/" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red dark:hover:text-volt transition-colors">
             <ChevronLeft size={16} />
             홈으로 돌아가기
           </Link>
@@ -15,11 +15,11 @@ export default function AboutPage() {
       </div>
 
       <main className="container mx-auto px-4 pt-16 max-w-4xl">
-        <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mb-12 tracking-tight">
-          <span className="text-aleti-red">알레띠 KR</span>에 대해서
+        <h1 className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white mb-12 tracking-tight">
+          <span className="text-aleti-red dark:text-volt">알레띠 KR</span>에 대해서
         </h1>
 
-        <div className="prose prose-xl text-gray-600 leading-relaxed space-y-8 font-medium max-w-none">
+        <div className="prose prose-xl text-gray-600 dark:text-gray-300 leading-relaxed space-y-8 font-medium max-w-none">
           <p className="text-lg sm:text-2xl leading-relaxed">
             <strong>알레띠 KR</strong>은 아틀레티코 마드리드(Atlético de Madrid)를 사랑하는 한국 팬들이 언어의 장벽 없이 현지의 생생한 소식을 접할 수 있도록 돕기 위해 시작된 <strong>개인 팬 프로젝트</strong>입니다.
           </p>
@@ -28,9 +28,9 @@ export default function AboutPage() {
             스페인 현지 매체의 보도를 일일이 찾아보기 어려운 한국 팬들을 위해, AI 기술을 활용하여 핵심 내용을 빠르게 번역하고 요약하여 전달합니다. 우리는 단순히 뉴스를 전달하는 것을 넘어, 한국 내 알레띠 팬덤이 더 깊게 팀과 연결되기를 바랍니다.
           </p>
 
-          <div className="bg-aleti-navy/5 p-8 sm:p-12 rounded-[3rem] border border-aleti-navy/10 my-16">
-            <h2 className="text-2xl sm:text-3xl font-black text-aleti-navy mb-8 flex items-center gap-3">
-              <div className="h-3 w-3 bg-aleti-navy rounded-full"></div>
+          <div className="bg-aleti-navy/5 dark:bg-volt/[0.03] p-8 sm:p-12 rounded-[3rem] border border-aleti-navy/10 dark:border-volt/8 my-16">
+            <h2 className="text-2xl sm:text-3xl font-black text-aleti-navy dark:text-volt/80 mb-8 flex items-center gap-3">
+              <div className="h-3 w-3 bg-aleti-navy dark:bg-volt rounded-full"></div>
               운영 원칙
             </h2>
             <ul className="space-y-6">
@@ -49,12 +49,12 @@ export default function AboutPage() {
             </ul>
           </div>
 
-          <div className="mt-16 p-8 sm:p-12 bg-gray-50 rounded-[3rem] border border-gray-100">
-            <h3 className="flex items-center gap-2 text-aleti-red font-black mb-6 uppercase tracking-tighter text-xl sm:text-2xl">
+          <div className="mt-16 p-8 sm:p-12 bg-gray-50 dark:bg-[#111318] rounded-[3rem] border border-gray-100 dark:border-white/[0.04]">
+            <h3 className="flex items-center gap-2 text-aleti-red dark:text-volt font-black mb-6 uppercase tracking-tighter text-xl sm:text-2xl">
               <ShieldAlert size={28} />
               Legal Disclaimer
             </h3>
-            <div className="text-sm sm:text-base text-gray-500 space-y-4 leading-relaxed font-normal">
+            <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400 space-y-4 leading-relaxed font-normal">
               <p>
                 • 본 사이트는 아틀레티코 마드리드 구단 또는 특정 언론사와 공식적인 관계가 없는 <strong>비공식 팬 페이지</strong>입니다.
               </p>

@@ -37,11 +37,11 @@ export default function SearchBar() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-24 soft-shadow focus:outline-none focus:ring-2 focus:ring-aleti-red/20 focus:border-aleti-red transition-all text-sm md:text-base font-medium placeholder:text-gray-400"
+        className="w-full bg-white dark:bg-[#111318] border border-gray-200 dark:border-white/[0.04] rounded-2xl py-4 pl-12 pr-24 soft-shadow focus:outline-none focus:ring-2 focus:ring-aleti-red/20 dark:focus:ring-volt/15 focus:border-aleti-red dark:focus:border-volt/30 transition-all text-sm md:text-base font-medium placeholder:text-gray-400 dark:text-gray-100"
       />
       <button
         onClick={handleSearch}
-        className="absolute inset-y-2 right-2 px-4 md:px-6 bg-aleti-red text-white rounded-xl font-bold text-xs md:text-sm hover:bg-aleti-red/90 transition-colors whitespace-nowrap"
+        className="absolute inset-y-2 right-2 px-4 md:px-6 bg-aleti-red dark:bg-volt text-white dark:text-black rounded-xl font-bold text-xs md:text-sm hover:bg-aleti-red/90 dark:hover:bg-volt/90 transition-colors whitespace-nowrap"
       >
         검색
       </button>

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
@@ -9,6 +11,32 @@
   --gemini-indigo: #4F46E5;
   --gemini-purple: #9333EA;
   --gemini-blue: #3B82F6;
+  --volt: #CCFF00;
+
+  /* Surface colors for dark mode support */
+  --surface: #ffffff;
+  --surface-secondary: #f9fafb;
+  --surface-tertiary: #f3f4f6;
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  --text-primary: #0f172a;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+  --text-muted: #d1d5db;
+}
+
+.dark {
+  --background: #0a0b10;
+  --foreground: #e2e8f0;
+  --surface: #111318;
+  --surface-secondary: #16181f;
+  --surface-tertiary: #1c1e27;
+  --border-color: rgba(204, 255, 0, 0.08);
+  --border-light: rgba(204, 255, 0, 0.04);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
 }
 
 @theme inline {
@@ -20,8 +48,19 @@
   --color-gemini-indigo: var(--gemini-indigo);
   --color-gemini-purple: var(--gemini-purple);
   --color-gemini-blue: var(--gemini-blue);
+  --color-volt: var(--volt);
   --font-bebas: var(--font-bebas-neue);
   --font-kanit: var(--font-kanit);
+
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-border-color: var(--border-color);
+  --color-border-light: var(--border-light);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
 }
 
 body {
@@ -72,9 +111,17 @@ h1, h2, h3, .font-bebas {
   background: linear-gradient(90deg, var(--aleti-red) 0%, #ff6b6b 100%);
 }
 
+.dark .aleti-gradient-line {
+  background: linear-gradient(90deg, var(--volt) 0%, rgba(204, 255, 0, 0.2) 100%) !important;
+}
+
 /* 부드러운 그림자 */
 .soft-shadow {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.dark .soft-shadow {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .soft-shadow-hover {
@@ -84,4 +131,102 @@ h1, h2, h3, .font-bebas {
 .soft-shadow-hover:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dark .soft-shadow-hover:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Dark mode transition */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===================================================
+   Jersey-inspired Geometric Triangle Pattern (Dark Mode)
+   Inspired by Atlético 25/26 Away Kit
+   =================================================== */
+
+/* Inline SVG encoded geometric triangle pattern */
+.dark-geo-pattern {
+  position: relative;
+}
+
+.dark .dark-geo-pattern::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30Z' fill='rgba(204,255,0,0.018)'/%3E%3Cpath d='M0 0 L30 0 L0 30Z' fill='rgba(255,255,255,0.012)'/%3E%3Cpath d='M60 0 L60 30 L30 0Z' fill='rgba(255,255,255,0.008)'/%3E%3Cpath d='M0 60 L30 60 L0 30Z' fill='rgba(255,255,255,0.008)'/%3E%3Cpath d='M60 60 L60 30 L30 60Z' fill='rgba(255,255,255,0.012)'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  opacity: 1;
+}
+
+/* Card-level geometric pattern */
+.dark .dark-card-pattern {
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .dark-card-pattern::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0 L40 20 L20 40 L0 20Z' fill='rgba(204,255,0,0.025)'/%3E%3Cpath d='M0 0 L20 0 L0 20Z' fill='rgba(255,255,255,0.015)'/%3E%3Cpath d='M40 0 L40 20 L20 0Z' fill='rgba(255,255,255,0.01)'/%3E%3Cpath d='M0 40 L20 40 L0 20Z' fill='rgba(255,255,255,0.01)'/%3E%3Cpath d='M40 40 L40 20 L20 40Z' fill='rgba(255,255,255,0.015)'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+  border-radius: inherit;
+}
+
+/* Volt neon glow accent line for dark mode */
+.dark .volt-accent-line {
+  background: linear-gradient(90deg, transparent 0%, rgba(204, 255, 0, 0.3) 50%, transparent 100%);
+  height: 1px;
+}
+
+/* Volt border glow on hover */
+.dark .volt-hover-glow:hover {
+  border-color: rgba(204, 255, 0, 0.25) !important;
+  box-shadow: 0 0 25px rgba(204, 255, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Subtle volt text shadow for headings in dark mode */
+.dark .volt-text-glow {
+  text-shadow: 0 0 30px rgba(204, 255, 0, 0.1);
+}
+
+/* Header stripe decoration in dark mode */
+.dark .dark-header-stripe {
+  background: repeating-linear-gradient(
+    to right,
+    #0a0b10,
+    #0a0b10 75px,
+    #16181f 75px,
+    #16181f 150px
+  ) !important;
+  position: relative;
+}
+
+.dark .dark-header-stripe::before,
+.dark .dark-header-stripe::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 55px;
+  background: #ccff00;
+  z-index: 10;
+  filter: drop-shadow(0 0 6px rgba(204, 255, 0, 0.7));
+}
+
+.dark .dark-header-stripe::before {
+  left: 0;
+  clip-path: polygon(0 0, 100% 0, 65% 100%, 0 100%);
+}
+
+.dark .dark-header-stripe::after {
+  right: 0;
+  clip-path: polygon(35% 0, 100% 0, 100% 100%, 0 100%);
 }

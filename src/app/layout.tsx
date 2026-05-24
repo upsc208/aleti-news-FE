@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Kanit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import ThemeProvider from "@/components/ThemeProvider";
+import DarkModeToggle from "@/components/DarkModeToggle";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -77,37 +79,40 @@ export default function RootLayout({
       lang="ko"
       className={`${bebasNeue.variable} ${kanit.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-kanit overflow-x-hidden">
-        <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Analytics />
-        <SpeedInsights />
-        <footer className="bg-blue-600 text-white py-12">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col items-center justify-center space-y-6">
-              <div className="text-center">
-                <p className="text-sm font-bold text-white mb-1">아틀레티 KR</p>
-                <p className="text-xs text-blue-100">&copy; {new Date().getFullYear()} Atleti KR. All rights reserved.</p>
-              </div>
+      <body className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-900 dark:text-gray-100 font-kanit overflow-x-hidden transition-colors duration-300 dark-geo-pattern">
+        <ThemeProvider>
+          <Header />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <Analytics />
+          <SpeedInsights />
+          <footer className="bg-blue-600 dark:bg-[#0d0e14] text-white py-12 dark:border-t dark:border-volt/10 relative z-10">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="text-center">
+                  <p className="text-sm font-bold text-white mb-1">아틀레티 KR</p>
+                  <p className="text-xs text-blue-100 dark:text-gray-500">&copy; {new Date().getFullYear()} Atleti KR. All rights reserved.</p>
+                </div>
 
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-[11px] font-bold text-blue-200 uppercase tracking-widest">Contact & Feedback</p>
-                <a
-                  href="mailto:upscman@gmail.com"
-                  className="text-sm font-medium text-white hover:text-blue-200 transition-colors border-b border-blue-300 hover:border-blue-100 pb-0.5"
-                >
-                  upscman@gmail.com
-                </a>
-              </div>
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-[11px] font-bold text-blue-200 dark:text-volt/30 uppercase tracking-widest">Contact & Feedback</p>
+                  <a
+                    href="mailto:upscman@gmail.com"
+                    className="text-sm font-medium text-white hover:text-blue-200 transition-colors border-b border-blue-300 hover:border-blue-100 pb-0.5"
+                  >
+                    upscman@gmail.com
+                  </a>
+                </div>
 
-              <p className="text-[11px] italic text-blue-200">
-                "위 메일로 연락주시길 바랍니다."
-              </p>
+                <p className="text-[11px] italic text-blue-200 dark:text-gray-600">
+                  "위 메일로 연락주시길 바랍니다."
+                </p>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+          <DarkModeToggle />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -60,7 +60,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-2xl font-bold mb-4">뉴스를 찾을 수 없습니다.</h1>
-        <Link href="/" className="text-aleti-red font-bold underline">홈으로 돌아가기</Link>
+        <Link href="/" className="text-aleti-red dark:text-volt font-bold underline">홈으로 돌아가기</Link>
       </div>
     );
   }
@@ -69,10 +69,10 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   const summaryPoints = news.summaryKo ? news.summaryKo.split('\n').filter(p => p.trim()) : [];
 
   return (
-    <div className="bg-white min-h-screen pb-20">
-      <div className="sticky top-16 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
+      <div className="sticky top-16 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
         <div className="container mx-auto px-4 h-12 flex items-center">
-          <Link href="/" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red transition-colors">
+          <Link href="/" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red dark:hover:text-volt transition-colors">
             <ChevronLeft size={16} />
             목록으로 돌아가기
           </Link>
@@ -81,18 +81,18 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
       <article className="container mx-auto px-4 pt-8 sm:pt-12 max-w-3xl">
         <header className="mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-6 sm:mb-8 tracking-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 sm:mb-8 tracking-tight">
             {news.titleKo}
           </h1>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 py-4 sm:py-6 gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-y border-gray-100 dark:border-volt/5 py-4 sm:py-6 gap-6">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
               <div className="flex items-center gap-3">
-                <span className="text-xs sm:text-sm font-black text-aleti-red uppercase tracking-widest">
+                <span className="text-xs sm:text-sm font-black text-aleti-red dark:text-volt uppercase tracking-widest">
                   {news.sourceName}
                 </span>
                 <div className="h-4 w-px bg-gray-200" />
-                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 font-semibold">
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 font-semibold">
                   <User size={18} className="text-gray-400" />
                   <span className="truncate max-w-[120px] sm:max-w-none">{news.authorName || '알레띠 뉴스'}</span>
                 </div>
@@ -117,7 +117,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
                 href={news.originalUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 text-gray-600 hover:text-aleti-red hover:bg-aleti-red/5 rounded-xl text-xs sm:text-sm font-bold transition-all border border-gray-100 hover:border-aleti-red/20"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-50 dark:bg-white/[0.03] text-gray-600 dark:text-gray-300 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5 rounded-xl text-xs sm:text-sm font-bold transition-all border border-gray-100 dark:border-white/[0.04] hover:border-aleti-red/20 dark:hover:border-volt/15"
                 title="원문 출처 보기"
               >
                 <span className="whitespace-nowrap">원문 보기</span>
@@ -131,18 +131,18 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
           </div>
         </header>
         {summaryPoints.length > 0 && (
-          <div className="mb-12 bg-gray-50 rounded-3xl p-6 lg:p-8 border border-gray-100 relative overflow-hidden">
+          <div className="mb-12 bg-gray-50 dark:bg-[#111318] rounded-3xl p-6 lg:p-8 border border-gray-100 dark:border-volt/15 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">
-              <Newspaper size={80} className="text-aleti-red" />
+              <Newspaper size={80} className="text-aleti-red dark:text-volt/5" />
             </div>
-            <h2 className="text-sm font-black text-aleti-red uppercase tracking-widest mb-4 flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-aleti-red animate-pulse"></div>
+            <h2 className="text-sm font-black text-aleti-red dark:text-volt uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-aleti-red dark:bg-volt animate-pulse"></div>
               AI 핵심 요약
             </h2>
             <ul className="space-y-4">
               {summaryPoints.map((point, index) => (
-                <li key={index} className="flex items-start gap-3 text-gray-700 leading-relaxed font-medium">
-                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-aleti-red/40"></span>
+                <li key={index} className="flex items-start gap-3 text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-aleti-red/40 dark:bg-volt/60"></span>
                   {point}
                 </li>
               ))}
@@ -169,7 +169,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        <div className="prose prose-xl max-w-none text-gray-800 leading-[2] mb-20 whitespace-pre-wrap font-medium text-lg sm:text-xl">
+        <div className="prose prose-xl max-w-none text-gray-800 dark:text-gray-200 leading-[2] mb-20 whitespace-pre-wrap font-medium text-lg sm:text-xl">
           {news.contentKo}
         </div>
 
@@ -177,7 +177,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
         {news.articleType === 'SNS_POST' && news.originalUrl.includes('x.com') && (
           <div className="mb-16 py-10 border-t border-gray-100">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <MessageSquare size={20} className="text-aleti-red" />
+              <MessageSquare size={20} className="text-aleti-red dark:text-volt" />
               원본
             </h3>
             <div className="flex justify-center">
@@ -189,7 +189,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
-        <footer className="pt-10 border-t border-gray-100">
+        <footer className="pt-10 border-t border-gray-100 dark:border-volt/5">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <p className="text-gray-400 text-sm font-medium">© 알레띠 뉴스. All rights reserved.</p>
           </div>
