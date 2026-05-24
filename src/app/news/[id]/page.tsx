@@ -173,17 +173,33 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
           {news.contentKo}
         </div>
 
-        {/* SNS 포스트인 경우 트윗 렌더링 (원문 URL에서 ID 추출하거나 별도 필드 필요) */}
-        {news.articleType === 'SNS_POST' && news.originalUrl.includes('x.com') && (
-          <div className="mb-16 py-10 border-t border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+        {/* SNS 포스트인 경우 트윗 렌더링 */}
+        {news.articleType === 'SNS_POST' && news.originalUrl && (news.originalUrl.includes('x.com') || news.originalUrl.includes('twitter.com')) && (
+          <div className="mb-16 py-10 border-t border-gray-100 dark:border-volt/5">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
               <MessageSquare size={20} className="text-aleti-red dark:text-volt" />
-              원본
+              원본 포스트
             </h3>
             <div className="flex justify-center">
-              <div className="w-full max-w-[550px]">
-                {/* URL에서 트윗 ID 추출 */}
-                <Tweet id={news.originalUrl.split('/').pop() || ''} />
+              <div className="w-full max-w-[550px] min-h-[200px]">
+                {(() => {
+                  // URL에서 트윗 ID 추출 (정규식 사용)
+                  const match = news.originalUrl.match(/\/status\/(\d+)/);
+                  const tweetId = match ? match[1] : null;
+                  
+                  if (tweetId) {
+                    return <Tweet id={tweetId} />;
+                  }
+                  
+                  return (
+                    <div className="p-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl">
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">트윗을 불러올 수 없습니다.</p>
+                      <a href={news.originalUrl} target="_blank" rel="noopener noreferrer" className="text-aleti-red dark:text-volt text-xs font-bold mt-2 inline-block">
+                        원문 직접 보기
+                      </a>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
