@@ -42,10 +42,10 @@ export default function CategoryFilter() {
   return (
     <div className="w-full mb-8 relative group">
       {/* Left Gradient Fade */}
-      <div className="absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity md:hidden"></div>
+      <div className="absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-gray-50 dark:from-[#0a0b10] to-transparent z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity md:hidden"></div>
       
       {/* Right Gradient Fade */}
-      <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none md:hidden"></div>
+      <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-gray-50 dark:from-[#0a0b10] to-transparent z-10 pointer-events-none md:hidden"></div>
 
       <div className="overflow-x-auto pb-2 scrollbar-hide">
         <div className="flex items-center justify-start md:justify-center gap-2 min-w-max px-6 md:px-1">
@@ -59,8 +59,8 @@ export default function CategoryFilter() {
                 className={`
                   flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap
                   ${isActive
-                    ? 'bg-aleti-red text-white shadow-xl shadow-aleti-red/20 scale-105'
-                    : 'bg-white border border-gray-100 text-gray-500 hover:border-aleti-red/30 hover:text-aleti-red hover:bg-aleti-red/5'}
+                    ? 'bg-aleti-red dark:bg-volt/90 text-white dark:text-black shadow-xl shadow-aleti-red/20 dark:shadow-volt/10 scale-105'
+                    : 'bg-white dark:bg-[#111318] border border-gray-100 dark:border-white/[0.04] text-gray-500 dark:text-gray-400 hover:border-aleti-red/30 dark:hover:border-volt/15 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5'}
                 `}
               >
                 <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'} />

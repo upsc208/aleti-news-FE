@@ -60,7 +60,7 @@ export default async function Home({
   return (
     <div className="flex flex-col gap-0">
       <section className="container mx-auto px-6 lg:px-12 pt-20 pb-24">
-        <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
+        <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 dark:border-volt/5 pb-10">
           <div className="w-full">
             <MatchResultCard recentMatch={recentMatchData} upcomingMatches={upcomingMatchesData} />
           </div>
@@ -85,12 +85,12 @@ export default async function Home({
               />
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-48 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-              <div className="relative mb-8">
+            <div className="flex flex-col items-center justify-center py-48 bg-white dark:bg-[#111318] rounded-[3rem] border-2 border-dashed border-gray-100 dark:border-white/[0.04] dark-card-pattern relative">
+              <div className="relative mb-8 z-10">
                 <Newspaper size={80} className="text-gray-100" />
                 <Sparkles size={24} className="absolute -top-2 -right-2 text-gray-200 animate-pulse" />
               </div>
-              <p className="text-gray-400 font-black tracking-tight text-center px-4 text-xl uppercase">
+              <p className="text-gray-400 dark:text-gray-500 font-black tracking-tight text-center px-4 text-xl uppercase relative z-10">
                 등록된 뉴스가 없습니다.
               </p>
             </div>
