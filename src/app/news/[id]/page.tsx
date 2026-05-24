@@ -30,10 +30,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       openGraph: {
         title,
         description,
-        images: news.imageUrl ? [news.imageUrl] : [],
+        images: news.imageUrl ? [{ url: news.imageUrl }] : [],
         type: 'article',
         publishedTime: news.publishedAt || undefined,
-        authors: [news.authorName || '알레띠 뉴스'],
+        authors: [{ name: news.authorName || '알레띠 뉴스' }],
         url: `https://alleti.kr/news/${id}`,
       },
       twitter: {
