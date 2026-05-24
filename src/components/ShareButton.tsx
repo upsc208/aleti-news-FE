@@ -18,15 +18,20 @@ export default function ShareButton({ title }: ShareButtonProps) {
     };
 
     // 1. Web Share API 시도 (주로 모바일)
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+    if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share(shareData);
-        return;
+        // 일부 브라우저에서 canShare가 비정상적으로 동작할 수 있으므로 간단한 체크만 수행
+        const canShare = navigator.canShare && navigator.canShare(shareData);
+        
+        if (canShare) {
+          await navigator.share(shareData);
+          return;
+        }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
           console.error('Error sharing:', err);
         } else {
-            return; // 사용자가 취소한 경우
+          return; // 사용자가 취소한 경우
         }
       }
     }

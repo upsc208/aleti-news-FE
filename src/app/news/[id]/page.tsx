@@ -18,7 +18,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!news) return { title: '뉴스를 찾을 수 없습니다 | 알레띠 KR' };
 
     const title = news.titleKo || '뉴스 상세';
-    const description = news.summaryKo || news.contentKo?.substring(0, 150) || '';
+    const contentPreview = news.contentKo ? news.contentKo.substring(0, 150) : '';
+    const description = news.summaryKo || contentPreview || '';
 
     return {
       title: `${title} | 알레띠 KR`,
