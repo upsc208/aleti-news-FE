@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
 import { Suspense } from 'react';
+import { getTweet } from 'react-tweet/api';
 import TwitterEmbed from '@/components/TwitterEmbed';
 import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
@@ -88,6 +89,19 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
     }
   } catch (e) {
     console.error('Date formatting error:', e);
+  }
+
+  // 트윗 데이터 가져오기 (SNS_POST인 경우)
+  let tweetData = null;
+  const tweetMatch = news.articleType === 'SNS_POST' && news.originalUrl?.match(/\/status\/(\d+)/);
+  const tweetId = tweetMatch ? tweetMatch[1] : null;
+
+  if (tweetId) {
+    try {
+      tweetData = await getTweet(tweetId);
+    } catch (e) {
+      console.error('Failed to fetch tweet data on server:', e);
+    }
   }
 
   return (
@@ -197,27 +211,18 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
             </h3>
             <div className="flex justify-center">
               <div className="w-full max-w-[550px] min-h-[200px]">
-                {(() => {
-                  const match = news.originalUrl.match(/\/status\/(\d+)/);
-                  const tweetId = match ? match[1] : null;
-                  
-                  if (tweetId) {
-                    return (
-                      <Suspense fallback={<div className="h-40 w-full animate-pulse bg-gray-50 dark:bg-white/5 rounded-2xl" />}>
-                        <TwitterEmbed id={tweetId} originalUrl={news.originalUrl} />
-                      </Suspense>
-                    );
-                  }
-                  
-                  return (
-                    <div className="p-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl">
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">트윗을 불러올 수 없습니다.</p>
-                      <a href={news.originalUrl} target="_blank" rel="noopener noreferrer" className="text-aleti-red dark:text-volt text-xs font-bold mt-2 inline-block">
-                        원문 직접 보기
-                      </a>
-                    </div>
-                  );
-                })()}
+                {tweetId ? (
+                  <Suspense fallback={<div className="h-40 w-full animate-pulse bg-gray-50 dark:bg-white/5 rounded-2xl" />}>
+                    <TwitterEmbed tweetData={tweetData} originalUrl={news.originalUrl} />
+                  </Suspense>
+                ) : (
+                  <div className="p-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">트윗 ID를 찾을 수 없습니다.</p>
+                    <a href={news.originalUrl} target="_blank" rel="noopener noreferrer" className="text-aleti-red dark:text-volt text-xs font-bold mt-2 inline-block">
+                      원문 직접 보기
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>
