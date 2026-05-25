@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
     const title = news.titleKo || '뉴스 상세';
     const contentPreview = news.contentKo ? news.contentKo.substring(0, 150) : '';
-    const description = news.summaryKo || contentPreview || '';
+    const description = news.summaryKo || contentPreview || '아틀레티코 마드리드 최신 뉴스';
 
     return {
       title: `${title} | 알레띠 KR`,
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       openGraph: {
         title,
         description,
-        images: news.imageUrl ? [news.imageUrl] : [],
+        images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
         type: 'article',
         publishedTime: news.publishedAt || undefined,
         authors: news.authorName ? [news.authorName] : ['알레띠 뉴스'],
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         card: 'summary_large_image',
         title,
         description,
-        images: news.imageUrl ? [news.imageUrl] : [],
+        images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
       },
     };
   } catch (error) {

@@ -106,7 +106,7 @@ export default function RootLayout({
                 </div>
 
                 <p className="text-[11px] italic text-blue-200 dark:text-gray-600">
-                  "위 메일로 연락주시길 바랍니다."
+                  &quot;위 메일로 연락주시길 바랍니다.&quot;
                 </p>
               </div>
             </div>
