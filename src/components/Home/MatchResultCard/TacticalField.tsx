@@ -7,10 +7,22 @@ interface TacticalFieldProps {
 }
 
 export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps) => {
+  // 아틀레티코 마드리드 여부 판별 (Atletico Madrid 포함 여부로 판단)
+  const isAtleti = (name: string) => 
+    name.toLowerCase().includes('atletico madrid') || 
+    name.includes('아틀레티코') || 
+    name.includes('Atlético');
+
+  const isAtletiHome = isAtleti(homeTeam);
+  const isAtletiAway = isAtleti(awayTeam);
+
   const renderTeam = (teamLineup: any, isHome: boolean) => {
     const formation = teamLineup.formation || '4-4-2';
     const starters = teamLineup.starters || [];
     const rows = [1, ...formation.split('-').map(Number)];
+    
+    // 현재 팀이 아틀레티코 마드리드인지 확인
+    const isThisAtleti = isHome ? isAtletiHome : isAtletiAway;
     
     let playerIdx = 0;
     const playerRows = rows.map(count => {
@@ -26,7 +38,7 @@ export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps
             {[...row].reverse().map((player: any, pIdx: number) => (
               <div key={pIdx} className="flex flex-col items-center gap-0.5 sm:gap-1 group/player">
                 <div className={`w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-xs shadow-lg border sm:border-2 transition-transform group-hover/player:scale-110 ${
-                  isHome 
+                  isThisAtleti
                     ? 'bg-white border-[#b92629] text-black dark:bg-black dark:border-[#ccff00] dark:text-[#ccff00] dark:shadow-[#ccff00]/20' 
                     : 'bg-white border-blue-600 text-black'
                 }`}>
@@ -47,14 +59,14 @@ export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps
     <div className="flex flex-col gap-4 w-full">
       <div className="flex justify-between items-center px-4 font-black uppercase tracking-tighter text-[10px] sm:text-sm md:text-base">
         <div className="flex items-center gap-1.5 text-white">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#b92629] dark:bg-volt"></span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiHome ? 'bg-[#b92629] dark:bg-volt' : 'bg-blue-600'}`}></span>
           <span>{homeTeam}</span>
           <span className="opacity-60">({lineup.home.formation})</span>
         </div>
         <div className="flex items-center gap-1.5 text-white">
           <span className="opacity-60">({lineup.away.formation})</span>
           <span>{awayTeam}</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiAway ? 'bg-[#b92629] dark:bg-volt' : 'bg-blue-600'}`}></span>
         </div>
       </div>
 
