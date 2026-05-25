@@ -35,7 +35,8 @@ export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps
       <div className={`flex-1 flex ${isHome ? 'flex-row' : 'flex-row-reverse'} justify-between items-center h-full px-2 sm:px-4 md:px-8`}>
         {playerRows.map((row, rowIdx) => (
           <div key={rowIdx} className="flex flex-col justify-around h-full py-1 sm:py-2 md:py-4">
-            {[...row].reverse().map((player: any, pIdx: number) => (
+            {/* 홈팀은 기존처럼 역순 유지, 어웨이팀은 배열 순서 그대로 */}
+            {(isHome ? [...row].reverse() : row).map((player: any, pIdx: number) => (
               <div key={pIdx} className="flex flex-col items-center gap-0.5 sm:gap-1 group/player">
                 <div className={`w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-xs shadow-lg border sm:border-2 transition-transform group-hover/player:scale-110 ${
                   isThisAtleti
