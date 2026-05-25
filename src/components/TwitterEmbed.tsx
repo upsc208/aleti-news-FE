@@ -1,7 +1,13 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode, useEffect, useState } from 'react';
-import { Tweet } from 'react-tweet';
+import dynamic from 'next/dynamic';
+
+// react-tweet의 Tweet 컴포넌트를 클라이언트 사이드 전용으로 로드
+const Tweet = dynamic(() => import('react-tweet').then(mod => mod.Tweet), {
+  ssr: false,
+  loading: () => <div className="h-40 w-full animate-pulse bg-gray-50 dark:bg-white/5 rounded-2xl" />
+});
 
 // 에러 바운더리
 class TweetErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
@@ -65,8 +71,9 @@ export default function TwitterEmbed({ tweetData, originalUrl }: TwitterEmbedPro
   if (!tweetData) return FallbackUI;
 
   return (
-    <div className="w-full flex justify-center twitter-embed-container">
+    <div className="w-full flex justify-center twitter-embed-container min-h-[200px]">
       <TweetErrorBoundary fallback={FallbackUI}>
+        {/* 클라이언트 사이드 전용 Tweet 컴포넌트 사용 */}
         <Tweet tweet={tweetData} />
       </TweetErrorBoundary>
     </div>
