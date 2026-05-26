@@ -123,8 +123,9 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
         }
 
         // text 필드가 없을 경우 빈 문자열로 초기화하여 에러 방지
-        if (!tweetData.text && tweetData.full_text) {
-          tweetData.text = tweetData.full_text;
+        const rawTweet = tweetData as any;
+        if (!rawTweet.text && rawTweet.full_text) {
+          rawTweet.text = rawTweet.full_text;
         }
       }
     } catch (e) {
