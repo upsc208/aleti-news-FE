@@ -98,35 +98,39 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
 
   if (tweetId) {
     try {
-      tweetData = await getTweet(tweetId);
+      const rawTweetData = await getTweet(tweetId);
       
-      // react-tweet 렌더링 에러 방지 (entities 및 필수 필드 누락 대응)
-      if (tweetData) {
-        // react-tweet 내부의 addEntities와 fixRange 함수가 죽지 않도록 완벽하게 빈 배열을 보장
-        tweetData.entities = tweetData.entities || {};
-        const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
-        
-        tweetData.entities.hashtags = safeArray(tweetData.entities.hashtags);
-        tweetData.entities.user_mentions = safeArray(tweetData.entities.user_mentions);
-        tweetData.entities.urls = safeArray(tweetData.entities.urls);
-        tweetData.entities.symbols = safeArray(tweetData.entities.symbols);
-        tweetData.entities.media = safeArray(tweetData.entities.media);
+      if (rawTweetData) {
+        // react-tweet 렌더링 에러 방지 (Deep Clone 및 필수 필드 보정)
+        // 1. 객체를 깊은 복사하여 불변성/Getter 이슈 방지
+        const tweet = JSON.parse(JSON.stringify(rawTweetData));
 
-        // fixRange 에러 대응: media 배열이 비어있으면 아예 undefined로 날려버려서 조건문을 패스하게 함
-        if (tweetData.entities.media.length === 0) {
-           delete tweetData.entities.media;
-        }
+        // 2. entities 객체 및 배열 안정화
+        tweet.entities = tweet.entities || {};
+        const sanitizeArr = (arr: any) => Array.isArray(arr) ? arr.filter(i => i && i.indices) : [];
         
-        // fixRange 에러 대응: display_text_range 가 없으면 기본값 부여
-        if (!tweetData.display_text_range) {
-           tweetData.display_text_range = [0, tweetData.text?.length || 0];
+        tweet.entities.hashtags = sanitizeArr(tweet.entities.hashtags);
+        tweet.entities.user_mentions = sanitizeArr(tweet.entities.user_mentions);
+        tweet.entities.urls = sanitizeArr(tweet.entities.urls);
+        tweet.entities.symbols = sanitizeArr(tweet.entities.symbols);
+        
+        // media가 비어있으면 아예 속성을 제거해야 fixRange가 죽지 않음
+        const media = sanitizeArr(tweet.entities.media);
+        if (media.length > 0) {
+          tweet.entities.media = media;
+        } else {
+          delete tweet.entities.media;
         }
 
-        // text 필드가 없을 경우 빈 문자열로 초기화하여 에러 방지
-        const rawTweet = tweetData as any;
-        if (!rawTweet.text && rawTweet.full_text) {
-          rawTweet.text = rawTweet.full_text;
+        // 3. 필수 필드 보정
+        if (!tweet.display_text_range) {
+          tweet.display_text_range = [0, (tweet.text || tweet.full_text || "").length];
         }
+        if (!tweet.text && tweet.full_text) {
+          tweet.text = tweet.full_text;
+        }
+
+        tweetData = tweet;
       }
     } catch (e) {
       console.error('Failed to fetch tweet data:', e);
