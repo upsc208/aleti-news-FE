@@ -100,16 +100,35 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
     try {
       tweetData = await getTweet(tweetId);
       
-      // react-tweet 렌더링 에러 방지 (entities 배열 누락 대응)
-      if (tweetData && tweetData.entities) {
-        tweetData.entities.hashtags = tweetData.entities.hashtags || [];
-        tweetData.entities.user_mentions = tweetData.entities.user_mentions || [];
-        tweetData.entities.urls = tweetData.entities.urls || [];
-        tweetData.entities.symbols = tweetData.entities.symbols || [];
-        tweetData.entities.media = tweetData.entities.media || [];
+      // react-tweet 렌더링 에러 방지 (entities 및 필수 필드 누락 대응)
+      if (tweetData) {
+        // react-tweet 내부의 addEntities와 fixRange 함수가 죽지 않도록 완벽하게 빈 배열을 보장
+        tweetData.entities = tweetData.entities || {};
+        const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
+        
+        tweetData.entities.hashtags = safeArray(tweetData.entities.hashtags);
+        tweetData.entities.user_mentions = safeArray(tweetData.entities.user_mentions);
+        tweetData.entities.urls = safeArray(tweetData.entities.urls);
+        tweetData.entities.symbols = safeArray(tweetData.entities.symbols);
+        tweetData.entities.media = safeArray(tweetData.entities.media);
+
+        // fixRange 에러 대응: media 배열이 비어있으면 아예 undefined로 날려버려서 조건문을 패스하게 함
+        if (tweetData.entities.media.length === 0) {
+           delete tweetData.entities.media;
+        }
+        
+        // fixRange 에러 대응: display_text_range 가 없으면 기본값 부여
+        if (!tweetData.display_text_range) {
+           tweetData.display_text_range = [0, tweetData.text?.length || 0];
+        }
+
+        // text 필드가 없을 경우 빈 문자열로 초기화하여 에러 방지
+        if (!tweetData.text && tweetData.full_text) {
+          tweetData.text = tweetData.full_text;
+        }
       }
     } catch (e) {
-      console.error('[Twitter Debug] Failed to fetch tweet data:', e);
+      console.error('Failed to fetch tweet data:', e);
     }
   }
 
