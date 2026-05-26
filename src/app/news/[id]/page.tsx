@@ -99,8 +99,17 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   if (tweetId) {
     try {
       tweetData = await getTweet(tweetId);
+      
+      // react-tweet 렌더링 에러 방지 (entities 배열 누락 대응)
+      if (tweetData && tweetData.entities) {
+        tweetData.entities.hashtags = tweetData.entities.hashtags || [];
+        tweetData.entities.user_mentions = tweetData.entities.user_mentions || [];
+        tweetData.entities.urls = tweetData.entities.urls || [];
+        tweetData.entities.symbols = tweetData.entities.symbols || [];
+        tweetData.entities.media = tweetData.entities.media || [];
+      }
     } catch (e) {
-      console.error('Failed to fetch tweet data on server:', e);
+      console.error('[Twitter Debug] Failed to fetch tweet data:', e);
     }
   }
 

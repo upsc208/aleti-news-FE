@@ -42,7 +42,8 @@ export default function TwitterEmbed({ tweetData, originalUrl }: TwitterEmbedPro
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    console.log('[TwitterEmbed Debug] Mounted. tweetData presence:', !!tweetData);
+  }, [tweetData]);
 
   const FallbackUI = (
     <div className="p-8 text-center bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5">
@@ -68,7 +69,10 @@ export default function TwitterEmbed({ tweetData, originalUrl }: TwitterEmbedPro
     );
   }
 
-  if (!tweetData) return FallbackUI;
+  if (!tweetData) {
+    console.warn('[TwitterEmbed Debug] No tweetData provided to component');
+    return FallbackUI;
+  }
 
   return (
     <div className="w-full flex justify-center twitter-embed-container min-h-[200px]">
