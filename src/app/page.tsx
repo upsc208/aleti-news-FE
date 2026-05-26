@@ -67,8 +67,10 @@ export default async function Home({
           <MobileFilterDrawer allSources={sourcesData} />
         </div>
 
-        <SearchBar />
-        <CategoryFilter />
+        <div id="news-section" className="scroll-mt-24">
+          <SearchBar />
+          <CategoryFilter />
+        </div>
 
         <NewsFeedContainer sourcesData={sourcesData}>
           {newsList.length > 0 ? (

@@ -28,7 +28,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
   const createPageUrl = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', page.toString());
-    return `?${params.toString()}`;
+    return `?${params.toString()}#news-section`;
   };
 
   return (
