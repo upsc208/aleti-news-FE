@@ -41,9 +41,15 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
 
     const searchParamsObj: Record<string, string> = {};
     
-    // query 파라미터가 있다면 유지
+    // 기존 파라미터 유지 (query, category, isHyped)
     const currentQuery = searchParams.get('query');
     if (currentQuery) searchParamsObj.query = currentQuery;
+    
+    const currentCategory = searchParams.get('category');
+    if (currentCategory) searchParamsObj.category = currentCategory;
+    
+    const currentIsHyped = searchParams.get('isHyped');
+    if (currentIsHyped) searchParamsObj.isHyped = currentIsHyped;
 
     // Logic for URL param
     if (nextInternalIds.length === allSources.length && nextInternalIds.length > 0) {
@@ -108,10 +114,9 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              const params = new URLSearchParams();
-              const currentQuery = searchParams.get('query');
-              if (currentQuery) params.set('query', currentQuery);
+              const params = new URLSearchParams(searchParams.toString());
               params.delete('sources');
+              params.set('page', '1');
               router.push(`?${params.toString()}`, { scroll: false });
             }}
             disabled={selectedInternalIdsFromUrl.length === allSources.length}
@@ -126,10 +131,9 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
           </button>
           <button
             onClick={() => {
-              const params = new URLSearchParams();
-              const currentQuery = searchParams.get('query');
-              if (currentQuery) params.set('query', currentQuery);
+              const params = new URLSearchParams(searchParams.toString());
               params.set('sources', 'none');
+              params.set('page', '1');
               router.push(`?${params.toString()}`, { scroll: false });
             }}
             disabled={selectedInternalIdsFromUrl.length === 0}

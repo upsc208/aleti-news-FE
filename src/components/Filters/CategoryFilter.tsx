@@ -9,12 +9,16 @@ import {
   Stethoscope, 
   Mic2, 
   ClipboardList, 
-  MoreHorizontal 
+  MoreHorizontal,
+  Flame,
+  Zap
 } from 'lucide-react';
 
 const categories = [
   { id: 'all', label: '전체', icon: LayoutGrid },
+  { id: 'hyped', label: 'Hyped', icon: Flame },
   { id: '이적시장', label: '이적시장', icon: ArrowLeftRight },
+  { id: '라이브요약', label: '라이브요약', icon: Zap },
   { id: '경기리뷰', label: '경기리뷰', icon: Trophy },
   { id: '오피셜', label: '오피셜', icon: Megaphone },
   { id: '부상/명단', label: '부상/명단', icon: Stethoscope },
@@ -26,15 +30,23 @@ const categories = [
 export default function CategoryFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category') || 'all';
+  
+  const isHypedActive = searchParams.get('isHyped') === 'true';
+  const currentCategory = isHypedActive ? 'hyped' : (searchParams.get('category') || 'all');
 
   const handleCategoryChange = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (categoryId === 'all') {
-      params.delete('category');
-    } else {
+    
+    // Reset both filters first
+    params.delete('category');
+    params.delete('isHyped');
+    
+    if (categoryId === 'hyped') {
+      params.set('isHyped', 'true');
+    } else if (categoryId !== 'all') {
       params.set('category', categoryId);
     }
+    
     params.set('page', '1'); // 카테고리 변경 시 1페이지로 이동
     router.push(`?${params.toString()}`, { scroll: false });
   };
@@ -57,10 +69,10 @@ export default function CategoryFilter() {
                 key={category.id}
                 onClick={() => handleCategoryChange(category.id)}
                 className={`
-                  flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap
+                  flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap border
                   ${isActive
-                    ? 'bg-aleti-red dark:bg-volt/90 text-white dark:text-black shadow-xl shadow-aleti-red/20 dark:shadow-volt/10 scale-105'
-                    : 'bg-white dark:bg-[#111318] border border-gray-100 dark:border-white/[0.04] text-gray-500 dark:text-gray-400 hover:border-aleti-red/30 dark:hover:border-volt/15 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5'}
+                    ? 'bg-aleti-red dark:bg-volt/90 text-white dark:text-black border-transparent shadow-xl shadow-aleti-red/20 dark:shadow-volt/10'
+                    : 'bg-white dark:bg-[#111318] border-gray-100 dark:border-white/[0.04] text-gray-500 dark:text-gray-400 hover:border-aleti-red/30 dark:hover:border-volt/15 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5'}
                 `}
               >
                 <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'} />

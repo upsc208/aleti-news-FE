@@ -13,7 +13,7 @@ import MatchResultCard from '@/components/Home/MatchResultCard';
 export default async function Home({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ page?: string; size?: string; query?: string; sources?: string; category?: string }>;
+  searchParams: Promise<{ page?: string; size?: string; query?: string; sources?: string; category?: string; isHyped?: string }>;
 }) {
   const searchParams = await searchParamsPromise;
   const page = searchParams.page ? parseInt(searchParams.page) - 1 : 0;
@@ -22,6 +22,7 @@ export default async function Home({
   const category = searchParams.category || '';
   const sourcesParam = searchParams.sources || '';
   const sources = sourcesParam ? sourcesParam.split(',') : [];
+  const isHyped = searchParams.isHyped === 'true';
 
   let newsData;
   let sourcesData: any[] = [];
@@ -36,6 +37,7 @@ export default async function Home({
           page: page,
           size: size,
           search: query,
+          isHyped: isHyped,
           ...(category && category !== 'all' ? { category } : {}),
           ...(sourcesParam && sourcesParam !== 'none' ? { sources } : {})
         }
