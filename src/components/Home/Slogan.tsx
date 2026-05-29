@@ -8,7 +8,7 @@ export default function Slogan() {
           </div>
           
           <div className="mb-12">
-            <h3 className="text-4xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
+            <h3 className="text-4xl lg:text-7xl font-bebas font-black text-white leading-[0.9] tracking-tighter uppercase italic">
               "GANAR, GANAR, GANAR <br />
               Y <span className="text-aleti-red relative">
                 VOLVER A GANAR.

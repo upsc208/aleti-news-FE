@@ -70,15 +70,21 @@ html, body {
 }
 
 body {
-  font-family: var(--font-kanit), system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Bold Football Typography */
-h1, h2, h3, .font-bebas {
+.font-bebas {
   font-family: var(--font-bebas-neue), sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .text-impact {

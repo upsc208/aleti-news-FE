@@ -50,8 +50,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NewsDetailPage({ 
+  params,
+  searchParams: searchParamsPromise
+}: { 
+  params: Promise<{ id: string }>,
+  searchParams: Promise<{ fromPage?: string }>
+}) {
   const { id } = await params;
+  const searchParams = await searchParamsPromise;
+  const fromPage = searchParams.fromPage;
 
   let news;
   try {
@@ -101,36 +109,60 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
       const rawTweetData = await getTweet(tweetId);
       
       if (rawTweetData) {
+        console.log(`[DEBUG] Fetching tweet ${tweetId} for news ${id}`);
+        // console.log(`[DEBUG] Raw entities:`, JSON.stringify(rawTweetData.entities, null, 2));
+
         // react-tweet 렌더링 에러 방지 (Deep Clone 및 필수 필드 보정)
-        // 1. 객체를 깊은 복사하여 불변성/Getter 이슈 방지
         const tweet = JSON.parse(JSON.stringify(rawTweetData));
 
-        // 2. entities 객체 및 배열 안정화
-        tweet.entities = tweet.entities || {};
-        const sanitizeArr = (arr: any) => Array.isArray(arr) ? arr.filter(i => i && i.indices) : [];
-        
-        tweet.entities.hashtags = sanitizeArr(tweet.entities.hashtags);
-        tweet.entities.user_mentions = sanitizeArr(tweet.entities.user_mentions);
-        tweet.entities.urls = sanitizeArr(tweet.entities.urls);
-        tweet.entities.symbols = sanitizeArr(tweet.entities.symbols);
-        
-        // media가 비어있으면 아예 속성을 제거해야 fixRange가 죽지 않음
-        const media = sanitizeArr(tweet.entities.media);
-        if (media.length > 0) {
-          tweet.entities.media = media;
-        } else {
-          delete tweet.entities.media;
-        }
+        // entities 및 extended_entities 보정
+        const sanitizeEntities = (entObj: any) => {
+          if (!entObj || typeof entObj !== 'object') return {};
+          const result = { ...entObj };
+          
+          // react-tweet에서 무조건 접근하는 키들
+          const requiredKeys = ['hashtags', 'user_mentions', 'urls', 'symbols', 'media'];
+          
+          requiredKeys.forEach(key => {
+            if (!result[key] || !Array.isArray(result[key])) {
+              result[key] = [];
+            } else {
+              result[key] = result[key].filter((item: any) => 
+                item && typeof item === 'object' && Array.isArray(item.indices)
+              );
+            }
+          });
 
-        // 3. 필수 필드 보정
-        if (!tweet.display_text_range) {
-          tweet.display_text_range = [0, (tweet.text || tweet.full_text || "").length];
-        }
-        if (!tweet.text && tweet.full_text) {
-          tweet.text = tweet.full_text;
+          // media 필드가 비어있을 경우 react-tweet의 특정 버전에서 인덱스 계산 에러를 유발할 수 있음
+          if (result.media && result.media.length === 0) {
+            delete result.media;
+          }
+          
+          return result;
+        };
+
+        const sanitizeTweet = (t: any) => {
+          if (!t) return;
+          t.entities = sanitizeEntities(t.entities);
+          if (t.extended_entities) {
+            t.extended_entities = sanitizeEntities(t.extended_entities);
+          }
+          // 필수 필드 보정
+          if (!t.display_text_range) {
+            t.display_text_range = [0, (t.text || t.full_text || "").length];
+          }
+          if (!t.text && t.full_text) {
+            t.text = t.full_text;
+          }
+        };
+
+        sanitizeTweet(tweet);
+        if (tweet.quoted_tweet) {
+          sanitizeTweet(tweet.quoted_tweet);
         }
 
         tweetData = tweet;
+        // console.log(`[DEBUG] Sanitized entities:`, JSON.stringify(tweetData.entities, null, 2));
       }
     } catch (e) {
       console.error('Failed to fetch tweet data:', e);
@@ -138,19 +170,21 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
-      <div className="sticky top-16 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
-        <div className="container mx-auto px-4 h-12 flex items-center">
-          <Link href="/" className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red dark:hover:text-volt transition-colors">
-            <ChevronLeft size={16} />
-            목록으로 돌아가기
-          </Link>
-        </div>
+    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300 relative">
+      {/* Floating Back Button */}
+      <div className="fixed top-24 left-4 sm:left-8 z-50">
+        <Link 
+          href={fromPage ? `/?page=${fromPage}#news-${id}` : `/#news-${id}`}
+          className="flex items-center gap-2 px-5 py-3 bg-white/90 dark:bg-[#111318]/90 backdrop-blur-md border border-gray-200 dark:border-volt/20 text-gray-700 dark:text-gray-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-black/50 hover:bg-aleti-red hover:text-white dark:hover:bg-volt dark:hover:text-black transition-all duration-300 font-bold group"
+        >
+          <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-kanit">목록으로</span>
+        </Link>
       </div>
 
-      <article className="container mx-auto px-4 pt-8 sm:pt-12 max-w-3xl">
+      <article className="container mx-auto px-4 pt-12 sm:pt-20 max-w-3xl">
         <header className="mb-8 sm:mb-10">
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 sm:mb-8 tracking-tight">
+          <h1 className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] mb-6 sm:mb-8 tracking-tight">
             {news.titleKo || '제목 없음'}
           </h1>
 

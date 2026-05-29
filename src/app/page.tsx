@@ -79,7 +79,7 @@ export default async function Home({
             <>
               <div className="flex flex-col min-h-[600px] -mt-10">
                 {newsList.map((news) => (
-                  <NewsCard key={news.id} news={news} showImage={true} />
+                  <NewsCard key={news.id} news={news} showImage={true} fromPage={currentPage} />
                 ))}
               </div>
 

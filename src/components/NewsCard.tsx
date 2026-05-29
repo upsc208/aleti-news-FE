@@ -6,9 +6,10 @@ import { NewsListResponse } from '@/client/types.gen';
 interface NewsCardProps {
   news: NewsListResponse;
   showImage?: boolean;
+  fromPage?: number;
 }
 
-export default function NewsCard({ news, showImage = false }: NewsCardProps) {
+export default function NewsCard({ news, showImage = false, fromPage }: NewsCardProps) {
   const getArticleTypeText = (type: string) => {
     switch (type) {
       case 'WEB_ARTICLE': return '웹 기사';
@@ -22,7 +23,8 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
 
   return (
     <Link
-      href={`/news/${news.id}`}
+      href={`/news/${news.id}${fromPage ? `?fromPage=${fromPage}` : ''}`}
+      id={`news-${news.id}`}
       className="group relative flex flex-col bg-white dark:bg-[#111318] rounded-3xl border border-gray-100 dark:border-white/[0.04] shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-black/40 hover:-translate-y-1 transition-all duration-300 overflow-hidden mb-6 sm:mb-8 dark-card-pattern volt-hover-glow"
     >
       {/* 상단 액센트 라인 */}
@@ -78,7 +80,7 @@ export default function NewsCard({ news, showImage = false }: NewsCardProps) {
             </div>
           </div>
 
-          <h3 className="mb-4 text-xl sm:text-2xl lg:text-4xl font-bebas text-gray-950 dark:text-gray-100 group-hover:text-aleti-red dark:group-hover:text-volt transition-colors line-clamp-2 leading-[1.1] tracking-normal">
+          <h3 className="mb-4 text-xl sm:text-2xl lg:text-[1.65rem] font-bold text-gray-950 dark:text-gray-100 group-hover:text-aleti-red dark:group-hover:text-volt transition-colors line-clamp-2 leading-[1.4] tracking-tight">
             {news.titleKo}
           </h3>
 

@@ -79,7 +79,7 @@ export default function RootLayout({
       lang="ko"
       className={`${bebasNeue.variable} ${kanit.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-900 dark:text-gray-100 font-kanit overflow-x-hidden transition-colors duration-300 dark-geo-pattern">
+      <body className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-950 dark:text-gray-100 font-sans overflow-x-hidden transition-colors duration-300 dark-geo-pattern antialiased">
         <ThemeProvider>
           <Header />
           <main className="flex-grow">
