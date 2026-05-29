@@ -170,19 +170,21 @@ export default async function NewsDetailPage({
   }
 
   return (
-    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300 relative">
-      {/* Floating Back Button */}
-      <div className="fixed top-24 left-4 sm:left-8 z-50">
-        <Link 
-          href={fromPage ? `/?page=${fromPage}#news-${id}` : `/#news-${id}`}
-          className="flex items-center gap-2 px-5 py-3 bg-white/90 dark:bg-[#111318]/90 backdrop-blur-md border border-gray-200 dark:border-volt/20 text-gray-700 dark:text-gray-200 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-black/50 hover:bg-aleti-red hover:text-white dark:hover:bg-volt dark:hover:text-black transition-all duration-300 font-bold group"
-        >
-          <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-kanit">목록으로</span>
-        </Link>
+    <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
+      {/* Sticky Back Bar */}
+      <div className="sticky top-16 sm:top-20 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
+        <div className="container mx-auto px-4 h-12 flex items-center">
+          <Link 
+            href={fromPage ? `/?page=${fromPage}#news-${id}` : `/#news-${id}`}
+            className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red dark:hover:text-volt transition-colors"
+          >
+            <ChevronLeft size={16} />
+            목록으로 돌아가기
+          </Link>
+        </div>
       </div>
 
-      <article className="container mx-auto px-4 pt-12 sm:pt-20 max-w-3xl">
+      <article className="container mx-auto px-4 pt-8 sm:pt-12 max-w-3xl">
         <header className="mb-8 sm:mb-10">
           <h1 className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white leading-[1.15] mb-6 sm:mb-8 tracking-tight">
             {news.titleKo || '제목 없음'}
