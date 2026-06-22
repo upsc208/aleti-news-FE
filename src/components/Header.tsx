@@ -1,23 +1,51 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
 import Link from 'next/link';
 import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
 import TributeBadge from './Header/TributeBadge';
 import { useTheme } from './ThemeProvider';
-import GriziImg from '@/app/AG.png';
-import GriziImgDark from '@/app/AG2.png';
+
+const KoreaTourIcon = () => (
+  <svg viewBox="0 0 100 100" className="w-10 h-10 select-none" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Background Shield (Filled) */}
+    <path 
+      d="M 20,12 L 80,12 C 83,12 85,14 85,17 L 85,48 C 85,73 50,88 50,93 C 50,88 15,73 15,48 L 15,17 C 15,14 17,12 20,12 Z" 
+      fill="currentColor" 
+      className="text-gray-50 dark:text-[#0f111a]" 
+    />
+
+    {/* Subtle internal pinstripes on the shield background to represent Atleti's stripes */}
+    <g opacity="0.12">
+      <line x1="32" y1="12" x2="32" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
+      <line x1="50" y1="12" x2="50" y2="90" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
+      <line x1="68" y1="12" x2="68" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
+    </g>
+
+    {/* Centered Taegeuk Emblem (Comfortably smaller and rotated to Korean flag standard) */}
+    <g transform="rotate(-34 50 48)">
+      {/* Top Half Red */}
+      <path d="M 50,28 A 20,20 0 0,1 50,68 A 10,10 0 0,1 50,48 A 10,10 0 0,0 50,28 Z" fill="#E02020" />
+      {/* Bottom Half Blue */}
+      <path d="M 50,68 A 20,20 0 0,1 50,28 A 10,10 0 0,1 50,48 A 10,10 0 0,0 50,68 Z" fill="#00349F" />
+    </g>
+
+    {/* Border around the Taegeuk circle to make it pop like a high-end enamel badge */}
+    <circle cx="50" cy="48" r="20" stroke="currentColor" strokeWidth="2" className="text-white dark:text-[#0f111a]" />
+
+    {/* Outer Shield Border (Always rendered on top) */}
+    <path 
+      d="M 20,12 L 80,12 C 83,12 85,14 85,17 L 85,48 C 85,73 50,88 50,93 C 50,88 15,73 15,48 L 15,17 C 15,14 17,12 20,12 Z" 
+      stroke="currentColor" 
+      strokeWidth="5.5" 
+      strokeLinejoin="round" 
+      className="text-aleti-red dark:text-volt" 
+    />
+  </svg>
+);
 
 export default function Header() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const activeGriziImg = mounted && theme === 'dark' ? GriziImgDark : GriziImg;
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#0d0e14] border-b border-gray-200 dark:border-volt/8 shadow-sm dark:shadow-none overflow-x-hidden transition-colors duration-300">
       {/* Red & White Stripe Decoration at the top */}
@@ -47,14 +75,12 @@ export default function Header() {
           <div className="md:hidden scale-90 xs:scale-100 origin-right transition-transform">
             <TributeBadge
               key={theme}
-              image={activeGriziImg}
-              name="Grizi"
-              subText="Gracias"
-              number="7"
+              icon={<KoreaTourIcon />}
+              name="내한을 환영합니다!"
+              subText="AT 마드리드의"
               stats={[
-                { label: '출전', value: '501' },
-                { label: '골', value: '212' },
-                { label: '도움', value: '101' }
+                { label: 'VS', value: '맨시티' },
+                { label: '일정', value: '8월 9일(일)' }
               ]}
             />
           </div>
@@ -101,14 +127,12 @@ export default function Header() {
         <div className="hidden md:flex md:flex-1 justify-end shrink-0 ml-4">
           <TributeBadge
             key={theme}
-            image={activeGriziImg}
-            name="Grizi"
-            subText="Gracias"
-            number="7"
+            icon={<KoreaTourIcon />}
+            name="내한을 환영합니다!"
+            subText="AT 마드리드의"
             stats={[
-              { label: '출전', value: '501' },
-              { label: '골', value: '212' },
-              { label: '도움', value: '101' }
+              { label: 'VS', value: '맨시티' },
+              { label: '일정', value: '8월 9일(일)' }
             ]}
           />
         </div>

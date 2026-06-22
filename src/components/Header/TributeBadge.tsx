@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image, { StaticImageData } from 'next/image';
 
 interface TributeBadgeProps {
-  image: StaticImageData | string;
+  image?: StaticImageData | string;
+  icon?: React.ReactNode;
   name: string;
   subText: string;
   number?: string;
@@ -14,7 +15,7 @@ interface TributeBadgeProps {
   }[];
 }
 
-export default function TributeBadge({ image, name, subText, number, stats }: TributeBadgeProps) {
+export default function TributeBadge({ image, icon, name, subText, number, stats }: TributeBadgeProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleFlip = () => {
@@ -27,26 +28,30 @@ export default function TributeBadge({ image, name, subText, number, stats }: Tr
 
   return (
     <div
-      className="relative group cursor-pointer w-40 md:w-40 h-12 md:h-14 [perspective:1000px] shrink-0"
+      className="relative group cursor-pointer w-44 md:w-48 h-12 md:h-14 [perspective:1000px] shrink-0"
       onClick={handleFlip}
     >
       <div className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''} md:group-hover:[transform:rotateY(180deg)] md:group-hover:!rotate-y-180`}>
         {/* Front: Image + Text */}
         <div className="absolute inset-0 [backface-visibility:hidden] flex items-center gap-3 bg-white dark:bg-[#0a0b10] px-3 rounded-2xl border border-gray-100 dark:border-volt/10 shadow-sm transition-all md:group-hover:border-aleti-red/20 dark:md:group-hover:border-volt/15">
-          <div className="relative h-11 w-11 transition-all duration-500 shrink-0">
-            <Image
-              src={image}
-              alt={name}
-              fill
-              className="object-contain"
-              unoptimized
-            />
+          <div className="relative h-11 w-11 transition-all duration-500 shrink-0 flex items-center justify-center">
+            {icon ? (
+              icon
+            ) : image ? (
+              <Image
+                src={image}
+                alt={name}
+                fill
+                className="object-contain"
+                unoptimized
+              />
+            ) : null}
           </div>
           <div className="flex flex-col">
-            <span className="text-[13px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none md:group-hover:text-aleti-red dark:md:group-hover:text-volt transition-colors">
+            <span className="text-[11px] md:text-[12px] font-bold text-aleti-red dark:text-volt uppercase tracking-[0.2em] leading-none transition-colors">
               {subText}
             </span>
-            <span className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mt-1 whitespace-nowrap">
+            <span className="text-[13px] md:text-[14px] font-black text-gray-900 dark:text-white tracking-tight leading-none mt-1.5 whitespace-nowrap">
               {name} {number && <span className="text-blue-700 dark:text-volt italic">#{number}</span>}
             </span>
           </div>
