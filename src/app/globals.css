@@ -39,6 +39,11 @@
   --text-muted: #475569;
 }
 
+@theme {
+  /* 코드 전반에서 쓰는 xs: 변형 정의 (Tailwind v4 기본에는 없음) */
+  --breakpoint-xs: 30rem;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -67,6 +72,12 @@ html, body {
   background-color: var(--background);
   color: var(--foreground);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 헤더 스트라이프 접힘/펼침으로 헤더 높이가 변할 때 브라우저 스크롤 앵커링이
+   scrollY를 자동 보정하면서 진동(피드백 루프)이 생기는 것을 차단 */
+html {
+  overflow-anchor: none;
 }
 
 body {

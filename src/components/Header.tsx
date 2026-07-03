@@ -49,7 +49,13 @@ export default function Header() {
   const [atTop, setAtTop] = useState(true);
 
   useEffect(() => {
-    const onScroll = () => setAtTop(window.scrollY < 10);
+    // 이중 임계값(히스테리시스): 스트라이프가 펼쳐지며 헤더 높이가 바뀔 때
+    // 스크롤 앵커링이 scrollY를 보정해도 반대 조건에 걸려 진동하지 않도록,
+    // 펼침(<2px)과 접힘(>40px) 기준을 분리하고 그 사이에서는 상태를 유지한다.
+    const onScroll = () => {
+      const y = window.scrollY;
+      setAtTop((prev) => (y < 2 ? true : y > 40 ? false : prev));
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
