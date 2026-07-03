@@ -5,8 +5,8 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
-  --aleti-red: #E2322A;
-  --aleti-navy: #004595;
+  --aleti-red: #BF0921;
+  --aleti-navy: #272E75;
   --aleti-white: #FFFFFF;
   --gemini-indigo: #4F46E5;
   --gemini-purple: #9333EA;
@@ -205,6 +205,28 @@ html {
 /* Subtle volt text shadow for headings in dark mode */
 .dark .volt-text-glow {
   text-shadow: 0 0 30px rgba(204, 255, 0, 0.1);
+}
+
+/* ===================================================
+   Header stripe — 26/27 Home Kit
+   75px red / 75px white stripes. Each red stripe is
+   edged with a thin red + white pinstripe pair; red
+   stripes alternate between a rising dark-red trident
+   and three thin dark-red lines. Navy collar line at
+   the bottom. SVG colors mirror --aleti-red / #8c0517
+   / #f8f4f3 (data-URI can't read CSS variables)
+   =================================================== */
+.header-stripe-kit {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='28' viewBox='0 0 300 28'%3E%3Crect width='300' height='28' fill='%23F8F4F3'/%3E%3Crect x='75' width='75' height='28' fill='%23BF0921'/%3E%3Crect x='225' width='75' height='28' fill='%23BF0921'/%3E%3Cg fill='%23F8F4F3'%3E%3Crect x='78' width='3' height='28'/%3E%3Crect x='144' width='3' height='28'/%3E%3Crect x='228' width='3' height='28'/%3E%3Crect x='294' width='3' height='28'/%3E%3C/g%3E%3Cg stroke='%238C0517' stroke-width='2' fill='none' stroke-linecap='round'%3E%3Cpath d='M112.5 28V8.6'/%3E%3Cpath d='M112.5 19c0-3-4.5-3-4.5-6v-4'/%3E%3Cpath d='M112.5 19c0-3 4.5-3 4.5-6v-4'/%3E%3C/g%3E%3Cpath d='M110.1 9.4h4.8L112.5 3.6z' fill='%238C0517'/%3E%3Cg stroke='%238C0517' stroke-width='1.5'%3E%3Cpath d='M256.5 0v28'/%3E%3Cpath d='M262.5 0v28'/%3E%3Cpath d='M268.5 0v28'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 300px 28px;
+  background-repeat: repeat-x;
+  background-position: right top;
+  box-shadow: inset 0 -2px 0 var(--aleti-navy);
+}
+
+.dark .header-stripe-kit {
+  box-shadow: none;
 }
 
 /* Header stripe decoration in dark mode */

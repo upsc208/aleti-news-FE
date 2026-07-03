@@ -21,7 +21,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
 
   if (!recentMatch) {
     return (
-      <div className="bg-[#b92629] dark:bg-[#111318] dark:border dark:border-volt/10 text-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col items-center justify-center min-h-[250px] border border-white/10 dark-card-pattern">
+      <div className="bg-aleti-red dark:bg-[#111318] dark:border dark:border-volt/10 text-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col items-center justify-center min-h-[250px] border border-white/10 dark-card-pattern">
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="scale-[2.5] mb-2 opacity-50 animate-bounce">
             <PawPrint />
@@ -42,7 +42,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches }: MatchR
   const awayScorers = sortedScorers.filter(s => !s.isHome);
 
   return (
-    <div className="bg-[#b92629] dark:bg-[#111318] text-white rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col overflow-hidden border border-white/10 dark:border-volt/10 transition-all duration-500 dark-card-pattern">
+    <div className="bg-aleti-red dark:bg-[#111318] text-white rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col overflow-hidden border border-white/10 dark:border-volt/10 transition-all duration-500 dark-card-pattern">
       <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8 md:gap-12 min-h-[250px]">
         {/* Left side: Match Result (70%) */}
         <div className="w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-white/20">

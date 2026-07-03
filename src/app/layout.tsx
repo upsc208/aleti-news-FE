@@ -87,7 +87,7 @@ export default function RootLayout({
           </main>
           <Analytics />
           <SpeedInsights />
-          <footer className="bg-blue-600 dark:bg-[#0d0e14] text-white py-12 dark:border-t dark:border-volt/10 relative z-10">
+          <footer className="bg-aleti-navy dark:bg-[#0d0e14] text-white py-12 dark:border-t dark:border-volt/10 relative z-10">
             <div className="container mx-auto px-4">
               <div className="flex flex-col items-center justify-center space-y-6">
                 <div className="text-center">

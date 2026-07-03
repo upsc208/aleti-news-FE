@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
 import TributeBadge from './Header/TributeBadge';
@@ -15,10 +16,10 @@ const KoreaTourIcon = () => (
     />
 
     {/* Subtle internal pinstripes on the shield background to represent Atleti's stripes */}
-    <g opacity="0.12">
-      <line x1="32" y1="12" x2="32" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
-      <line x1="50" y1="12" x2="50" y2="90" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
-      <line x1="68" y1="12" x2="68" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-gray-500 dark:text-volt" />
+    <g opacity="0.18">
+      <line x1="32" y1="12" x2="32" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-aleti-navy dark:text-volt" />
+      <line x1="50" y1="12" x2="50" y2="90" stroke="currentColor" strokeWidth="2.5" className="text-aleti-navy dark:text-volt" />
+      <line x1="68" y1="12" x2="68" y2="78" stroke="currentColor" strokeWidth="2.5" className="text-aleti-navy dark:text-volt" />
     </g>
 
     {/* Centered Taegeuk Emblem (Comfortably smaller and rotated to Korean flag standard) */}
@@ -45,16 +46,41 @@ const KoreaTourIcon = () => (
 
 export default function Header() {
   const { theme } = useTheme();
+  const [atTop, setAtTop] = useState(true);
+
+  useEffect(() => {
+    const onScroll = () => setAtTop(window.scrollY < 10);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // 뉴스 클릭 시 검색바(#news-section)가 sticky 헤더 바로 아래 오도록 스크롤.
+  // 홈이 아닌 페이지에서는 기본 내비게이션(/#news-section)에 맡긴다.
+  const scrollToNews = (e: React.MouseEvent) => {
+    const target = document.getElementById('news-section');
+    if (!target) return;
+    e.preventDefault();
+    const header = document.querySelector('header');
+    // 스크롤을 내리면 상단 유니폼 스트라이프(28px)가 접히므로,
+    // 현재 펼쳐져 있다면 그만큼 헤더 높이에서 빼고 계산한다.
+    const stripe = header?.querySelector('.header-stripe-kit');
+    const collapsedHeaderHeight =
+      (header?.offsetHeight ?? 0) - ((stripe as HTMLElement | null)?.offsetHeight ?? 0);
+    const top =
+      target.getBoundingClientRect().top + window.scrollY - collapsedHeaderHeight - 12;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white dark:bg-[#0d0e14] border-b border-gray-200 dark:border-volt/8 shadow-sm dark:shadow-none overflow-x-hidden transition-colors duration-300">
-      {/* Red & White Stripe Decoration at the top */}
-      <div className="absolute top-0 left-0 w-full h-3 bg-[repeating-linear-gradient(to_right,#b92629,#b92629_75px,#ffffff_75px,#ffffff_150px)] dark-header-stripe"></div>
-      <div className="max-w-[1920px] mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-2 sm:px-6 lg:px-12 py-4 md:py-0 mt-1.5 gap-y-4 md:gap-y-0">
+      {/* 26/27 Home Kit stripe with trident pinstripes — collapses once the page is scrolled */}
+      <div className={`w-full header-stripe-kit dark-header-stripe overflow-hidden transition-all duration-300 ease-out ${atTop ? 'h-7 opacity-100' : 'h-0 opacity-0'}`}></div>
+      <div className="max-w-[1920px] mx-auto flex flex-col md:flex-row md:h-20 items-center justify-between px-2 sm:px-6 lg:px-12 py-4 md:py-0 gap-y-4 md:gap-y-0">
         {/* Top Section: Logo & Tribute (Mobile) / Logo only (Desktop) */}
         <div className="flex w-full items-center justify-between md:justify-start md:flex-1 gap-2 sm:gap-4 shrink-0">
           <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group shrink-0">
-            <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-aleti-red to-red-600 dark:from-[#111318] dark:to-black dark:border dark:border-volt/20 shadow-lg group-hover:scale-105 transition-transform shrink-0">
+            <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-aleti-red to-[#8c0517] dark:from-[#111318] dark:to-black dark:border dark:border-volt/20 shadow-lg group-hover:scale-105 transition-transform shrink-0">
               <span className="text-[10px] sm:text-sm font-black text-white dark:text-volt italic">KR</span>
               <div className="absolute -top-1 -right-1 flex h-3 w-3 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-gemini-purple dark:bg-volt text-white dark:text-black shadow-sm">
                 <Sparkles size={6} className="sm:hidden" />
@@ -88,7 +114,7 @@ export default function Header() {
 
         {/* Center Section: Navigation */}
         <nav className="flex items-center justify-center gap-x-2 min-[350px]:gap-x-4 sm:gap-x-6 lg:gap-x-8 xl:gap-x-12 md:flex-1 md:justify-center gap-y-2 text-[11px] min-[350px]:text-[13px] sm:text-sm lg:text-base font-extrabold w-full md:w-auto mt-4 md:mt-0 whitespace-nowrap overflow-visible px-1">
-          <Link href="/" className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-800 dark:text-gray-300 transition-all hover:text-aleti-red dark:hover:text-volt shrink-0">
+          <Link href="/#news-section" onClick={scrollToNews} className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-800 dark:text-gray-300 transition-all hover:text-aleti-red dark:hover:text-volt shrink-0">
             <div className="p-1 min-[350px]:p-1.5 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 dark:group-hover:bg-volt/5 transition-colors">
               <Newspaper className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5" />
             </div>

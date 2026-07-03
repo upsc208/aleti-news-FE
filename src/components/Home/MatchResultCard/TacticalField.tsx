@@ -40,7 +40,7 @@ export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps
               <div key={pIdx} className="flex flex-col items-center gap-0.5 sm:gap-1 group/player">
                 <div className={`w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[7px] sm:text-[9px] md:text-xs shadow-lg border sm:border-2 transition-transform group-hover/player:scale-110 ${
                   isThisAtleti
-                    ? 'bg-white border-[#b92629] text-black dark:bg-black dark:border-[#ccff00] dark:text-[#ccff00] dark:shadow-[#ccff00]/20' 
+                    ? 'bg-white border-aleti-red text-black dark:bg-black dark:border-[#ccff00] dark:text-[#ccff00] dark:shadow-[#ccff00]/20' 
                     : 'bg-white border-blue-600 text-black'
                 }`}>
                   {player.shirt}
@@ -60,14 +60,14 @@ export const TacticalField = ({ lineup, homeTeam, awayTeam }: TacticalFieldProps
     <div className="flex flex-col gap-4 w-full">
       <div className="flex justify-between items-center px-4 font-black uppercase tracking-tighter text-[10px] sm:text-sm md:text-base">
         <div className="flex items-center gap-1.5 text-white">
-          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiHome ? 'bg-[#b92629] dark:bg-volt' : 'bg-blue-600'}`}></span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiHome ? 'bg-aleti-red dark:bg-volt' : 'bg-blue-600'}`}></span>
           <span>{homeTeam}</span>
           <span className="opacity-60">({lineup.home.formation})</span>
         </div>
         <div className="flex items-center gap-1.5 text-white">
           <span className="opacity-60">({lineup.away.formation})</span>
           <span>{awayTeam}</span>
-          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiAway ? 'bg-[#b92629] dark:bg-volt' : 'bg-blue-600'}`}></span>
+          <span className={`w-1.5 h-1.5 rounded-full ${isAtletiAway ? 'bg-aleti-red dark:bg-volt' : 'bg-blue-600'}`}></span>
         </div>
       </div>
 

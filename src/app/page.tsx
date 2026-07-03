@@ -69,7 +69,7 @@ export default async function Home({
           <MobileFilterDrawer allSources={sourcesData} />
         </div>
 
-        <div id="news-section" className="scroll-mt-24">
+        <div id="news-section" className="scroll-mt-36 md:scroll-mt-24">
           <SearchBar />
           <CategoryFilter />
         </div>
