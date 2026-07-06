@@ -8,7 +8,7 @@ interface UpcomingSectionProps {
 
 export const UpcomingSection = ({ upcomingMatches }: UpcomingSectionProps) => {
   return (
-    <div className="w-full md:w-[30%] flex flex-col pt-4 md:pt-0">
+    <div className="w-full flex flex-col pt-4 md:pt-0">
       <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 opacity-70">
         Upcoming Matches
       </div>

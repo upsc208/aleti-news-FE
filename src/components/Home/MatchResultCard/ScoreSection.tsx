@@ -17,9 +17,9 @@ export const ScoreSection = ({
   return (
     <>
       {/* Header */}
-      <div className="order-1 flex justify-between items-start text-[10px] md:text-xs font-bold tracking-widest uppercase mb-8 md:mb-6 gap-4">
-        <span className="shrink-0">Full Time</span>
-        <div className="flex flex-wrap justify-end gap-x-1.5 text-right">
+      <div className="order-1 flex justify-between items-center text-[10px] md:text-xs font-bold tracking-widest uppercase mb-8 md:mb-6 gap-4">
+        <span className="shrink-0 bg-white/10 text-white dark:bg-white/5 px-2 py-0.5 rounded border border-white/10 dark:border-volt/10 text-[9px] md:text-[10px] font-black tracking-wider">Full Time</span>
+        <div className="flex flex-wrap justify-end gap-x-1.5 text-right opacity-80">
           <span className="whitespace-nowrap">{formatKST(matchDate)}</span>
           <span className="opacity-40">&middot;</span>
           <span className="whitespace-nowrap">{tournament}</span>

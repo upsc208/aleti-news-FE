@@ -1,4 +1,4 @@
-import { getNews, getSources, getRecentMatch, getUpcomingMatches } from '@/client/sdk.gen';
+import { getNews, getSources, getRecentMatch, getUpcomingMatches, getHeadlines } from '@/client/sdk.gen';
 import NewsCard from '@/components/NewsCard';
 import SourceFilter from '@/components/Filters/SourceFilter';
 import MobileFilterDrawer from '@/components/Filters/MobileFilterDrawer';
@@ -28,10 +28,11 @@ export default async function Home({
   let sourcesData: any[] = [];
   let recentMatchData = null;
   let upcomingMatchesData: any[] = [];
+  let headlinesData: any[] = [];
 
   try {
     // Fetch news and sources in parallel
-    const [newsResponse, sourcesResponse, recentMatchResponse, upcomingMatchesResponse] = await Promise.all([
+    const [newsResponse, sourcesResponse, recentMatchResponse, upcomingMatchesResponse, headlinesResponse] = await Promise.all([
       getNews({
         query: {
           page: page,
@@ -44,13 +45,15 @@ export default async function Home({
       } as any),
       getSources(),
       getRecentMatch(),
-      getUpcomingMatches()
+      getUpcomingMatches(),
+      getHeadlines()
     ]);
 
     newsData = newsResponse.data;
     sourcesData = sourcesResponse.data || [];
     recentMatchData = recentMatchResponse.data || null;
     upcomingMatchesData = upcomingMatchesResponse.data || [];
+    headlinesData = headlinesResponse.data || [];
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }
@@ -64,7 +67,11 @@ export default async function Home({
       <section className="container mx-auto px-6 lg:px-12 pt-20 pb-24">
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 dark:border-volt/5 pb-10">
           <div className="w-full">
-            <MatchResultCard recentMatch={recentMatchData} upcomingMatches={upcomingMatchesData} />
+            <MatchResultCard 
+              recentMatch={recentMatchData} 
+              upcomingMatches={upcomingMatchesData} 
+              headlines={headlinesData} 
+            />
           </div>
           <MobileFilterDrawer allSources={sourcesData} />
         </div>
