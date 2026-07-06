@@ -8,7 +8,7 @@ export default defineConfig({
         '@hey-api/sdk',
         {
             name: '@hey-api/client-fetch',
-            baseUrl: 'http://api.atleti.kr',
+            baseUrl: 'https://api.atleti.kr',
             runtimeConfigPath: './src/client-config',
         },
     ],

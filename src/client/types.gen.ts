@@ -4,16 +4,30 @@ export type ClientOptions = {
     baseUrl: 'https://api.atleti.kr' | (string & {});
 };
 
+export type PlayerRatingRequest = {
+    playerName: string;
+    score: number;
+};
+
+export type PlayerRatingResponse = {
+    playerName: string;
+    shirt?: string;
+    averageScore: number;
+    voteCount: number;
+    myScore?: number;
+};
+
 export type NewsListResponse = {
     id: number;
     titleKo?: string;
     sourceName: string;
     authorName?: string;
     publishedAt?: string;
-    articleType: 'WEB_ARTICLE' | 'SNS_POST';
+    articleType: 'WEB_ARTICLE' | 'SNS_POST' | 'YOUTUBE';
     summaryKo?: string;
     category?: string;
     imageUrl?: string;
+    viewCount: number;
 };
 
 export type PageNewsListResponse = {
@@ -55,8 +69,9 @@ export type NewsDetailResponse = {
     authorName?: string;
     originalUrl: string;
     publishedAt?: string;
-    articleType: 'WEB_ARTICLE' | 'SNS_POST';
+    articleType: 'WEB_ARTICLE' | 'SNS_POST' | 'YOUTUBE';
     category?: string;
+    viewCount: number;
 };
 
 export type NewsSource = {
@@ -162,6 +177,12 @@ export type TeamLineupInfo = {
     starters: Array<PlayerInfo>;
 };
 
+export type HeadlineResponse = {
+    id: number;
+    content: string;
+    createdAt: string;
+};
+
 export type NewsSourceWritable = {
     id?: number;
     internalId: string;
@@ -187,6 +208,42 @@ export type TriggerPipelineResponses = {
     200: unknown;
 };
 
+export type GetRatingsData = {
+    body?: never;
+    path: {
+        matchId: string;
+    };
+    query?: never;
+    url: '/api/matches/{matchId}/ratings';
+};
+
+export type GetRatingsResponses = {
+    /**
+     * OK
+     */
+    200: Array<PlayerRatingResponse>;
+};
+
+export type GetRatingsResponse = GetRatingsResponses[keyof GetRatingsResponses];
+
+export type SubmitRatingData = {
+    body: PlayerRatingRequest;
+    path: {
+        matchId: string;
+    };
+    query?: never;
+    url: '/api/matches/{matchId}/ratings';
+};
+
+export type SubmitRatingResponses = {
+    /**
+     * OK
+     */
+    200: PlayerRatingResponse;
+};
+
+export type SubmitRatingResponse = SubmitRatingResponses[keyof SubmitRatingResponses];
+
 export type GetNewsData = {
     body?: never;
     path?: never;
@@ -196,6 +253,7 @@ export type GetNewsData = {
         sources?: Array<string>;
         category?: string;
         search?: string;
+        isHyped?: boolean;
     };
     url: '/api/news';
 };
@@ -309,3 +367,53 @@ export type GetRecentMatchResponses = {
 };
 
 export type GetRecentMatchResponse = GetRecentMatchResponses[keyof GetRecentMatchResponses];
+
+export type GetHeadlinesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/headlines';
+};
+
+export type GetHeadlinesResponses = {
+    /**
+     * OK
+     */
+    200: Array<HeadlineResponse>;
+};
+
+export type GetHeadlinesResponse = GetHeadlinesResponses[keyof GetHeadlinesResponses];
+
+export type TriggerYoutubePipelineData = {
+    body?: never;
+    path?: never;
+    query?: {
+        channelId?: string;
+    };
+    url: '/api/admin/youtube/trigger';
+};
+
+export type TriggerYoutubePipelineResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type TriggerYoutubePipelineResponse = TriggerYoutubePipelineResponses[keyof TriggerYoutubePipelineResponses];
+
+export type TriggerHeadlinePipelineData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/headline/trigger';
+};
+
+export type TriggerHeadlinePipelineResponses = {
+    /**
+     * OK
+     */
+    200: string;
+};
+
+export type TriggerHeadlinePipelineResponse = TriggerHeadlinePipelineResponses[keyof TriggerHeadlinePipelineResponses];

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, SyncMatchesData, SyncMatchesResponses, TriggerPipelineData, TriggerPipelineResponses } from './types.gen';
+import type { GetHeadlinesData, GetHeadlinesResponses, GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRatingsData, GetRatingsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, SubmitRatingData, SubmitRatingResponses, SyncMatchesData, SyncMatchesResponses, TriggerHeadlinePipelineData, TriggerHeadlinePipelineResponses, TriggerPipelineData, TriggerPipelineResponses, TriggerYoutubePipelineData, TriggerYoutubePipelineResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -24,6 +24,27 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  * 뉴스 수집 파이프라인을 즉시 실행합니다.
  */
 export const triggerPipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerPipelineData, ThrowOnError>) => (options?.client ?? client).post<TriggerPipelineResponses, unknown, ThrowOnError>({ url: '/api/news/trigger', ...options });
+
+/**
+ * 선수 평점 목록 조회
+ *
+ * 해당 경기에서 뛴 아틀레티코 선수별 평균 평점, 투표수, 그리고 요청 IP가 준 점수(myScore)를 반환합니다.
+ */
+export const getRatings = <ThrowOnError extends boolean = false>(options: Options<GetRatingsData, ThrowOnError>) => (options.client ?? client).get<GetRatingsResponses, unknown, ThrowOnError>({ url: '/api/matches/{matchId}/ratings', ...options });
+
+/**
+ * 선수 평점 등록/수정
+ *
+ * 0~5점으로 선수 평점을 남깁니다. 같은 IP가 다시 보내면 점수가 수정됩니다. 응답으로 갱신된 평균/투표수를 즉시 돌려줍니다.
+ */
+export const submitRating = <ThrowOnError extends boolean = false>(options: Options<SubmitRatingData, ThrowOnError>) => (options.client ?? client).post<SubmitRatingResponses, unknown, ThrowOnError>({
+    url: '/api/matches/{matchId}/ratings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * 뉴스 목록 조회 (필터링 및 검색 포함)
@@ -73,3 +94,14 @@ export const syncMatches = <ThrowOnError extends boolean = false>(options?: Opti
  * 가장 최근 종료된 경기 1개의 상세 결과를 가져옵니다.
  */
 export const getRecentMatch = <ThrowOnError extends boolean = false>(options?: Options<GetRecentMatchData, ThrowOnError>) => (options?.client ?? client).get<GetRecentMatchResponses, unknown, ThrowOnError>({ url: '/api/matches/recent', ...options });
+
+/**
+ * 헤드라인 목록 조회
+ *
+ * 최신순으로 현재 노출 중인 헤드라인(최대 5개)을 가져옵니다.
+ */
+export const getHeadlines = <ThrowOnError extends boolean = false>(options?: Options<GetHeadlinesData, ThrowOnError>) => (options?.client ?? client).get<GetHeadlinesResponses, unknown, ThrowOnError>({ url: '/api/headlines', ...options });
+
+export const triggerYoutubePipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerYoutubePipelineData, ThrowOnError>) => (options?.client ?? client).get<TriggerYoutubePipelineResponses, unknown, ThrowOnError>({ url: '/api/admin/youtube/trigger', ...options });
+
+export const triggerHeadlinePipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerHeadlinePipelineData, ThrowOnError>) => (options?.client ?? client).get<TriggerHeadlinePipelineResponses, unknown, ThrowOnError>({ url: '/api/admin/headline/trigger', ...options });
