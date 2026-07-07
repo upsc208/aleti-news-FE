@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Star, Award, Loader2 } from 'lucide-react';
+import { Star, Award, Loader2, X, ChevronRight } from 'lucide-react';
 import { getRatings, submitRating } from '@/client/sdk.gen';
 import type { RecentMatch, PlayerRatingResponse } from '@/client/types.gen';
 
@@ -15,6 +15,7 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch ratings from backend and merge with match lineup
   const fetchAndMergeRatings = async () => {
@@ -83,8 +84,24 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
       fetchAndMergeRatings();
       setUnsavedRatings({});
       setSubmitSuccess(false);
+      setIsModalOpen(false);
     }
   }, [recentMatch?.matchId]);
+
+  // Lock background scroll & allow ESC-to-close while the mobile modal is open
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isModalOpen]);
 
   // Handle rating click
   const handleRate = (playerName: string, score: number) => {
@@ -135,145 +152,248 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
     }
   };
 
-  // Interactive Star component supporting half stars
-  const StarRating = ({ 
-    playerName, 
-    value = 0 
-  }: { 
-    playerName: string; 
+  // Interactive star rating: large touch targets, half-star support, hover preview
+  const StarRating = ({
+    playerName,
+    value = 0,
+  }: {
+    playerName: string;
     value?: number;
   }) => {
+    const [hoverValue, setHoverValue] = useState<number | null>(null);
+    const display = hoverValue ?? value;
+    // Big on mobile (panel is full-width) and lg; a touch smaller on the tight md column
+    const starSize = 'w-8 h-8 md:w-6 md:h-6 lg:w-7 lg:h-7';
+
     return (
-      <div className="flex items-center gap-0.5">
+      <div
+        className="flex items-center w-full select-none"
+        onMouseLeave={() => setHoverValue(null)}
+      >
         {[1, 2, 3, 4, 5].map((starIdx) => {
-          const isFull = value >= starIdx;
-          const isHalf = value === starIdx - 0.5;
+          const isFull = display >= starIdx;
+          const isHalf = display >= starIdx - 0.5 && display < starIdx;
 
           return (
-            <div key={starIdx} className="relative w-4 h-4 cursor-pointer">
-              {/* Visual stars layered using clip-path for half star */}
-              {isFull ? (
-                <Star className="absolute inset-0 w-4 h-4 text-volt fill-volt" />
-              ) : isHalf ? (
-                <div className="relative w-4 h-4">
-                  <Star className="absolute inset-0 w-4 h-4 text-white/20 fill-transparent" />
-                  <div className="absolute inset-0 w-1/2 overflow-hidden">
-                    <Star className="w-4 h-4 text-volt fill-volt" />
-                  </div>
-                </div>
-              ) : (
-                <Star className="absolute inset-0 w-4 h-4 text-white/20 fill-transparent" />
-              )}
+            <div
+              key={starIdx}
+              className="relative flex-1 h-11 flex items-center justify-center"
+            >
+              {/* Visual star — clicks pass through to the zones beneath */}
+              <div className={`relative ${starSize} pointer-events-none`}>
+                {isFull ? (
+                  <Star className={`absolute inset-0 ${starSize} text-volt fill-volt`} />
+                ) : isHalf ? (
+                  <>
+                    <Star className={`absolute inset-0 ${starSize} text-white/20 fill-white/[0.06]`} />
+                    <div className="absolute inset-0 w-1/2 overflow-hidden">
+                      <Star className={`${starSize} text-volt fill-volt`} />
+                    </div>
+                  </>
+                ) : (
+                  <Star className={`absolute inset-0 ${starSize} text-white/20 fill-white/[0.06]`} />
+                )}
+              </div>
 
-              {/* Click detection zones */}
-              {/* Left half zone: rate (idx - 0.5) */}
-              <div 
-                className="absolute left-0 top-0 w-1/2 h-full z-10" 
+              {/* Left half → X.5 point (full-cell hit area, min 44px tall) */}
+              <button
+                type="button"
+                aria-label={`${playerName} ${starIdx - 0.5}점`}
+                className="absolute inset-y-0 left-0 w-1/2 z-10"
+                onMouseEnter={() => setHoverValue(starIdx - 0.5)}
                 onClick={() => handleRate(playerName, starIdx - 0.5)}
-                title={`${starIdx - 0.5}점`}
               />
-              {/* Right half zone: rate (idx) */}
-              <div 
-                className="absolute right-0 top-0 w-1/2 h-full z-10" 
+              {/* Right half → whole point */}
+              <button
+                type="button"
+                aria-label={`${playerName} ${starIdx}점`}
+                className="absolute inset-y-0 right-0 w-1/2 z-10"
+                onMouseEnter={() => setHoverValue(starIdx)}
                 onClick={() => handleRate(playerName, starIdx)}
-                title={`${starIdx}점`}
               />
             </div>
           );
         })}
+
+        {/* Selected score readout */}
+        <span className="ml-1.5 w-7 shrink-0 text-right text-sm font-black tabular-nums text-volt">
+          {display > 0 ? display.toFixed(1) : ''}
+        </span>
       </div>
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-full min-h-[220px] flex flex-col items-center justify-center text-white/50">
-        <Loader2 className="w-8 h-8 animate-spin text-white mb-2" />
-        <span className="text-xs font-semibold tracking-wider uppercase">Loading squad...</span>
-      </div>
-    );
-  }
-
-  // Check if all players in ratings have a score (either already rated or currently rated in unsavedRatings)
-  const allPlayersRated = ratings.every(p => {
+  // Rating progress helpers
+  const allPlayersRated = ratings.every((p) => {
     const score = unsavedRatings[p.playerName] !== undefined ? unsavedRatings[p.playerName] : p.myScore;
     return score !== undefined && score > 0;
   });
-
+  const myRatedCount = ratings.filter((p) => {
+    const score = unsavedRatings[p.playerName] !== undefined ? unsavedRatings[p.playerName] : p.myScore;
+    return score !== undefined && score > 0;
+  }).length;
   const hasUnsavedChanges = Object.keys(unsavedRatings).length > 0;
   const isSubmitDisabled = isSubmitting || !allPlayersRated || !hasUnsavedChanges;
 
-  return (
-    <div className="w-full flex flex-col h-full bg-black/10 dark:bg-black/25 rounded-lg pt-4 pb-4 pl-4 pr-0 border border-white/5">
-      {/* Title */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 pr-4">
-        <div className="flex items-center gap-1.5">
-          <Award className="text-volt" size={16} />
-          <span className="text-xs font-black tracking-wider uppercase text-white">선수 평점</span>
-        </div>
-        <span className="text-[10px] font-bold text-white/50 tracking-tight">별 반개 가능</span>
-      </div>
-
-      {/* Players List with stylized scrollbar */}
-      <div className="flex-1 max-h-[170px] md:max-h-none overflow-y-auto pr-1.5 flex flex-col gap-2 custom-scrollbar-red">
-        {ratings.length > 0 ? (
-          ratings.map((p) => (
-            <div 
-              key={p.playerName} 
-              className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-b-0 gap-2 shrink-0"
-            >
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {p.shirt && (
-                    <span className="text-[9px] font-black text-white/60 bg-white/10 px-1 py-0.5 rounded shrink-0">
-                      {p.shirt}
-                    </span>
-                  )}
-                  <span className="text-xs font-bold text-white/95 truncate leading-tight">
-                    {p.playerName}
-                  </span>
-                </div>
-                <div className="text-[9px] text-white/40 flex items-center gap-0.5 mt-0.5">
-                  <Star size={8} className="fill-volt text-volt" />
-                  <span>{p.averageScore > 0 ? p.averageScore.toFixed(1) : '평점 없음'} ({p.voteCount}명)</span>
-                </div>
-              </div>
-
-              {/* Star Rating Selectors */}
-              <StarRating playerName={p.playerName} value={p.myScore} />
-            </div>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center text-white/30 h-full">
-            <span className="text-xs uppercase font-bold tracking-wider">명단이 존재하지 않습니다</span>
-          </div>
-        )}
-      </div>
-
-      {/* Submission Actions */}
-      <div className="pt-3 border-t border-white/10 mt-3 flex flex-col gap-1.5 pr-4">
-        <button
-          onClick={handleSubmitRatings}
-          disabled={isSubmitDisabled}
-          className={`w-full py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
-            isSubmitDisabled
-              ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
-              : 'bg-aleti-navy text-white hover:scale-[1.02] hover:bg-aleti-navy/90 active:scale-95 shadow-md dark:bg-volt dark:text-black dark:hover:bg-volt/95 dark:shadow-volt/10'
-          }`}
+  // Shared: player rows (name + interactive stars). Text is a touch larger on mobile (modal).
+  const renderRows = () =>
+    ratings.length > 0 ? (
+      ratings.map((p) => (
+        <div
+          key={p.playerName}
+          className="flex flex-col gap-1 py-2 border-b border-white/5 last:border-b-0 shrink-0"
         >
-          {isSubmitting 
-            ? '제출 중...' 
-            : !allPlayersRated 
-              ? '모든 선수 평점 입력 필요' 
-              : `평점 저장하기 (${Object.keys(unsavedRatings).length})`
-          }
-        </button>
-        {submitSuccess && (
-          <div className="text-[10px] text-volt text-center font-bold tracking-tight animate-pulse">
-            평점이 성공적으로 저장되었습니다!
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {p.shirt && (
+                <span className="text-[9px] font-black text-white/60 bg-white/10 px-1 py-0.5 rounded shrink-0">
+                  {p.shirt}
+                </span>
+              )}
+              <span className="text-sm md:text-xs font-bold text-white/95 truncate leading-tight">
+                {p.playerName}
+              </span>
+            </div>
+            <div className="text-[10px] md:text-[9px] text-white/40 flex items-center gap-0.5 shrink-0 whitespace-nowrap">
+              <Star size={9} className="fill-volt text-volt" />
+              <span>{p.averageScore > 0 ? p.averageScore.toFixed(1) : '평점 없음'} ({p.voteCount}명)</span>
+            </div>
           </div>
+
+          {/* Star Rating Selectors — full width for large tap targets */}
+          <StarRating playerName={p.playerName} value={p.myScore} />
+        </div>
+      ))
+    ) : (
+      <div className="flex flex-col items-center justify-center py-8 text-center text-white/30 h-full">
+        <span className="text-xs uppercase font-bold tracking-wider">명단이 존재하지 않습니다</span>
+      </div>
+    );
+
+  // Shared: submit button + success message
+  const renderSubmitBar = () => (
+    <>
+      <button
+        onClick={handleSubmitRatings}
+        disabled={isSubmitDisabled}
+        className={`w-full py-2.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
+          isSubmitDisabled
+            ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
+            : 'bg-aleti-navy text-white hover:scale-[1.02] hover:bg-aleti-navy/90 active:scale-95 shadow-md dark:bg-volt dark:text-black dark:hover:bg-volt/95 dark:shadow-volt/10'
+        }`}
+      >
+        {isSubmitting
+          ? '제출 중...'
+          : !allPlayersRated
+            ? '모든 선수 평점 입력 필요'
+            : `평점 저장하기 (${Object.keys(unsavedRatings).length})`}
+      </button>
+      {submitSuccess && (
+        <div className="text-[10px] text-volt text-center font-bold tracking-tight animate-pulse">
+          평점이 성공적으로 저장되었습니다!
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* ===== Desktop: inline panel ===== */}
+      <div className="hidden md:flex w-full flex-col h-full bg-black/10 dark:bg-black/25 rounded-lg pt-4 pb-4 pl-4 pr-0 border border-white/5">
+        {isLoading ? (
+          <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center text-white/50">
+            <Loader2 className="w-8 h-8 animate-spin text-white mb-2" />
+            <span className="text-xs font-semibold tracking-wider uppercase">Loading squad...</span>
+          </div>
+        ) : (
+          <>
+            {/* Title */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 pr-4">
+              <div className="flex items-center gap-1.5">
+                <Award className="text-volt" size={16} />
+                <span className="text-xs font-black tracking-wider uppercase text-white">선수 평점</span>
+              </div>
+              <span className="text-[10px] font-bold text-white/50 tracking-tight">별 반개 가능</span>
+            </div>
+
+            {/* Players List with stylized scrollbar */}
+            <div className="flex-1 max-h-none overflow-y-auto pr-1.5 flex flex-col gap-1.5 custom-scrollbar-red">
+              {renderRows()}
+            </div>
+
+            {/* Submission Actions */}
+            <div className="pt-3 border-t border-white/10 mt-3 flex flex-col gap-1.5 pr-4">
+              {renderSubmitBar()}
+            </div>
+          </>
         )}
       </div>
-    </div>
+
+      {/* ===== Mobile: trigger that opens the full-screen modal ===== */}
+      <button
+        type="button"
+        onClick={() => setIsModalOpen(true)}
+        className="md:hidden w-full flex items-center justify-between gap-3 bg-black/10 dark:bg-black/25 rounded-lg p-4 border border-white/5 text-left active:scale-[0.99] transition-transform"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Award className="text-volt shrink-0" size={20} />
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-black tracking-wider uppercase text-white">선수 평점 매기기</span>
+            <span className="text-[10px] font-bold text-white/50 tracking-tight truncate">
+              {isLoading
+                ? '불러오는 중...'
+                : ratings.length > 0
+                  ? `${myRatedCount}/${ratings.length}명 평가함 · 탭하여 매기기`
+                  : '명단 준비중'}
+            </span>
+          </div>
+        </div>
+        <ChevronRight className="text-white/50 shrink-0" size={18} />
+      </button>
+
+      {/* ===== Mobile: full-screen modal ===== */}
+      {isModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="선수 평점"
+          className="md:hidden fixed inset-0 z-[100] flex flex-col bg-aleti-red dark:bg-[#0d0e14] animate-fadeIn"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 h-14 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <Award className="text-volt shrink-0" size={18} />
+              <span className="text-sm font-black tracking-wider uppercase text-white">선수 평점</span>
+              <span className="text-[10px] font-bold text-white/40 tracking-tight ml-0.5 shrink-0">별 반개 가능</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="닫기"
+              className="p-2 -mr-2 text-white/70 hover:text-white active:scale-90 transition"
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          {/* Scrollable player list */}
+          <div className="flex-1 overflow-y-auto px-5 py-3 flex flex-col gap-1.5 custom-scrollbar-red">
+            {isLoading ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-white/50">
+                <Loader2 className="w-8 h-8 animate-spin text-white mb-2" />
+                <span className="text-xs font-semibold tracking-wider uppercase">Loading squad...</span>
+              </div>
+            ) : (
+              renderRows()
+            )}
+          </div>
+
+          {/* Fixed submit bar */}
+          <div className="shrink-0 px-5 pt-3 pb-6 border-t border-white/10 bg-black/10 flex flex-col gap-1.5">
+            {renderSubmitBar()}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

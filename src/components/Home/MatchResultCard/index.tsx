@@ -63,7 +63,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         <div className="relative w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-aleti-navy/30 dark:border-white/10">
           
           {/* Header Row: Title - Bottom border styled in Atlético Navy in light mode */}
-          <div className="flex justify-between items-center mb-6 border-b border-aleti-navy/25 dark:border-white/10 pb-4 px-6 md:px-0">
+          <div className="flex justify-between items-center mb-6 border-b border-aleti-navy/25 dark:border-white/10 pb-4 px-0">
             <div className="flex items-center gap-2">
               {currentPage === 0 ? (
                 <>
@@ -83,11 +83,11 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
             </div>
           </div>
 
-          {/* Content Area with padding on mobile to prevent overlapping with edge buttons */}
-          <div className="flex-1 flex flex-col justify-center min-h-[160px] px-6 md:px-0">
+          {/* Content Area — per-page horizontal padding keeps text clear of the ‹/› edge buttons */}
+          <div className="flex-1 flex flex-col justify-center min-h-[160px]">
             {currentPage === 0 ? (
               /* Page 1: Headlines */
-              <div className="flex flex-col gap-2.5 justify-center h-full animate-fadeIn">
+              <div className="flex flex-col gap-2.5 justify-center h-full animate-fadeIn pr-3 md:pr-0">
                 {headlineList.map((hl, idx) => {
                   if (hl) {
                     return (
@@ -98,7 +98,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
                         <span className="shrink-0 flex items-center justify-center w-5.5 h-5.5 rounded-md bg-white/15 dark:bg-volt/10 text-[10px] font-black text-white dark:text-volt tracking-tight group-hover:scale-105 transition-all shadow-sm">
                           {idx + 1}
                         </span>
-                        <p className="text-sm font-semibold tracking-tight text-white/90 line-clamp-1 flex-1 leading-snug">
+                        <p className="text-sm font-semibold tracking-tight text-white/90 line-clamp-2 sm:line-clamp-1 flex-1 leading-snug">
                           {hl.content}
                         </p>
                         <span className="shrink-0 text-[10px] font-bold opacity-45 uppercase tracking-widest whitespace-nowrap hidden sm:inline-block">
@@ -138,7 +138,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
               </div>
             ) : (
               /* Page 2: Match Result */
-              <div className="flex flex-col h-full justify-between animate-fadeIn">
+              <div className="flex flex-col h-full justify-between animate-fadeIn px-3 md:px-0">
                 {recentMatch ? (
                   <>
                     <ScoreSection 
