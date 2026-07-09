@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PawPrint, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, Newspaper } from 'lucide-react';
 import type { RecentMatch, UpcomingMatch, HeadlineResponse } from '@/client/types.gen';
 import { sortScorers, formatKST } from './utils';
@@ -21,6 +21,26 @@ interface MatchResultCardProps {
 export default function MatchResultCard({ recentMatch, upcomingMatches, headlines }: MatchResultCardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Touch swipe navigation (mobile): swipe left → next page, swipe right → previous
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    // Ignore taps and vertical scrolls; act only on a clear horizontal swipe
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    setCurrentPage(dx < 0 ? 1 : 0);
+  };
 
   // If there is no data at all, show the loading/fallback container
   if (!recentMatch && (!headlines || headlines.length === 0)) {
@@ -57,7 +77,11 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
     <div className="bg-aleti-red dark:bg-[#111318] text-white rounded-xl shadow-lg w-full max-w-none font-sans tracking-wide flex flex-col overflow-hidden border border-white/10 dark:border-volt/10 transition-all duration-500 dark-card-pattern relative">
       
       {/* Main card content */}
-      <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8 md:gap-12 min-h-[280px] relative">
+      <div
+        className="p-6 md:p-8 flex flex-col md:flex-row gap-8 md:gap-12 min-h-[280px] relative touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         
         {/* Left side: Match Result or Headlines (70%) - Divider border styled in Atlético Navy in light mode */}
         <div className="relative w-full md:w-[70%] flex flex-col pr-0 md:pr-8 md:border-r border-aleti-navy/30 dark:border-white/10">
@@ -87,7 +111,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
           <div className="flex-1 flex flex-col justify-center min-h-[160px]">
             {currentPage === 0 ? (
               /* Page 1: Headlines */
-              <div className="flex flex-col gap-2.5 justify-center h-full animate-fadeIn pr-3 md:pr-0">
+              <div className="flex flex-col gap-2.5 justify-center h-full animate-fadeIn">
                 {headlineList.map((hl, idx) => {
                   if (hl) {
                     return (
@@ -206,7 +230,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         {currentPage > 0 && (
           <button 
             onClick={() => setCurrentPage(0)}
-            className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
+            className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
             title="이전 페이지"
           >
             <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -217,7 +241,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         {currentPage < 1 && (
           <button 
             onClick={() => setCurrentPage(1)}
-            className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
+            className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
             title="다음 페이지"
           >
             <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:translate-x-0.5 transition-transform" />

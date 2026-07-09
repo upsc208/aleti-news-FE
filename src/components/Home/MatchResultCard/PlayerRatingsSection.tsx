@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Star, Award, Loader2, X, ChevronRight } from 'lucide-react';
+import { Star, Award, Loader2, X, ChevronRight, Lock, Clock } from 'lucide-react';
 import { getRatings, submitRating } from '@/client/sdk.gen';
 import type { RecentMatch, PlayerRatingResponse } from '@/client/types.gen';
+
+// Rating window: open for 24h after kickoff, then results-only
+const RATING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 interface PlayerRatingsSectionProps {
   recentMatch: RecentMatch;
@@ -16,6 +19,11 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'rate' | 'results'>('rate');
+  const [hasRatedBefore, setHasRatedBefore] = useState(false);
+  const [ratingClosed, setRatingClosed] = useState(false);
+  const [now, setNow] = useState(0);
+  const [closesAt, setClosesAt] = useState(0);
 
   // Fetch ratings from backend and merge with match lineup
   const fetchAndMergeRatings = async () => {
@@ -72,6 +80,8 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
       });
 
       setRatings(merged);
+      // If the API already knows this user's score, they've rated before → unlock results
+      setHasRatedBefore(merged.some((m) => m.myScore !== undefined && m.myScore > 0));
     } catch (err) {
       console.error('Failed to fetch player ratings:', err);
     } finally {
@@ -85,8 +95,28 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
       setUnsavedRatings({});
       setSubmitSuccess(false);
       setIsModalOpen(false);
+      setViewMode('rate');
     }
   }, [recentMatch?.matchId]);
+
+  // Keep the countdown fresh and flip to results-only exactly at the deadline.
+  // Deferred/interval updates (not synchronous) keep render pure.
+  useEffect(() => {
+    if (!recentMatch.matchDate) return;
+    const closes = new Date(recentMatch.matchDate).getTime() + RATING_WINDOW_MS;
+    const update = () => {
+      const n = Date.now();
+      setNow(n);
+      setClosesAt(closes);
+      setRatingClosed(n > closes);
+    };
+    const timeout = setTimeout(update, 0);
+    const interval = setInterval(update, 60 * 1000);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [recentMatch.matchDate]);
 
   // Lock background scroll & allow ESC-to-close while the mobile modal is open
   useEffect(() => {
@@ -142,8 +172,9 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
 
       setSubmitSuccess(true);
       setUnsavedRatings({});
-      // Refresh averages from API
+      // Refresh averages from API, then reveal the results
       await fetchAndMergeRatings();
+      setViewMode('results');
     } catch (err) {
       console.error('Failed to submit ratings:', err);
       alert('평점 제출 중 오류가 발생했습니다. 다시 시도해 주세요.');
@@ -235,15 +266,144 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
   const hasUnsavedChanges = Object.keys(unsavedRatings).length > 0;
   const isSubmitDisabled = isSubmitting || !allPlayersRated || !hasUnsavedChanges;
 
-  // Shared: player rows (name + interactive stars). Text is a touch larger on mobile (modal).
-  const renderRows = () =>
+  // ratingClosed is computed off-render (in the match effect) to keep render pure.
+  // Once rating closes, everyone sees results (no anchoring risk left).
+  // While open, results stay hidden until the user saves their own rating.
+  const resultsUnlocked = ratingClosed || hasRatedBefore || submitSuccess;
+  const effectiveView = ratingClosed ? 'results' : viewMode;
+
+  // "N시간 M분 남음" label for the rating deadline (urgency to participate early)
+  const remainingMs = closesAt > 0 && now > 0 ? closesAt - now : 0;
+  const remainingLabel = (() => {
+    if (remainingMs <= 0) return null;
+    const totalMin = Math.floor(remainingMs / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return h >= 1 ? `${h}시간 ${m}분` : `${m}분`;
+  })();
+
+  // Read-only star bar for the results view
+  const StaticStars = ({ value = 0 }: { value?: number }) => (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => {
+        const isFull = value >= i;
+        const isHalf = value >= i - 0.5 && value < i;
+        return (
+          <div key={i} className="relative w-5 h-5">
+            {isFull ? (
+              <Star className="absolute inset-0 w-5 h-5 text-volt fill-volt" />
+            ) : isHalf ? (
+              <>
+                <Star className="absolute inset-0 w-5 h-5 text-white/15 fill-white/[0.04]" />
+                <div className="absolute inset-0 w-1/2 overflow-hidden">
+                  <Star className="w-5 h-5 text-volt fill-volt" />
+                </div>
+              </>
+            ) : (
+              <Star className="absolute inset-0 w-5 h-5 text-white/15 fill-white/[0.04]" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // Segmented tabs: 평가하기 | 결과 보기 (results locked until the user has saved)
+  const renderTabs = () => (
+    <div className="flex gap-1 p-1 bg-black/20 dark:bg-black/40 rounded-lg shrink-0">
+      <button
+        type="button"
+        onClick={() => setViewMode('rate')}
+        className={`flex-1 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wider transition-all ${
+          viewMode === 'rate'
+            ? 'bg-white/15 text-white shadow-sm dark:bg-volt/15 dark:text-volt'
+            : 'text-white/50 hover:text-white/80'
+        }`}
+      >
+        평가하기
+      </button>
+      <button
+        type="button"
+        onClick={() => resultsUnlocked && setViewMode('results')}
+        disabled={!resultsUnlocked}
+        title={resultsUnlocked ? undefined : '내 평점을 저장하면 공개됩니다'}
+        className={`flex-1 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${
+          !resultsUnlocked
+            ? 'text-white/25 cursor-not-allowed'
+            : viewMode === 'results'
+              ? 'bg-white/15 text-white shadow-sm dark:bg-volt/15 dark:text-volt'
+              : 'text-white/50 hover:text-white/80'
+        }`}
+      >
+        {!resultsUnlocked && <Lock size={11} />}
+        결과 보기
+      </button>
+    </div>
+  );
+
+  // Status row: tabs while rating is open, a "closed" banner once the 24h window passes
+  const renderStatusRow = () =>
+    ratingClosed ? (
+      <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-black/20 dark:bg-black/40 text-white/50 shrink-0">
+        <Lock size={11} />
+        <span className="text-[11px] font-black uppercase tracking-wider">평가 마감 · 팬 평점 결과</span>
+      </div>
+    ) : (
+      renderTabs()
+    );
+
+  // RATE view: interactive stars only — deliberately NO average/vote count (avoid anchoring)
+  const renderRateRows = () =>
     ratings.length > 0 ? (
       ratings.map((p) => (
         <div
           key={p.playerName}
           className="flex flex-col gap-1 py-2 border-b border-white/5 last:border-b-0 shrink-0"
         >
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {p.shirt && (
+              <span className="text-[9px] font-black text-white/60 bg-white/10 px-1 py-0.5 rounded shrink-0">
+                {p.shirt}
+              </span>
+            )}
+            <span className="text-sm md:text-xs font-bold text-white/95 truncate leading-tight">
+              {p.playerName}
+            </span>
+          </div>
+          <StarRating playerName={p.playerName} value={p.myScore} />
+        </div>
+      ))
+    ) : (
+      <div className="flex flex-col items-center justify-center py-8 text-center text-white/30 h-full">
+        <span className="text-xs uppercase font-bold tracking-wider">명단이 존재하지 않습니다</span>
+      </div>
+    );
+
+  // RESULTS view: read-only community averages, sorted highest first
+  const renderResultRows = () => {
+    const rated = [...ratings]
+      .filter((p) => p.voteCount > 0)
+      .sort((a, b) => (b.averageScore || 0) - (a.averageScore || 0));
+
+    if (rated.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-10 text-center text-white/30 h-full gap-2">
+          <Award size={28} className="opacity-40" />
+          <span className="text-xs uppercase font-bold tracking-wider">아직 집계된 평점이 없습니다</span>
+        </div>
+      );
+    }
+
+    return rated.map((p, idx) => (
+      <div
+        key={p.playerName}
+        className="flex items-center justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0 shrink-0"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`shrink-0 w-4 text-center text-xs font-black tabular-nums ${idx === 0 ? 'text-volt' : 'text-white/40'}`}>
+            {idx + 1}
+          </span>
+          <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
               {p.shirt && (
                 <span className="text-[9px] font-black text-white/60 bg-white/10 px-1 py-0.5 rounded shrink-0">
@@ -254,23 +414,22 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
                 {p.playerName}
               </span>
             </div>
-            <div className="text-[10px] md:text-[9px] text-white/40 flex items-center gap-0.5 shrink-0 whitespace-nowrap">
-              <Star size={9} className="fill-volt text-volt" />
-              <span>{p.averageScore > 0 ? p.averageScore.toFixed(1) : '평점 없음'} ({p.voteCount}명)</span>
-            </div>
+            <span className="text-[10px] text-white/40 mt-0.5 truncate">
+              {p.voteCount}명 참여{p.myScore ? ` · 내 평점 ${p.myScore.toFixed(1)}` : ''}
+            </span>
           </div>
-
-          {/* Star Rating Selectors — full width for large tap targets */}
-          <StarRating playerName={p.playerName} value={p.myScore} />
         </div>
-      ))
-    ) : (
-      <div className="flex flex-col items-center justify-center py-8 text-center text-white/30 h-full">
-        <span className="text-xs uppercase font-bold tracking-wider">명단이 존재하지 않습니다</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <StaticStars value={p.averageScore} />
+          <span className="w-8 text-right text-sm font-black tabular-nums text-volt">
+            {p.averageScore.toFixed(1)}
+          </span>
+        </div>
       </div>
-    );
+    ));
+  };
 
-  // Shared: submit button + success message
+  // Submit button + guidance (rate mode only)
   const renderSubmitBar = () => (
     <>
       <button
@@ -288,11 +447,9 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
             ? '모든 선수 평점 입력 필요'
             : `평점 저장하기 (${Object.keys(unsavedRatings).length})`}
       </button>
-      {submitSuccess && (
-        <div className="text-[10px] text-volt text-center font-bold tracking-tight animate-pulse">
-          평점이 성공적으로 저장되었습니다!
-        </div>
-      )}
+      <p className="text-[10px] text-white/40 text-center font-medium tracking-tight">
+        {submitSuccess ? '저장 완료! 결과가 공개되었습니다.' : '저장하면 다른 팬들의 평점이 공개됩니다.'}
+      </p>
     </>
   );
 
@@ -308,23 +465,40 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
         ) : (
           <>
             {/* Title */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 pr-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 pr-4 shrink-0">
               <div className="flex items-center gap-1.5">
                 <Award className="text-volt" size={16} />
-                <span className="text-xs font-black tracking-wider uppercase text-white">선수 평점</span>
+                <span className="text-xs font-black tracking-wider uppercase text-white">이번 경기 선수 평점</span>
               </div>
-              <span className="text-[10px] font-bold text-white/50 tracking-tight">별 반개 가능</span>
+              {effectiveView === 'rate' && (
+                <span className="text-[10px] font-bold text-white/50 tracking-tight">0~5</span>
+              )}
             </div>
 
-            {/* Players List with stylized scrollbar */}
-            <div className="flex-1 max-h-none overflow-y-auto pr-1.5 flex flex-col gap-1.5 custom-scrollbar-red">
-              {renderRows()}
+            {/* Tabs / closed banner */}
+            <div className="pr-4 mb-3 shrink-0">{renderStatusRow()}</div>
+
+            {/* Deadline countdown (rate mode) */}
+            {effectiveView === 'rate' && remainingLabel && (
+              <div className="pr-4 mb-3 shrink-0">
+                <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-volt/10 text-volt">
+                  <Clock size={12} />
+                  <span className="text-[11px] font-black tracking-tight">평가 마감까지 {remainingLabel} 남음</span>
+                </div>
+              </div>
+            )}
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto pr-1.5 flex flex-col gap-1.5 custom-scrollbar-red">
+              {effectiveView === 'rate' ? renderRateRows() : renderResultRows()}
             </div>
 
-            {/* Submission Actions */}
-            <div className="pt-3 border-t border-white/10 mt-3 flex flex-col gap-1.5 pr-4">
-              {renderSubmitBar()}
-            </div>
+            {/* Submission Actions (rate mode only) */}
+            {effectiveView === 'rate' && (
+              <div className="pt-3 border-t border-white/10 mt-3 flex flex-col gap-1.5 pr-4 shrink-0">
+                {renderSubmitBar()}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -338,13 +512,17 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
         <div className="flex items-center gap-2.5 min-w-0">
           <Award className="text-volt shrink-0" size={20} />
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-black tracking-wider uppercase text-white">선수 평점 매기기</span>
+            <span className="text-xs font-black tracking-wider uppercase text-white">
+              {ratingClosed ? '선수 평점 결과' : '선수 평점 매기기'}
+            </span>
             <span className="text-[10px] font-bold text-white/50 tracking-tight truncate">
               {isLoading
                 ? '불러오는 중...'
-                : ratings.length > 0
-                  ? `${myRatedCount}/${ratings.length}명 평가함 · 탭하여 매기기`
-                  : '명단 준비중'}
+                : ratingClosed
+                  ? '평가 마감 · 결과 보기'
+                  : ratings.length > 0
+                    ? `${myRatedCount}/${ratings.length}명 평가함${remainingLabel ? ` · 마감 ${remainingLabel} 전` : ' · 탭하여 매기기'}`
+                    : '명단 준비중'}
             </span>
           </div>
         </div>
@@ -356,15 +534,17 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="선수 평점"
+          aria-label="이번 경기 선수 평점"
           className="md:hidden fixed inset-0 z-[100] flex flex-col bg-aleti-red dark:bg-[#0d0e14] animate-fadeIn"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 h-14 border-b border-white/10 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <Award className="text-volt shrink-0" size={18} />
-              <span className="text-sm font-black tracking-wider uppercase text-white">선수 평점</span>
-              <span className="text-[10px] font-bold text-white/40 tracking-tight ml-0.5 shrink-0">별 반개 가능</span>
+              <span className="text-sm font-black tracking-wider uppercase text-white">이번 경기 선수 평점</span>
+              {effectiveView === 'rate' && (
+                <span className="text-[10px] font-bold text-white/40 tracking-tight ml-0.5 shrink-0">0~5</span>
+              )}
             </div>
             <button
               type="button"
@@ -376,22 +556,39 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
             </button>
           </div>
 
-          {/* Scrollable player list */}
-          <div className="flex-1 overflow-y-auto px-5 py-3 flex flex-col gap-1.5 custom-scrollbar-red">
+          {/* Tabs / closed banner */}
+          <div className="px-5 pt-3 shrink-0">{renderStatusRow()}</div>
+
+          {/* Deadline countdown (rate mode) */}
+          {effectiveView === 'rate' && remainingLabel && (
+            <div className="px-5 pt-3 shrink-0">
+              <div className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-volt/10 text-volt">
+                <Clock size={13} />
+                <span className="text-xs font-black tracking-tight">평가 마감까지 {remainingLabel} 남음</span>
+              </div>
+            </div>
+          )}
+
+          {/* Scrollable list */}
+          <div className="flex-1 overflow-y-auto px-5 pt-3 pb-3 flex flex-col gap-1.5 custom-scrollbar-red">
             {isLoading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-white/50">
                 <Loader2 className="w-8 h-8 animate-spin text-white mb-2" />
                 <span className="text-xs font-semibold tracking-wider uppercase">Loading squad...</span>
               </div>
+            ) : effectiveView === 'rate' ? (
+              renderRateRows()
             ) : (
-              renderRows()
+              renderResultRows()
             )}
           </div>
 
-          {/* Fixed submit bar */}
-          <div className="shrink-0 px-5 pt-3 pb-6 border-t border-white/10 bg-black/10 flex flex-col gap-1.5">
-            {renderSubmitBar()}
-          </div>
+          {/* Fixed submit bar (rate mode only) */}
+          {effectiveView === 'rate' && (
+            <div className="shrink-0 px-5 pt-3 pb-6 border-t border-white/10 bg-black/10 flex flex-col gap-1.5">
+              {renderSubmitBar()}
+            </div>
+          )}
         </div>
       )}
     </>
