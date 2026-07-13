@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Newspaper, Info, Sparkles, Ticket, ShoppingBag } from 'lucide-react';
+import { Newspaper, Info, Sparkles, ShoppingBag } from 'lucide-react';
 import TributeBadge from './Header/TributeBadge';
+import TicketModal from './Header/TicketModal';
 import { useTheme } from './ThemeProvider';
 
 export default function Header() {
@@ -92,16 +93,7 @@ export default function Header() {
             <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">소개</span>
           </Link>
           <div className="hidden lg:block h-6 w-[1px] bg-gray-200 dark:bg-volt/10 mx-1 shrink-0"></div>
-          <a
-            href="https://en.atleticodemadrid.com/listado-de-entradas"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-aleti-red dark:text-gray-300 hover:bg-aleti-red dark:hover:bg-volt/10 hover:text-white dark:hover:text-volt px-1.5 min-[350px]:px-2.5 lg:px-4 py-1.5 min-[350px]:py-2 rounded-lg sm:rounded-xl transition-all border border-aleti-red/20 dark:border-volt/10 shadow-sm shadow-aleti-red/5 dark:shadow-none shrink-0"
-            title="공식 티켓 예매"
-          >
-            <Ticket className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5 group-hover:rotate-12 transition-transform" />
-            <span className="tracking-tighter font-extrabold">티켓 예매</span>
-          </a>
+          <TicketModal />
           <a
             href="https://shop.atleticodemadrid.com/en/home"
             target="_blank"
