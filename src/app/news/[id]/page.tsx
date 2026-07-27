@@ -16,14 +16,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     });
     const news = response.data;
     
-    if (!news) return { title: '뉴스를 찾을 수 없습니다 | 알레띠 KR' };
+    if (!news) return { title: '뉴스를 찾을 수 없습니다' };
 
     const title = news.titleKo || '뉴스 상세';
     const contentPreview = news.contentKo ? news.contentKo.substring(0, 150) : '';
-    const description = news.summaryKo || contentPreview || '아틀레티코 마드리드 최신 뉴스';
+    const description = news.summaryKo || contentPreview || '아틀레티코 마드리드(알레띠) 최신 뉴스';
 
     return {
-      title: `${title} | 알레띠 KR`,
+      title,
       description,
       alternates: {
         canonical: `/news/${id}`,
@@ -34,8 +34,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
         type: 'article',
         publishedTime: news.publishedAt || undefined,
-        authors: news.authorName ? [news.authorName] : ['알레띠 뉴스'],
-        url: `https://alleti.kr/news/${id}`,
+        authors: news.authorName ? [news.authorName] : ['아틀레티 KR'],
+        url: `https://atleti.kr/news/${id}`,
+        siteName: '아틀레티 KR',
+        locale: 'ko_KR',
       },
       twitter: {
         card: 'summary_large_image',
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   } catch (error) {
     console.error(`Metadata generation failed for id ${id}:`, error);
-    return { title: '뉴스 상세 | 알레띠 KR' };
+    return { title: '뉴스 상세' };
   }
 }
 
@@ -169,8 +171,34 @@ export default async function NewsDetailPage({
     }
   }
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: news.titleKo || '뉴스 상세',
+    description: news.summaryKo || (news.contentKo ? news.contentKo.substring(0, 150) : ''),
+    image: news.imageUrl ? [news.imageUrl] : ['https://atleti.kr/icon.png'],
+    datePublished: news.publishedAt || undefined,
+    dateModified: news.publishedAt || undefined,
+    inLanguage: 'ko-KR',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://atleti.kr/news/${id}`,
+    },
+    author: {
+      '@type': news.authorName ? 'Person' : 'Organization',
+      name: news.authorName || news.sourceName || '아틀레티 KR',
+    },
+    publisher: { '@id': 'https://atleti.kr/#organization' },
+  };
+
   return (
     <div className="bg-white dark:bg-[#0a0b10] min-h-screen pb-20 transition-colors duration-300">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       {/* Sticky Back Bar */}
       <div className="sticky top-16 sm:top-20 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
         <div className="container mx-auto px-4 h-12 flex items-center">
