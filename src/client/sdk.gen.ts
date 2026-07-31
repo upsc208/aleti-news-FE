@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetHeadlinesData, GetHeadlinesResponses, GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRatingsData, GetRatingsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, SubmitRatingData, SubmitRatingResponses, SyncMatchesData, SyncMatchesResponses, TriggerHeadlinePipelineData, TriggerHeadlinePipelineResponses, TriggerPipelineData, TriggerPipelineResponses, TriggerYoutubePipelineData, TriggerYoutubePipelineResponses } from './types.gen';
+import type { BanData, BannedListData, BannedListResponses, BanResponses, GetHeadlinesData, GetHeadlinesResponses, GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRatingsData, GetRatingsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, ReserveNicknameData, ReserveNicknameResponses, RoomInfoData, RoomInfoResponses, SubmitRatingData, SubmitRatingResponses, SyncMatchesData, SyncMatchesResponses, TriggerHeadlinePipelineData, TriggerHeadlinePipelineResponses, TriggerPipelineData, TriggerPipelineResponses, TriggerYoutubePipelineData, TriggerYoutubePipelineResponses, UnbanData, UnbanResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -45,6 +45,21 @@ export const submitRating = <ThrowOnError extends boolean = false>(options: Opti
         ...options.headers
     }
 });
+
+export const reserveNickname = <ThrowOnError extends boolean = false>(options: Options<ReserveNicknameData, ThrowOnError>) => (options.client ?? client).post<ReserveNicknameResponses, unknown, ThrowOnError>({
+    url: '/api/chat/{matchId}/nickname',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const unban = <ThrowOnError extends boolean = false>(options: Options<UnbanData, ThrowOnError>) => (options.client ?? client).delete<UnbanResponses, unknown, ThrowOnError>({ url: '/api/admin/chat/ban', ...options });
+
+export const bannedList = <ThrowOnError extends boolean = false>(options?: Options<BannedListData, ThrowOnError>) => (options?.client ?? client).get<BannedListResponses, unknown, ThrowOnError>({ url: '/api/admin/chat/ban', ...options });
+
+export const ban = <ThrowOnError extends boolean = false>(options: Options<BanData, ThrowOnError>) => (options.client ?? client).post<BanResponses, unknown, ThrowOnError>({ url: '/api/admin/chat/ban', ...options });
 
 /**
  * 뉴스 목록 조회 (필터링 및 검색 포함)
@@ -101,6 +116,8 @@ export const getRecentMatch = <ThrowOnError extends boolean = false>(options?: O
  * 최신순으로 현재 노출 중인 헤드라인(최대 5개)을 가져옵니다.
  */
 export const getHeadlines = <ThrowOnError extends boolean = false>(options?: Options<GetHeadlinesData, ThrowOnError>) => (options?.client ?? client).get<GetHeadlinesResponses, unknown, ThrowOnError>({ url: '/api/headlines', ...options });
+
+export const roomInfo = <ThrowOnError extends boolean = false>(options: Options<RoomInfoData, ThrowOnError>) => (options.client ?? client).get<RoomInfoResponses, unknown, ThrowOnError>({ url: '/api/chat/{matchId}', ...options });
 
 export const triggerYoutubePipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerYoutubePipelineData, ThrowOnError>) => (options?.client ?? client).get<TriggerYoutubePipelineResponses, unknown, ThrowOnError>({ url: '/api/admin/youtube/trigger', ...options });
 
