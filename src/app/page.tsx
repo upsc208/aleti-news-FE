@@ -49,16 +49,16 @@ export default async function Home({
       getHeadlines()
     ]);
 
-    newsData = newsResponse.data;
-    sourcesData = sourcesResponse.data || [];
-    recentMatchData = recentMatchResponse.data || null;
-    upcomingMatchesData = upcomingMatchesResponse.data || [];
-    headlinesData = headlinesResponse.data || [];
+    newsData = (newsResponse?.data && typeof newsResponse.data === 'object' && 'content' in newsResponse.data) ? newsResponse.data : null;
+    sourcesData = Array.isArray(sourcesResponse?.data) ? sourcesResponse.data : [];
+    recentMatchData = (recentMatchResponse?.data && typeof recentMatchResponse.data === 'object' && !('status' in recentMatchResponse.data && (recentMatchResponse.data as any).status >= 400)) ? recentMatchResponse.data : null;
+    upcomingMatchesData = Array.isArray(upcomingMatchesResponse?.data) ? upcomingMatchesResponse.data : [];
+    headlinesData = Array.isArray(headlinesResponse?.data) ? headlinesResponse.data : [];
   } catch (error) {
     console.error('Failed to fetch data:', error);
   }
 
-  let newsList = newsData?.content || [];
+  let newsList = Array.isArray(newsData?.content) ? newsData.content : [];
   let totalPages = newsData?.totalPages || 0;
   const currentPage = (newsData?.number || 0) + 1;
 

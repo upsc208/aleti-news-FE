@@ -8,11 +8,14 @@ interface ScorersSectionProps {
 }
 
 export const ScorersSection = ({ homeScorers, awayScorers }: ScorersSectionProps) => {
+  const safeHome = Array.isArray(homeScorers) ? homeScorers : [];
+  const safeAway = Array.isArray(awayScorers) ? awayScorers : [];
+
   return (
     <div className="order-3 md:order-4 grid grid-cols-2 px-1 md:px-2 w-full mb-6 md:mb-8 gap-x-6 md:gap-x-12">
       {/* Home Scorers */}
       <div className="flex flex-col items-start gap-2 min-w-0">
-        {homeScorers.map((scorer, i) => (
+        {safeHome.map((scorer, i) => (
           <div key={i} className="text-[10px] md:text-base font-bold tracking-tight flex items-center gap-x-1 md:gap-x-2 w-full min-w-0">
             <span className="shrink-0 opacity-60 font-medium">{scorer.time}&apos;</span>
             <div className="flex items-center gap-1 min-w-0 shrink">
@@ -31,7 +34,7 @@ export const ScorersSection = ({ homeScorers, awayScorers }: ScorersSectionProps
 
       {/* Away Scorers */}
       <div className="flex flex-col items-end gap-2 text-right min-w-0">
-        {awayScorers.map((scorer, i) => (
+        {safeAway.map((scorer, i) => (
           <div key={i} className="text-[10px] md:text-base font-bold tracking-tight flex items-center justify-end gap-x-1 md:gap-x-2 w-full min-w-0">
             {scorer.assist && (
               <div className="hidden lg:flex items-center gap-1 opacity-40 font-medium text-sm italic shrink-0">

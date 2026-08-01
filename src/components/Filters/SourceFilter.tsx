@@ -13,20 +13,22 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const safeSources = useMemo(() => Array.isArray(allSources) ? allSources : [], [allSources]);
+
   // URL 파라미터에서 현재 선택된 ID들을 가져옵니다.
   // 이 때, allSources의 internalId와 대조하여 정확한 케이싱을 유지한 목록을 관리합니다.
   const selectedInternalIdsFromUrl = useMemo(() => {
     const sourcesParam = searchParams.get('sources');
-    if (!sourcesParam) return allSources.map(s => s.internalId); // 파라미터 없으면 전체 선택
+    if (!sourcesParam) return safeSources.map(s => s.internalId); // 파라미터 없으면 전체 선택
     if (sourcesParam === 'none') return [];
     
     // URL에 있는 값들 중 실제 존재하는 internalId만 필터링 (대소문자 무시 비교 후 실제 값 반환)
     const urlIds = sourcesParam.split(',');
     return urlIds.map(urlId => {
-      const found = allSources.find(s => s.internalId.toLowerCase() === urlId.toLowerCase());
+      const found = safeSources.find(s => s.internalId.toLowerCase() === urlId.toLowerCase());
       return found ? found.internalId : urlId;
     });
-  }, [searchParams, allSources]);
+  }, [searchParams, safeSources]);
 
   const toggleSource = (internalId: string) => {
     let nextInternalIds: string[];
@@ -52,7 +54,7 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
     if (currentIsHyped) searchParamsObj.isHyped = currentIsHyped;
 
     // Logic for URL param
-    if (nextInternalIds.length === allSources.length && nextInternalIds.length > 0) {
+    if (nextInternalIds.length === safeSources.length && nextInternalIds.length > 0) {
       // All selected -> clear param for clean URL
     } else if (nextInternalIds.length === 0) {
       // None selected
@@ -73,8 +75,8 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
 
   return (
     <div className="flex flex-col gap-3 pb-12 sm:pb-0">
-      {allSources.length > 0 ? (
-        allSources.map((source) => {
+      {safeSources.length > 0 ? (
+        safeSources.map((source) => {
           const isSelected = selectedInternalIdsFromUrl.includes(source.internalId);
           return (
             <label
@@ -119,10 +121,10 @@ export default function SourceFilter({ allSources }: SourceFilterProps) {
               params.set('page', '1');
               router.push(`?${params.toString()}`, { scroll: false });
             }}
-            disabled={selectedInternalIdsFromUrl.length === allSources.length}
+            disabled={selectedInternalIdsFromUrl.length === safeSources.length}
             className={`
               flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-              ${selectedInternalIdsFromUrl.length === allSources.length
+              ${selectedInternalIdsFromUrl.length === safeSources.length
                 ? 'bg-gray-50 dark:bg-white/[0.02] text-gray-300 dark:text-gray-600 cursor-not-allowed border border-gray-100 dark:border-white/[0.04]'
                 : 'bg-aleti-navy dark:bg-[#1c1e27] text-white dark:text-gray-300 hover:bg-aleti-red dark:hover:bg-volt dark:hover:text-black border border-transparent dark:border-volt/25 shadow-md'}
             `}

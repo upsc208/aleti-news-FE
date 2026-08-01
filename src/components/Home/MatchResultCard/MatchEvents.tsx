@@ -7,8 +7,11 @@ interface MatchEventsProps {
   cards: any[] | undefined;
 }
 
-export const MatchEvents = ({ substitutions = [], cards = [] }: MatchEventsProps) => {
-  if (substitutions.length + cards.length === 0) return null;
+export const MatchEvents = ({ substitutions, cards }: MatchEventsProps) => {
+  const safeSubs = Array.isArray(substitutions) ? substitutions : [];
+  const safeCards = Array.isArray(cards) ? cards : [];
+
+  if (safeSubs.length + safeCards.length === 0) return null;
 
   const renderEvent = (e: any, isMobile: boolean) => {
     const isSubstitution = 'inName' in e;
@@ -44,11 +47,11 @@ export const MatchEvents = ({ substitutions = [], cards = [] }: MatchEventsProps
     );
   };
 
-  const homeEvents = [...substitutions, ...cards]
+  const homeEvents = [...safeSubs, ...safeCards]
     .filter(e => e.isHome)
     .sort((a, b) => parseInt(a.time) - parseInt(b.time));
 
-  const awayEvents = [...substitutions, ...cards]
+  const awayEvents = [...safeSubs, ...safeCards]
     .filter(e => !e.isHome)
     .sort((a, b) => parseInt(a.time) - parseInt(b.time));
 

@@ -7,6 +7,8 @@ interface UpcomingSectionProps {
 }
 
 export const UpcomingSection = ({ upcomingMatches }: UpcomingSectionProps) => {
+  const safeUpcoming = Array.isArray(upcomingMatches) ? upcomingMatches : [];
+
   return (
     <div className="w-full flex flex-col pt-4 md:pt-0">
       <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 opacity-70">
@@ -14,7 +16,7 @@ export const UpcomingSection = ({ upcomingMatches }: UpcomingSectionProps) => {
       </div>
 
       <div className="flex flex-col gap-6">
-        {upcomingMatches && upcomingMatches.slice(0, 3).map((match, idx) => (
+        {safeUpcoming.slice(0, 3).map((match, idx) => (
           <div key={idx} className="flex flex-col gap-1">
             <div className="flex items-start gap-2 text-lg sm:text-xl md:text-2xl font-black tracking-tight leading-tight">
               <span className="shrink-0 mt-0.5">vs</span>

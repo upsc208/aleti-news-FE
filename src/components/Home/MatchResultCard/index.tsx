@@ -65,10 +65,12 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
   const homeScorers = sortedScorers.filter(s => s.isHome);
   const awayScorers = sortedScorers.filter(s => !s.isHome);
 
+  const safeHeadlines = Array.isArray(headlines) ? headlines : [];
+
   // Always create a list of exactly 5 slots to keep the card height fixed
   const headlineList = Array.from({ length: 5 }, (_, i) => {
-    if (headlines && headlines[i]) {
-      return headlines[i];
+    if (safeHeadlines[i]) {
+      return safeHeadlines[i];
     }
     return null;
   });
