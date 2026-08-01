@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { MessageSquareText } from 'lucide-react';
-import fichadoImg from '@/app/fichado.png';
+import fichadoImg from '../../../public/fichado.png';
 
 interface TributeBadgeProps {
   stats?: {
