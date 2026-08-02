@@ -9,12 +9,12 @@ import {
   Users,
   Send,
   Sparkles,
-  Edit3,
   Flame,
   Radio,
   ArrowLeft,
   MessageSquare,
-  RefreshCw,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -49,7 +49,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Nickname State
   const [myNickname, setMyNickname] = useState<string>('');
@@ -61,6 +60,42 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
+
+  // Audio State & Reference
+  const [isPlayingChant, setIsPlayingChant] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const audio = new Audio('/atletiChant.mp3');
+      audio.loop = true;
+      audioRef.current = audio;
+
+      const handlePlay = () => setIsPlayingChant(true);
+      const handlePause = () => setIsPlayingChant(false);
+
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+
+      return () => {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.pause();
+        audioRef.current = null;
+      };
+    }
+  }, []);
+
+  const toggleChant = () => {
+    if (!audioRef.current) return;
+    if (isPlayingChant) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch((err) => {
+        console.error('Failed to play chant:', err);
+      });
+    }
+  };
 
   // Helper to load all stored messages (unified global key + match key)
   const loadLocalHistory = useCallback((mId: string): ChatMessage[] => {
@@ -219,7 +254,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         console.error('Failed to fetch room info:', err);
       } finally {
         setIsLoading(false);
-        setIsRefreshing(false);
       }
     },
     [matchId, messages.length, mergeServerMessages, saveLocalHistory]
@@ -460,19 +494,24 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             </div>
           </div>
 
-          {/* Online Counter & Nickname Edit */}
+          {/* Online Counter */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Refresh indicator */}
+            {/* Music/Chant Player Toggle */}
             <button
               type="button"
-              onClick={() => {
-                setIsRefreshing(true);
-                fetchRoomData(false);
-              }}
-              className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/25 transition"
-              title="새로고침"
+              onClick={toggleChant}
+              className={`p-1.5 sm:p-2 rounded-xl border transition flex items-center justify-center ${
+                isPlayingChant
+                  ? 'bg-[#ccff00] text-black border-[#ccff00] font-black shadow-[0_0_8px_rgba(204,255,0,0.5)] animate-pulse'
+                  : 'bg-white/10 hover:bg-white/20 text-white border-white/25'
+              }`}
+              title={isPlayingChant ? '응원가 끄기' : '응원가 켜기'}
             >
-              <RefreshCw size={12} className={`sm:w-3.5 sm:h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isPlayingChant ? (
+                <Volume2 size={12} className="sm:w-3.5 sm:h-3.5" />
+              ) : (
+                <VolumeX size={12} className="sm:w-3.5 sm:h-3.5" />
+              )}
             </button>
 
             {/* Online Badge */}
@@ -481,17 +520,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
               <Users size={12} className="sm:w-3.5 sm:h-3.5 shrink-0" />
               <span className="tabular-nums text-white">{onlineCount}<span className="hidden xs:inline">명</span></span>
             </div>
-
-            {/* Nickname Button */}
-            <button
-              type="button"
-              onClick={() => setIsNicknameModalOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-white text-aleti-red hover:bg-red-50 border border-transparent font-black text-[10px] sm:text-xs transition shadow-xs"
-              title="닉네임 변경"
-            >
-              <Edit3 size={12} className="sm:w-3.5 sm:h-3.5 shrink-0 text-aleti-red" />
-              <span className="hidden sm:inline truncate max-w-[60px] sm:max-w-[80px]">{myNickname || '설정'}</span>
-            </button>
           </div>
         </div>
       </div>
