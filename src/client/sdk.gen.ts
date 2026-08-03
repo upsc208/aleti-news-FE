@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { BanData, BannedListData, BannedListResponses, BanResponses, GetHeadlinesData, GetHeadlinesResponses, GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRatingsData, GetRatingsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, ReserveNicknameData, ReserveNicknameResponses, RoomInfoData, RoomInfoResponses, SubmitRatingData, SubmitRatingResponses, SyncMatchesData, SyncMatchesResponses, TriggerHeadlinePipelineData, TriggerHeadlinePipelineResponses, TriggerPipelineData, TriggerPipelineResponses, TriggerYoutubePipelineData, TriggerYoutubePipelineResponses, UnbanData, UnbanResponses } from './types.gen';
+import type { BanData, BannedListData, BannedListResponses, BanResponses, GetHeadlinesData, GetHeadlinesResponses, GetLogsData, GetLogsResponses, GetNewsData, GetNewsDetailData, GetNewsDetailResponses, GetNewsResponses, GetRatingsData, GetRatingsResponses, GetRecentMatchData, GetRecentMatchResponses, GetSourcesData, GetSourcesResponses, GetUpcomingMatchesData, GetUpcomingMatchesResponses, ParticipantsData, ParticipantsResponses, ReserveNicknameData, ReserveNicknameResponses, RoomInfoData, RoomInfoResponses, SubmitRatingData, SubmitRatingResponses, SyncMatchesData, SyncMatchesResponses, TriggerHeadlinePipelineData, TriggerHeadlinePipelineResponses, TriggerPipelineData, TriggerPipelineResponses, TriggerYoutubePipelineData, TriggerYoutubePipelineResponses, UnbanData, UnbanResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -122,3 +122,5 @@ export const roomInfo = <ThrowOnError extends boolean = false>(options: Options<
 export const triggerYoutubePipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerYoutubePipelineData, ThrowOnError>) => (options?.client ?? client).get<TriggerYoutubePipelineResponses, unknown, ThrowOnError>({ url: '/api/admin/youtube/trigger', ...options });
 
 export const triggerHeadlinePipeline = <ThrowOnError extends boolean = false>(options?: Options<TriggerHeadlinePipelineData, ThrowOnError>) => (options?.client ?? client).get<TriggerHeadlinePipelineResponses, unknown, ThrowOnError>({ url: '/api/admin/headline/trigger', ...options });
+
+export const participants = <ThrowOnError extends boolean = false>(options: Options<ParticipantsData, ThrowOnError>) => (options.client ?? client).get<ParticipantsResponses, unknown, ThrowOnError>({ url: '/api/admin/chat/{matchId}/participants', ...options });

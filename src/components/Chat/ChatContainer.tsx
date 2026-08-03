@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import SockJS from 'sockjs-client';
+import { Client as StompClient } from '@stomp/stompjs';
 import { roomInfo, getRecentMatch } from '@/client/sdk.gen';
 import type { ChatMessage, RecentMatch } from '@/client/types.gen';
 import ChatMessageItem from './ChatMessageItem';
@@ -34,8 +36,23 @@ const QUICK_CHANTS = [
 // 이모지 단독 버튼은 text-xs로 두면 너무 작아서 크게 렌더한다
 const isEmojiOnly = (chant: string) => !/[a-zA-Z가-힣]/.test(chant);
 
-const GLOBAL_STORAGE_KEY = 'atleti_chat_global_messages_v2';
-const MAX_HISTORY = 99;
+// 서버가 방마다 최근 100건을 24시간 보관한다(redis-design 6.2). 화면도 같은 상한을 쓴다.
+const MAX_HISTORY = 100;
+
+// 접속자 수는 /topic/presence/{matchId}로 즉시 밀려온다.
+// 이 폴링은 어긋난 값을 되맞추는 안전망일 뿐이라 느려도 된다
+// (비정상 종료 시 카운트가 드리프트할 수 있음 — redis-design 6.7).
+const ONLINE_POLL_MS = 30_000;
+
+// 라우트 파라미터가 없을 때 쓰는 placeholder. 실제 방 키가 아니므로
+// getRecentMatch()로 진짜 matchId를 받기 전까지는 접속하지 않는다.
+const PENDING_MATCH_ID = 'recent';
+
+// 상시 개방 자유 채팅방의 방 키 — 백엔드 ChatService.FREE_ROOM_ID와 같은 값.
+// 경기 방 키는 FotMob 숫자 ID라 충돌하지 않는다.
+const FREE_ROOM_ID = 'free';
+
+const messageKey = (m: ChatMessage) => `${m.sentAt ?? ''}|${m.ipHash ?? ''}|${m.nickname}|${m.content}`;
 
 // Trailing slashes are stripped so the paths appended below never produce '//'.
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://api.atleti.kr').replace(
@@ -59,7 +76,14 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   const [isSending, setIsSending] = useState<boolean>(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<WebSocket | null>(null);
+  const stompRef = useRef<StompClient | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [errorNotice, setErrorNotice] = useState<string>('');
+  const [roomOpen, setRoomOpen] = useState<boolean>(true);
+
+  // 실제 방 키가 정해졌는지 — placeholder 상태에서는 접속/조회하지 않는다
+  const roomReady = matchId !== PENDING_MATCH_ID && matchId.length > 0;
+  const isFreeRoom = matchId === FREE_ROOM_ID;
 
   // Audio State & Reference
   const [isPlayingChant, setIsPlayingChant] = useState<boolean>(false);
@@ -97,240 +121,159 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
     }
   };
 
-  // Helper to load all stored messages (unified global key + match key)
-  const loadLocalHistory = useCallback((mId: string): ChatMessage[] => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const globalRaw = localStorage.getItem(GLOBAL_STORAGE_KEY);
-      const matchRaw = localStorage.getItem(`atleti_chat_history_${mId}`);
-      
-      let list: ChatMessage[] = [];
-      if (globalRaw) {
-        const parsed = JSON.parse(globalRaw);
-        if (Array.isArray(parsed)) list = [...list, ...parsed];
-      }
-      if (matchRaw) {
-        const parsed = JSON.parse(matchRaw);
-        if (Array.isArray(parsed)) list = [...list, ...parsed];
-      }
-
-      // Deduplicate
-      const unique: ChatMessage[] = [];
-      list.forEach((item) => {
-        const isDup = unique.some(
-          (u) => u.nickname === item.nickname && u.content === item.content && u.sentAt === item.sentAt
-        );
-        if (!isDup) unique.push(item);
-      });
-
-      return unique.slice(-MAX_HISTORY);
-    } catch (e) {
-      console.error('Failed to load local chat history:', e);
-    }
-    return [];
+  // 메시지는 서버(Redis)가 보관한다. 브라우저에 따로 저장하지 않는다 —
+  // 저장해두면 서버에 도달하지 못한 내 메시지가 보내진 것처럼 남아,
+  // "각자 자기 메시지만 보이는" 상태를 정상처럼 보이게 만든다.
+  const appendMessages = useCallback((incoming: ChatMessage[]) => {
+    if (incoming.length === 0) return;
+    setMessages((prev) => {
+      const seen = new Set(prev.map(messageKey));
+      const fresh = incoming.filter((m) => !seen.has(messageKey(m)));
+      if (fresh.length === 0) return prev;
+      return [...prev, ...fresh].slice(-MAX_HISTORY);
+    });
   }, []);
 
-  // Helper to save chat history globally & per-match
-  const saveLocalHistory = useCallback((mId: string, newMsgs: ChatMessage[]) => {
+  // Initialize nickname.
+  // 방 키가 정해지기 전(placeholder)에 모달을 열면 존재하지 않는 방에 닉네임을 선점하게 되므로 기다린다.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !roomReady) return;
+    const savedNick =
+      localStorage.getItem(`atleti_chat_nickname_${matchId}`) ||
+      localStorage.getItem('atleti_chat_nickname');
+    if (savedNick) {
+      setMyNickname(savedNick);
+      setIsNicknameModalOpen(false);
+    } else {
+      setIsNicknameModalOpen(true);
+    }
+  }, [matchId, roomReady]);
+
+  // 예전 버전이 브라우저에 쌓아둔 메시지 기록 정리.
+  // 남겨두면 서버에 없는 메시지가 계속 보여 "나만 있는 방"처럼 느껴진다. (닉네임 키는 유지)
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const trimmed = newMsgs.slice(-MAX_HISTORY);
-      localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(trimmed));
-      localStorage.setItem(`atleti_chat_history_${mId}`, JSON.stringify(trimmed));
-    } catch (e) {
-      console.error('Failed to save local chat history:', e);
+      localStorage.removeItem('atleti_chat_global_messages_v2');
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('atleti_chat_history_'))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // 접근 불가 환경(사파리 프라이빗 등)에서는 무시
     }
   }, []);
 
-  // Initialize nickname and local message history
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedNick =
-        localStorage.getItem(`atleti_chat_nickname_${matchId}`) ||
-        localStorage.getItem('atleti_chat_nickname');
-      if (savedNick) {
-        setMyNickname(savedNick);
-        setIsNicknameModalOpen(false);
-      } else {
-        setIsNicknameModalOpen(true);
-      }
-
-      // Load local history immediately so messages persist on re-entry!
-      const initialMsgs = loadLocalHistory(matchId);
-      if (initialMsgs.length > 0) {
-        setMessages(initialMsgs);
-        setIsLoading(false);
-      }
-    }
-  }, [matchId, loadLocalHistory]);
-
-  // Fetch recent match details for banner
+  // 헤더 배너에 쓸 경기 정보. 방 키가 placeholder면 최근 경기 방으로 확정한다.
   useEffect(() => {
     async function fetchMatch() {
       try {
-        const res = await getRecentMatch();
-        if (res.data) {
-          setRecentMatch(res.data);
-          if (initialMatchId === 'recent' && res.data.matchId) {
-            setMatchId(res.data.matchId);
-          }
+        const res = await getRecentMatch().catch(() => null);
+        if (!res?.data) return;
+        setRecentMatch(res.data);
+        if (initialMatchId === PENDING_MATCH_ID && res.data.matchId) {
+          setMatchId(res.data.matchId);
         }
       } catch (err) {
-        console.error('Failed to fetch recent match info:', err);
+        console.error('Failed to fetch match info:', err);
       }
     }
     fetchMatch();
   }, [initialMatchId]);
 
-  // Helper to merge server messages with local state smoothly.
-  // Server history is authoritative; local messages the server has not echoed back
-  // yet are kept at the tail as still-pending.
-  const mergeServerMessages = useCallback((currentMsgs: ChatMessage[], serverMsgs: ChatMessage[]) => {
-    if (!serverMsgs || serverMsgs.length === 0) {
-      return currentMsgs;
+  // 방 정보 조회 — 입장 시 최근 메시지 로딩 + 접속자 수 갱신.
+  // 접속자 수는 서버에서 밀어주는 채널이 없어 이 폴링이 유일한 갱신 경로다.
+  const fetchRoomData = useCallback(async () => {
+    if (!roomReady) return;
+    try {
+      const res = await roomInfo({ path: { matchId } }).catch(() => null);
+      if (!res?.data) return;
+
+      // 0명이면 0으로 표시한다. 예전에는 `|| 1` 때문에 항상 최소 1명으로 보여서
+      // 아무도 접속 못 하고 있는 상태가 "나 혼자 있는 방"처럼 보였다.
+      setOnlineCount(res.data.onlineCount ?? 0);
+      setRoomOpen(res.data.open ?? true);
+      if (Array.isArray(res.data.messages)) appendMessages(res.data.messages);
+    } catch (err) {
+      console.error('Failed to fetch room info:', err);
+    } finally {
+      setIsLoading(false);
     }
+  }, [matchId, roomReady, appendMessages]);
 
-    // Count the copies the server already holds: each server copy accounts for exactly
-    // one local message. A plain "does the server have this text?" check would collapse
-    // repeats — sending 👍 twice would make the second one vanish. sentAt can't be used
-    // as the key because the server may stamp its own value.
-    const messageKey = (msg: ChatMessage) => JSON.stringify([msg.nickname, msg.content]);
-    const unmatchedOnServer = new Map<string, number>();
-    serverMsgs.forEach((srv) => {
-      const key = messageKey(srv);
-      unmatchedOnServer.set(key, (unmatchedOnServer.get(key) || 0) + 1);
-    });
-
-    const merged = [...serverMsgs];
-    currentMsgs.forEach((local) => {
-      const key = messageKey(local);
-      const remaining = unmatchedOnServer.get(key) || 0;
-      if (remaining > 0) {
-        unmatchedOnServer.set(key, remaining - 1);
-      } else {
-        merged.push(local);
-      }
-    });
-
-    return merged.slice(-MAX_HISTORY);
-  }, []);
-
-  // Fetch room info from backend (queries both current matchId and 'recent' fallback)
-  const fetchRoomData = useCallback(
-    async (showLoader = false) => {
-      if (showLoader && messages.length === 0) setIsLoading(true);
-      try {
-        // Try current matchId
-        let res = await roomInfo({
-          path: {
-            matchId: matchId || 'recent',
-          },
-        }).catch(() => null);
-
-        // Fallback to 'recent' if specific ID returns no messages
-        if ((!res || !res.data || !res.data.messages || res.data.messages.length === 0) && matchId !== 'recent') {
-          const fallbackRes = await roomInfo({
-            path: {
-              matchId: 'recent',
-            },
-          }).catch(() => null);
-          if (fallbackRes && fallbackRes.data && fallbackRes.data.messages && fallbackRes.data.messages.length > 0) {
-            res = fallbackRes;
-          }
-        }
-
-        if (res && res.data) {
-          setOnlineCount(res.data.onlineCount || 1);
-          if (res.data.messages && Array.isArray(res.data.messages)) {
-            const serverMsgs = res.data.messages;
-            setMessages((prev) => {
-              const updated = mergeServerMessages(prev, serverMsgs);
-              saveLocalHistory(matchId, updated);
-              return updated;
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch room info:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [matchId, messages.length, mergeServerMessages, saveLocalHistory]
-  );
-
-  // Polling every 2.5 seconds
   useEffect(() => {
-    fetchRoomData(messages.length === 0);
-
-    const interval = setInterval(() => {
-      fetchRoomData(false);
-    }, 2500);
-
+    if (!roomReady) return;
+    fetchRoomData();
+    const interval = setInterval(fetchRoomData, ONLINE_POLL_MS);
     return () => clearInterval(interval);
-  }, [fetchRoomData, messages.length]);
+  }, [fetchRoomData, roomReady]);
 
-  // Connect STOMP WebSocket for real-time messaging with Spring Boot backend
+  // 백엔드 STOMP 연결 (WebSocketConfig.kt: 엔드포인트 /ws, SockJS 사용).
+  // 목적지 규약: 구독 /topic/chat/{matchId}, 전송 /app/chat/{matchId},
+  // 개인 에러 회신 /user/queue/errors.
   useEffect(() => {
-    let ws: WebSocket | null = null;
+    if (typeof window === 'undefined' || !roomReady) return;
 
-    const connectWebSocket = () => {
-      try {
-        // Derived from the API URL, not the page URL: in local dev the page is http
-        // while the API is https, and ws:// against a TLS endpoint fails to connect.
-        const protocol = API_BASE_URL.startsWith('https:') ? 'wss:' : 'ws:';
-        const host = API_BASE_URL.replace(/^https?:\/\//, '');
+    const client = new StompClient({
+      // 백엔드가 .withSockJS()로 등록했으므로 raw WebSocket이 아니라 SockJS로 붙어야 한다
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      reconnectDelay: 3000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      onConnect: () => {
+        setIsConnected(true);
+        setErrorNotice('');
 
-        const wsUrl = `${protocol}//${host}/ws-chat`;
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          ws?.send('CONNECT\naccept-version:1.2,1.1,1.0\nheart-beat:10000,10000\n\n\0');
-        };
-
-        ws.onmessage = (event) => {
-          const data = event.data;
-          if (typeof data === 'string') {
-            if (data.includes('CONNECTED')) {
-              ws?.send(`SUBSCRIBE\nid:sub-0\ndestination:/sub/chat/room/${matchId}\n\n\0`);
-              ws?.send(`SUBSCRIBE\nid:sub-1\ndestination:/topic/chat/room/${matchId}\n\n\0`);
-              ws?.send(`SUBSCRIBE\nid:sub-2\ndestination:/sub/chat/room/recent\n\n\0`);
-              ws?.send(`SUBSCRIBE\nid:sub-3\ndestination:/topic/chat/room/recent\n\n\0`);
-            } else if (data.includes('MESSAGE')) {
-              const bodyIdx = data.indexOf('\n\n');
-              if (bodyIdx !== -1) {
-                const jsonStr = data.substring(bodyIdx + 2, data.length - 1).trim();
-                try {
-                  const parsedMsg: ChatMessage = JSON.parse(jsonStr);
-                  setMessages((prev) => {
-                    const updated = mergeServerMessages(prev, [parsedMsg]);
-                    saveLocalHistory(matchId, updated);
-                    return updated;
-                  });
-                } catch (e) {
-                  // Ignore JSON parse errors
-                }
-              }
-            }
+        // 접속자 수 먼저 구독한다 — 아래 방 구독으로 발생하는 내 입장 이벤트를 놓치지 않으려고.
+        // (백엔드가 /topic/chat/ 아래 구독을 전부 "입장"으로 세므로 목적지 prefix가 다르다)
+        client.subscribe(`/topic/presence/${matchId}`, (frame) => {
+          try {
+            const { onlineCount } = JSON.parse(frame.body);
+            if (typeof onlineCount === 'number') setOnlineCount(onlineCount);
+          } catch {
+            // 파싱 불가 프레임은 무시
           }
-        };
+        });
 
-        socketRef.current = ws;
-      } catch (e) {
-        // Fail quietly to polling if WebSocket fails
-      }
-    };
+        client.subscribe(`/topic/chat/${matchId}`, (frame) => {
+          try {
+            appendMessages([JSON.parse(frame.body) as ChatMessage]);
+          } catch {
+            // 파싱 불가 프레임은 무시
+          }
+        });
 
-    if (typeof window !== 'undefined') {
-      connectWebSocket();
-    }
+        // 정책 위반(닫힌 방·도배·금칙어·닉네임 중복)은 방 전체가 아니라 나에게만 온다.
+        // 예전에는 이 채널을 구독하지 않아 거절 사유가 전혀 보이지 않았다.
+        client.subscribe('/user/queue/errors', (frame) => {
+          try {
+            setErrorNotice(JSON.parse(frame.body).error ?? '메시지를 보낼 수 없습니다.');
+          } catch {
+            setErrorNotice('메시지를 보낼 수 없습니다.');
+          }
+        });
+
+        // 구독 직후 한 번 더 맞춰준다 — 연결 전에 올라온 메시지와 접속자 수 반영
+        fetchRoomData();
+      },
+      onDisconnect: () => setIsConnected(false),
+      onWebSocketClose: () => setIsConnected(false),
+      onStompError: (frame) => {
+        setIsConnected(false);
+        console.error('STOMP error:', frame.headers['message'], frame.body);
+      },
+    });
+
+    client.activate();
+    stompRef.current = client;
 
     return () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      stompRef.current = null;
+      setIsConnected(false);
+      client.deactivate();
     };
-  }, [matchId, mergeServerMessages, saveLocalHistory]);
+    // fetchRoomData는 matchId에만 의존하므로 재연결 루프를 만들지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchId, roomReady, appendMessages]);
 
   // Isolated scroll within inner message container only
   useEffect(() => {
@@ -347,23 +290,15 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
       localStorage.setItem('atleti_chat_nickname', newNickname);
     }
     setIsNicknameModalOpen(false);
-
-    // Append welcome system message
-    const systemNotice: ChatMessage = {
-      matchId,
-      nickname: 'SYSTEM',
-      content: `🔴⚪ ${newNickname} 님이 라이브 응원방에 입장하셨습니다!`,
-      sentAt: new Date().toISOString(),
-    };
-    setMessages((prev) => {
-      const updated = [...prev, systemNotice];
-      saveLocalHistory(matchId, updated);
-      return updated;
-    });
   };
 
-  // Send Message logic: Transmit to Backend STOMP & Backend HTTP Endpoints
-  const handleSendMessage = async (contentToSend?: string) => {
+  /**
+   * 전송은 STOMP 한 경로뿐이다 (ChatController.kt: @MessageMapping("/chat/{matchId}")).
+   * 서버가 검증·저장한 뒤 브로드캐스트한 것을 구독으로 되받아 화면에 그린다.
+   * 낙관적 업데이트를 하지 않는 이유: 서버가 거절해도(도배·금칙어·닫힌 방)
+   * 화면에는 보내진 것처럼 남아 예전처럼 "나만 보이는 메시지"가 생긴다.
+   */
+  const handleSendMessage = (contentToSend?: string) => {
     const text = (contentToSend || inputContent).trim();
     if (!text) return;
 
@@ -372,83 +307,25 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
       return;
     }
 
-    setIsSending(true);
-
-    const messagePayload: ChatMessage = {
-      matchId,
-      nickname: myNickname,
-      content: text,
-      sentAt: new Date().toISOString(),
-    };
-
-    // 1. Optimistic Local Update & Instant Persistence to localStorage!
-    setMessages((prev) => {
-      const updated = [...prev, messagePayload];
-      saveLocalHistory(matchId, updated);
-      return updated;
-    });
-
-    if (!contentToSend) setInputContent('');
-
-    // 2. Publish over WebSocket STOMP
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      try {
-        const frame1 = `SEND\ndestination:/pub/chat/message\ncontent-type:application/json\n\n${JSON.stringify(
-          messagePayload
-        )}\0`;
-        const frame2 = `SEND\ndestination:/app/chat/message\ncontent-type:application/json\n\n${JSON.stringify(
-          messagePayload
-        )}\0`;
-        socketRef.current.send(frame1);
-        socketRef.current.send(frame2);
-      } catch (e) {
-        console.error('Failed to send WebSocket message:', e);
-      }
+    const client = stompRef.current;
+    if (!client?.connected) {
+      setErrorNotice('채팅 서버에 연결되어 있지 않아요. 잠시 후 다시 시도해주세요.');
+      return;
     }
 
-    // 3. Send HTTP POST to backend endpoints so backend stores it in room history
+    setIsSending(true);
+    setErrorNotice('');
     try {
-      const apiHost = API_BASE_URL;
-      const body = JSON.stringify({
-        matchId,
-        nickname: myNickname,
-        content: text,
+      // 서버는 목적지의 matchId와 본문의 nickname/content만 사용한다
+      client.publish({
+        destination: `/app/chat/${matchId}`,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ nickname: myNickname, content: text }),
       });
-
-      await Promise.allSettled([
-        fetch(`${apiHost}/api/chat/${matchId}/message`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }),
-        fetch(`${apiHost}/api/chat/recent/message`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }),
-        fetch(`${apiHost}/api/chat/${matchId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }),
-        fetch(`${apiHost}/api/chat/recent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }),
-        fetch(`${apiHost}/api/chat/message`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }),
-      ]);
-
-      // Refetch backend's recent messages
-      setTimeout(() => {
-        fetchRoomData(false);
-      }, 500);
+      if (!contentToSend) setInputContent('');
     } catch (err) {
-      console.error('HTTP send message error:', err);
+      console.error('Failed to publish message:', err);
+      setErrorNotice('메시지 전송에 실패했어요.');
     } finally {
       setIsSending(false);
     }
@@ -461,35 +338,39 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   return (
     <div className="flex flex-col h-dvh w-full max-w-4xl mx-auto bg-white text-gray-900 overflow-hidden shadow-none sm:shadow-lg border-0 sm:border-x border-gray-200 animate-fadeIn">
       {/* 1. Header Banner (Vibrant Atletico Red 360-degree LED board Style) */}
-      <div className="bg-gradient-to-r from-aleti-red to-[#a6081c] text-white px-3 py-2.5 sm:px-4 sm:py-3.5 shrink-0 shadow-sm border-b-2 border-red-800 relative overflow-hidden">
-        {/* Metropolitano LED Top Neon line */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-white via-red-200 to-white opacity-40" />
-        
-        {/* Faint LED stadium grid overlay for 360-degree board feel */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none" />
+      {/*
+        헤더 컨테이너 자체가 26/27 홈킷 스트라이프다.
+        흰 줄 위에서는 흰 글씨가 사라지므로, 안의 요소들은 각자 남색/흰색 판을 깔고 올라간다
+        (유니폼에 붙은 패치처럼). 하단 남색 라인은 셔츠 칼라.
+      */}
+      <div className="chat-header-kit text-white px-3 py-2.5 sm:px-4 sm:py-3.5 shrink-0 shadow-sm border-b-2 border-aleti-navy relative">
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 relative z-10">
           {/* Back & Match Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               href="/"
-              className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/25 transition shrink-0"
+              className="kit-patch p-1.5 sm:p-2 rounded-xl transition shrink-0"
               title="홈으로 돌아가기"
             >
               <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
             </Link>
 
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 items-start">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white text-aleti-red text-[9px] sm:text-[10px] font-black shrink-0">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white text-aleti-red text-[9px] sm:text-[10px] font-black shrink-0 shadow-sm">
                   <Radio size={8} className="animate-pulse sm:w-2.5 sm:h-2.5 text-aleti-red" />
-                  라이브 채팅
+                  {isFreeRoom ? '자유 채팅' : '경기 채팅'}
                 </span>
               </div>
-              <h1 className="text-xs sm:text-base md:text-lg font-black text-white truncate leading-tight font-sans tracking-tight mt-0.5 sm:mt-1">
-                {recentMatch
-                  ? `${recentMatch.homeTeam} vs ${recentMatch.awayTeam}`
-                  : '아틀레티코 마드리드 실시간 응원방'}
+              {/* 줄무늬 위에 그냥 흰 글씨를 올리면 흰 줄 구간에서 사라진다 —
+                  가슴 스폰서 블록처럼 남색 패치를 깔고 그 위에 얹는다 */}
+              <h1 className="kit-patch max-w-full truncate rounded-lg px-2.5 py-1 text-xs font-black leading-tight tracking-tight sm:text-base md:text-lg mt-0.5 sm:mt-1">
+                {isFreeRoom
+                  ? '자유 채팅방'
+                  : recentMatch
+                    ? `${recentMatch.homeTeam} vs ${recentMatch.awayTeam}`
+                    : '아틀레티코 마드리드 실시간 응원방'}
               </h1>
             </div>
           </div>
@@ -500,10 +381,10 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             <button
               type="button"
               onClick={toggleChant}
-              className={`p-1.5 sm:p-2 rounded-xl border transition flex items-center justify-center ${
+              className={`p-1.5 sm:p-2 rounded-xl transition flex items-center justify-center ${
                 isPlayingChant
-                  ? 'bg-[#ccff00] text-black border-[#ccff00] font-black shadow-[0_0_8px_rgba(204,255,0,0.5)] animate-pulse'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/25'
+                  ? 'bg-[#ccff00] text-black border border-[#ccff00] font-black shadow-[0_0_8px_rgba(204,255,0,0.5)] animate-pulse'
+                  : 'kit-patch'
               }`}
               title={isPlayingChant ? '응원가 끄기' : '응원가 켜기'}
             >
@@ -515,7 +396,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             </button>
 
             {/* Online Badge */}
-            <div className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-black/25 text-white text-[10px] sm:text-xs font-bold border border-white/20 shadow-inner">
+            <div className="kit-patch flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
               <Users size={12} className="sm:w-3.5 sm:h-3.5 shrink-0" />
               <span className="tabular-nums text-white">{onlineCount}<span className="hidden xs:inline">명</span></span>
@@ -569,6 +450,51 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           )}
         </div>
 
+        {/* 방이 아직 안 열림 — 경기 채팅방은 킥오프 1시간 전부터 종료 3시간 후까지만 열린다 */}
+        {!roomOpen && !isLoading && !errorNotice && (
+          <div className="absolute bottom-2 inset-x-0 px-4 flex justify-center pointer-events-none">
+            <div className="pointer-events-auto max-w-md w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold shadow-lg border bg-gray-50 border-gray-200 text-gray-700">
+              <span className="shrink-0">⏳</span>
+              <span className="flex-1 leading-snug">
+                이 경기 채팅방은 킥오프 1시간 전에 열려요. 그동안은{' '}
+                <Link href={`/chat/${FREE_ROOM_ID}`} className="underline text-aleti-red">
+                  자유 채팅방
+                </Link>
+                에서 이야기 나눠요!
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 연결 끊김 / 정책 위반 안내 — 예전에는 실패가 전부 조용히 무시됐다 */}
+        {(!isConnected || errorNotice) && !isLoading && (
+          <div className="absolute bottom-2 inset-x-0 px-4 flex justify-center pointer-events-none">
+            <div
+              role="status"
+              className={`pointer-events-auto max-w-md w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold shadow-lg border ${
+                errorNotice
+                  ? 'bg-red-50 border-red-200 text-red-700'
+                  : 'bg-amber-50 border-amber-200 text-amber-800'
+              }`}
+            >
+              <span className="shrink-0">{errorNotice ? '⚠️' : '🔌'}</span>
+              <span className="flex-1 leading-snug">
+                {errorNotice || '채팅 서버와 연결이 끊겼어요. 다시 연결하는 중...'}
+              </span>
+              {errorNotice && (
+                <button
+                  type="button"
+                  onClick={() => setErrorNotice('')}
+                  className="shrink-0 px-1.5 text-red-500 hover:text-red-700"
+                  aria-label="알림 닫기"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/*
           El ramo de Margarita — since 1996 a bouquet of rojiblanco carnations sits by the
           corner flag left of the south goal at every Metropolitano home match.
@@ -591,9 +517,10 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
 
 
       {/* 3. Quick Chant Buttons */}
-      <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 overflow-x-auto whitespace-nowrap shrink-0 flex items-center gap-1.5 no-scrollbar">
-        <span className="text-[10px] font-black uppercase text-gray-500 flex items-center gap-1 mr-1 shrink-0">
-          <Flame size={12} className="text-aleti-red" />
+      <div className="px-3 py-2 bg-aleti-navy border-t border-white/15 overflow-x-auto whitespace-nowrap shrink-0 flex items-center gap-1.5 no-scrollbar">
+        <span className="text-[10px] font-black uppercase text-white/75 flex items-center gap-1 mr-1 shrink-0">
+          {/* 남색 배경에서 aleti-red는 대비가 낮아 아이콘만 밝게 둔다 */}
+          <Flame size={12} className="text-white/75" />
           빠른 응원:
         </span>
         {QUICK_CHANTS.map((chant) => (
@@ -601,7 +528,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             key={chant}
             type="button"
             onClick={() => handleQuickChant(chant)}
-            className={`rounded-lg bg-white hover:bg-aleti-red hover:text-white font-bold text-gray-700 border border-gray-300 shadow-2xs transition active:scale-95 shrink-0 ${
+            className={`rounded-lg bg-white hover:bg-aleti-red hover:text-white font-bold text-gray-700 border border-white/25 shadow-2xs transition active:scale-95 shrink-0 ${
               isEmojiOnly(chant) ? 'px-2 py-0.5 text-base leading-6' : 'px-2.5 py-1 text-xs'
             }`}
           >
@@ -611,7 +538,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
       </div>
 
       {/* 4. Bottom Input Bar */}
-      <div className="p-3 sm:p-4 bg-white border-t border-gray-200 shrink-0">
+      <div className="p-3 sm:p-4 bg-aleti-navy border-t border-white/15 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();

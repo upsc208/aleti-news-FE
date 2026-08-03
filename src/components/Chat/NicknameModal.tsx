@@ -41,8 +41,10 @@ export default function NicknameModal({
       return;
     }
 
-    if (trimmed.length < 2 || trimmed.length > 15) {
-      setErrorMsg('닉네임은 2자 이상 15자 이하로 입력해 주세요.');
+    // 서버 규칙과 동일하게 2~12자 (ChatService.validateNickname).
+    // 예전에는 15자까지 통과시켜 13~15자는 서버에서 거절당했다.
+    if (trimmed.length < 2 || trimmed.length > 12) {
+      setErrorMsg('닉네임은 2자 이상 12자 이하로 입력해 주세요.');
       return;
     }
 
@@ -51,30 +53,36 @@ export default function NicknameModal({
     setSuccessMsg('');
 
     try {
-      await reserveNickname({
-        path: {
-          matchId: matchId || 'recent',
-        },
-        body: {
-          nickname: trimmed,
-        },
+      // hey-api 클라이언트는 기본값(throwOnError:false)에서 예외를 던지지 않고
+      // { data, error, response }를 돌려준다. 예전 코드는 catch에만 의존해
+      // 409(닉네임 중복)를 성공으로 처리했다.
+      const res = await reserveNickname({
+        path: { matchId },
+        body: { nickname: trimmed },
       });
+
+      if (res.error || !res.response?.ok) {
+        const serverMsg =
+          typeof res.error === 'object' && res.error !== null && 'error' in res.error
+            ? String((res.error as { error?: unknown }).error ?? '')
+            : '';
+        setErrorMsg(
+          serverMsg ||
+            (res.response?.status === 409
+              ? '이미 사용 중이거나 사용할 수 없는 닉네임입니다.'
+              : '닉네임을 설정하지 못했어요. 잠시 후 다시 시도해주세요.')
+        );
+        return;
+      }
 
       setSuccessMsg('닉네임이 성공적으로 설정되었습니다!');
       setTimeout(() => {
         onSuccess(trimmed);
       }, 400);
-    } catch (err: any) {
+    } catch (err) {
+      // 네트워크 장애 등 — 여기서 로컬 통과시키면 채팅이 안 되는데 된 것처럼 보인다
       console.error('Failed to reserve nickname:', err);
-      if (err?.status === 400 || err?.status === 409) {
-        setErrorMsg('이미 사용 중이거나 사용할 수 없는 닉네임입니다.');
-      } else {
-        // Fallback: accept locally for smooth UX if endpoint is offline
-        setSuccessMsg('닉네임 설정 완료!');
-        setTimeout(() => {
-          onSuccess(trimmed);
-        }, 400);
-      }
+      setErrorMsg('서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +121,7 @@ export default function NicknameModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                닉네임 입력 (2~15자)
+                닉네임 입력 (2~12자)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -127,7 +135,7 @@ export default function NicknameModal({
                     setErrorMsg('');
                   }}
                   placeholder="예: 로히블랑코_77, Colchonero"
-                  maxLength={15}
+                  maxLength={12}
                   required
                   className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
                 />

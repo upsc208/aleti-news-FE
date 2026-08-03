@@ -63,7 +63,7 @@ export default function ChatMessageItem({ msg, myNickname }: ChatMessageItemProp
     );
   }
 
-  // Other users' message (Left aligned - Soft Light Gray bubble)
+  // Other users' message (Left aligned - Atleti navy bubble)
   const initialChar = msg.nickname ? msg.nickname.charAt(0).toUpperCase() : '?';
 
   return (
@@ -85,7 +85,7 @@ export default function ChatMessageItem({ msg, myNickname }: ChatMessageItemProp
           </span>
           <span className="text-[10px] text-gray-400 font-medium">{formatTime(msg.sentAt)}</span>
         </div>
-        <div className="px-4 py-2.5 rounded-2xl rounded-tl-xs bg-gray-100 text-gray-900 border border-gray-200/80 shadow-xs text-sm font-medium leading-relaxed break-words">
+        <div className="px-4 py-2.5 rounded-2xl rounded-tl-xs bg-aleti-navy text-white border border-aleti-navy shadow-xs text-sm font-medium leading-relaxed break-words">
           {msg.content}
         </div>
       </div>

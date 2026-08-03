@@ -240,6 +240,93 @@ html {
   box-shadow: none;
 }
 
+/* ===================================================
+   유니폼 패치 — 셔츠에 눌러 붙인 남색 스폰서/소매 패치 질감
+   (RIYADH AIR 가슴 블록, 크래프톤 소매 패치 참고)
+
+   세 가지 신호로 "천에 붙은 조각"처럼 보이게 한다:
+     1) 가장자리 안쪽 1px 흰 스티치 실선
+     2) 위 밝고 아래 어두운 미세 그라디언트 = 도톰함
+     3) 바깥 그림자 = 원단 위에 떠 있음
+   =================================================== */
+.kit-patch {
+  background-color: var(--aleti-navy);
+  /* 위가 밝고 아래가 어두워 살짝 볼록해 보인다 */
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(0, 0, 0, 0.16));
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1.5px var(--aleti-navy),           /* 패치 바깥 여백 */
+    inset 0 0 0 2.5px rgba(255, 255, 255, 0.5),    /* 테두리 스티치 */
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),       /* 윗면 하이라이트 */
+    0 1px 3px rgba(0, 0, 0, 0.38);                 /* 원단에 드리운 그림자 */
+}
+
+.kit-patch:hover {
+  filter: brightness(1.18);
+}
+
+/* ===================================================
+   채팅방 헤더 — 26/27 홈킷 스트라이프 (높이 자유형)
+   위 .header-stripe-kit의 SVG는 28px 밴드 전용이다.
+   삼지창 모티프가 고정 크기라 높이를 늘리면 세로로
+   찌그러지므로, 같은 기하(75px 흰/빨 + 가장자리
+   핀스트라이프 + 우측 3선)를 그라디언트로 옮겨
+   컨테이너 높이와 무관하게 선이 곧게 서도록 했다.
+   색은 --aleti-red / #8C0517 / #F8F4F3와 동일.
+   =================================================== */
+.chat-header-kit {
+  background-color: #f8f4f3;
+  background-image:
+    /* 1겹: 삼지창 — 붉은 줄 1의 모티프.
+       줄무늬처럼 세로로 늘리면 형태가 깨지므로 비율 고정 타일로 얹고
+       아래(칼라)에서 솟아오르도록 bottom 정렬한다. 원본 밴드의 2배 크기. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='56' viewBox='0 0 300 56'%3E%3Cg stroke='%238C0517' stroke-width='4' fill='none' stroke-linecap='round'%3E%3Cpath d='M112.5 56V17.2'/%3E%3Cpath d='M112.5 38c0-6-9-6-9-12v-8'/%3E%3Cpath d='M112.5 38c0-6 9-6 9-12v-8'/%3E%3C/g%3E%3Cpath d='M107.7 18.8h9.6L112.5 7.2z' fill='%238C0517'/%3E%3C/svg%3E"),
+
+    /* 2겹: 삼지창 위로 이어지는 3선.
+       삼지창의 세 갈래(좌 갈퀴 103.5 / 중앙 112.5 / 우 갈퀴 121.5) 위에 세운다.
+       맨 위가 진한 붉은색(#8C0517)으로 꽉 차고, 내려올수록 배경 빨강(#BF0921)으로
+       옅어져 삼지창이 세 갈래로 갈라지는 지점(높이의 약 82%)에서 사라진다.
+
+       삼지창과 달리 이 겹은 컨테이너 높이에 맞춰 늘린다(300px 100%).
+       세로선과 세로 그라디언트는 늘어나도 형태가 깨지지 않으므로
+       헤더가 높든 낮든 "맨 위는 항상 진하게"가 유지된다.
+       고정 타일에 넣으면 헤더 높이에 따라 위쪽 진하기가 달라져 이 방식이 필요하다. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='100' viewBox='0 0 300 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='t' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238C0517'/%3E%3Cstop offset='0.82' stop-color='%23BF0921'/%3E%3Cstop offset='1' stop-color='%23BF0921'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23t)'%3E%3Crect x='102' width='3' height='100'/%3E%3Crect x='111' width='3' height='100'/%3E%3Crect x='120' width='3' height='100'/%3E%3C/g%3E%3C/svg%3E"),
+
+    /* 3겹: 흰/빨 줄무늬 + 핀스트라이프 + 붉은 줄 2의 3선 */
+    repeating-linear-gradient(
+    to right,
+    #f8f4f3 0 75px,
+    /* 붉은 줄 1 — 양 끝에 흰 핀스트라이프 */
+    #bf0921 75px 78px,
+    #f8f4f3 78px 81px,
+    #bf0921 81px 144px,
+    #f8f4f3 144px 147px,
+    #bf0921 147px 150px,
+    #f8f4f3 150px 225px,
+    /* 붉은 줄 2 — 핀스트라이프 + 진한 붉은 3선 */
+    #bf0921 225px 228px,
+    #f8f4f3 228px 231px,
+    /* 3선 — 굵기 3px, 중심 간격 9는 삼지창 쪽 3선(103.5 / 112.5 / 121.5)과 동일하게 맞춘 값.
+       줄 한가운데(262.5)를 기준으로 253.5 / 262.5 / 271.5에 세운다. */
+    #bf0921 231px 252px,
+    #8c0517 252px 255px,
+    #bf0921 255px 261px,
+    #8c0517 261px 264px,
+    #bf0921 264px 270px,
+    #8c0517 270px 273px,
+    #bf0921 273px 294px,
+    #f8f4f3 294px 297px,
+    #bf0921 297px 300px
+  );
+  /* 세 겹 모두 300px 타일을 오른쪽 기준으로 반복 — 헤더(.header-stripe-kit)와 정렬 위상을 맞춘다.
+     이 선언이 없으면 그라디언트가 요소 전체를 한 장으로 채워 background-position이 무시된다.
+     삼지창만 고정 높이(56px)로 아래 정렬, 나머지 두 겹은 컨테이너 높이에 맞춰 늘린다. */
+  background-size: 300px 56px, 300px 100%, 300px 100%;
+  background-repeat: repeat-x, repeat-x, repeat-x;
+  background-position: right bottom, right top, right top;
+}
+
 /* Header stripe decoration in dark mode */
 .dark .dark-header-stripe {
   background: repeating-linear-gradient(
@@ -306,3 +393,4 @@ html {
 .custom-scrollbar-red::-webkit-scrollbar-thumb:hover {
   background: #ff2a3b;
 }
+
