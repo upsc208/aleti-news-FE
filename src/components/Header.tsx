@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Newspaper, Info, Sparkles, ShoppingBag } from 'lucide-react';
+import { Newspaper, Info, Sparkles, ShoppingBag, MessageSquare } from 'lucide-react';
 import TributeBadge from './Header/TributeBadge';
 import TicketModal from './Header/TicketModal';
 import { useTheme } from './ThemeProvider';
@@ -68,13 +68,7 @@ export default function Header() {
 
           {/* TributeBadge for Mobile only */}
           <div className="md:hidden scale-90 xs:scale-100 origin-right transition-transform">
-            <TributeBadge
-              key={theme}
-              stats={[
-                { label: 'VS', value: '맨시티' },
-                { label: '일정', value: '8월 9일(일)' }
-              ]}
-            />
+            <TributeBadge key={theme} />
           </div>
         </div>
 
@@ -92,6 +86,13 @@ export default function Header() {
             </div>
             <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">소개</span>
           </Link>
+          {/* 채팅방 선택 화면 — 자유 채팅방 / 경기 채팅방 중 고른다 */}
+          <Link href="/chat" className="group flex items-center gap-1 min-[350px]:gap-1.5 lg:gap-2 text-gray-800 dark:text-gray-300 transition-all hover:text-aleti-red dark:hover:text-volt shrink-0">
+            <div className="p-1 min-[350px]:p-1.5 lg:p-2 rounded-lg group-hover:bg-aleti-red/5 dark:group-hover:bg-volt/5 transition-colors">
+              <MessageSquare className="w-4 h-4 min-[350px]:w-[18px] min-[350px]:h-[18px] lg:w-5 lg:h-5" />
+            </div>
+            <span className="tracking-tight underline-offset-4 decoration-2 hover:underline">채팅</span>
+          </Link>
           <div className="hidden lg:block h-6 w-[1px] bg-gray-200 dark:bg-volt/10 mx-1 shrink-0"></div>
           <TicketModal />
           <a
@@ -108,13 +109,7 @@ export default function Header() {
 
         {/* Right Section: Tribute (Desktop) */}
         <div className="hidden md:flex md:flex-1 justify-end shrink-0 ml-4">
-          <TributeBadge
-            key={theme}
-            stats={[
-              { label: 'VS', value: '맨시티' },
-              { label: '일정', value: '8월 9일(일)' }
-            ]}
-          />
+          <TributeBadge key={theme} />
         </div>
       </div>
     </header>

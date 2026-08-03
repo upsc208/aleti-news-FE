@@ -7,9 +7,12 @@ import DarkModeToggle from '@/components/DarkModeToggle';
 
 export default function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isChatPage = pathname?.startsWith('/chat');
+  // 실제 채팅방(/chat/free, /chat/{matchId})만 전체화면 몰입형으로 띄운다.
+  // 방 선택 화면(/chat)은 일반 페이지라 사이트 헤더·푸터를 그대로 쓴다
+  // — 여기에 overflow-hidden + h-dvh를 걸면 선택 카드가 잘린다.
+  const isChatRoom = pathname?.startsWith('/chat/');
 
-  if (isChatPage) {
+  if (isChatRoom) {
     return (
       <main className="min-h-dvh h-dvh w-full bg-white text-gray-900 flex flex-col overflow-hidden">
         {children}
