@@ -12,7 +12,6 @@ import {
   Send,
   Sparkles,
   Flame,
-  Radio,
   ArrowLeft,
   MessageSquare,
   Volume2,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface ChatContainerProps {
   initialMatchId?: string;
@@ -61,6 +61,7 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://api.atleti.kr'
 );
 
 export default function ChatContainer({ initialMatchId = 'recent' }: ChatContainerProps) {
+  const router = useRouter();
   const [matchId, setMatchId] = useState<string>(initialMatchId);
   const [recentMatch, setRecentMatch] = useState<RecentMatch | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -335,6 +336,21 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
     handleSendMessage(chant);
   };
 
+  /**
+   * 헤더 뒤로가기 — 기기 뒤로가기와 같은 동작(히스토리 되감기).
+   * 예전에는 홈('/')으로 가는 링크였다. 방 선택 화면으로 돌아가지 않는 데다,
+   * 홈은 뉴스 목록을 불러오는 무거운 페이지라 서버 응답을 기다리는 동안
+   * 눌러도 반응이 없는 것처럼 보였다.
+   */
+  const handleBack = () => {
+    // 링크로 바로 들어와 되돌아갈 기록이 없으면 방 선택 화면으로 보낸다.
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/chat');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto bg-white text-gray-900 overflow-hidden shadow-none sm:shadow-lg border-0 sm:border-x border-gray-200 animate-fadeIn">
       {/* 1. Header Banner (Vibrant Atletico Red 360-degree LED board Style) */}
@@ -348,24 +364,20 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         <div className="flex items-center justify-between gap-2 sm:gap-3 relative z-10">
           {/* Back & Match Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Link
-              href="/"
-              className="kit-patch p-1.5 sm:p-2 rounded-xl transition shrink-0"
-              title="홈으로 돌아가기"
+            <button
+              type="button"
+              onClick={handleBack}
+              className="kit-patch inline-flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition shrink-0"
+              aria-label="이전 화면으로"
+              title="이전 화면으로"
             >
-              <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
-            </Link>
+              <ArrowLeft size={22} className="sm:w-6 sm:h-6" />
+            </button>
 
             <div className="flex flex-col min-w-0 items-start">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white text-aleti-red text-[9px] sm:text-[10px] font-black shrink-0 shadow-sm">
-                  <Radio size={8} className="animate-pulse sm:w-2.5 sm:h-2.5 text-aleti-red" />
-                  {isFreeRoom ? '자유 채팅' : '경기 채팅'}
-                </span>
-              </div>
               {/* 줄무늬 위에 그냥 흰 글씨를 올리면 흰 줄 구간에서 사라진다 —
                   가슴 스폰서 블록처럼 남색 패치를 깔고 그 위에 얹는다 */}
-              <h1 className="kit-patch max-w-full truncate rounded-lg px-2.5 py-1 text-xs font-black leading-tight tracking-tight sm:text-base md:text-lg mt-0.5 sm:mt-1">
+              <h1 className="kit-patch max-w-full truncate rounded-lg px-2.5 py-1 text-xs font-black leading-tight tracking-tight sm:text-base md:text-lg">
                 {isFreeRoom
                   ? '자유 채팅방'
                   : recentMatch
