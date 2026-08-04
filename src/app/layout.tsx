@@ -97,7 +97,7 @@ export default function RootLayout({
       lang="ko"
       className={`${bebasNeue.variable} ${kanit.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-950 dark:text-gray-100 font-sans overflow-x-hidden transition-colors duration-300 dark-geo-pattern antialiased">
+      <body className="min-h-dvh flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-950 dark:text-gray-100 font-sans overflow-x-hidden transition-colors duration-300 dark-geo-pattern antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import DarkModeToggle from '@/components/DarkModeToggle';
@@ -12,9 +12,22 @@ export default function MainLayoutWrapper({ children }: { children: React.ReactN
   // — 여기에 overflow-hidden + h-dvh를 걸면 선택 카드가 잘린다.
   const isChatRoom = pathname?.startsWith('/chat/');
 
+  // 채팅방은 뷰포트에 정확히 맞는 몰입 화면이다.
+  // body는 100dvh를 "최소" 높이로만 잡으므로 앞 페이지에서 넘어온 스크롤 위치나
+  // 모바일 주소창 높이 변화가 남으면 화면이 살짝 밀린 채로 열린다.
+  // 이 화면에서만 문서 스크롤 자체를 잠그고 맨 위로 되돌린다.
+  useEffect(() => {
+    if (!isChatRoom) return;
+    document.documentElement.classList.add('chat-immersive');
+    window.scrollTo(0, 0);
+    return () => {
+      document.documentElement.classList.remove('chat-immersive');
+    };
+  }, [isChatRoom]);
+
   if (isChatRoom) {
     return (
-      <main className="min-h-dvh h-dvh w-full bg-white text-gray-900 flex flex-col overflow-hidden">
+      <main className="h-dvh w-full bg-white text-gray-900 flex flex-col overflow-hidden">
         {children}
       </main>
     );

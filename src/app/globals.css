@@ -80,6 +80,19 @@ html {
   overflow-anchor: none;
 }
 
+/* 채팅방 몰입 모드 — 문서를 뷰포트 높이에 고정하고 스크롤을 잠근다.
+   body에 걸린 min-h-dvh(유틸리티, 낮은 우선순위)보다 이 선택자가 이겨야 하므로
+   html.chat-immersive body 형태로 구체적으로 지정한다.
+   메시지 목록은 자체 overflow-y-auto라 안에서는 그대로 스크롤된다. */
+html.chat-immersive,
+html.chat-immersive body {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  /* 스크롤 끝에서 문서가 딸려 움직이는 바운스 차단 */
+  overscroll-behavior: none;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, Roboto, "Noto Sans KR", "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   -webkit-font-smoothing: antialiased;

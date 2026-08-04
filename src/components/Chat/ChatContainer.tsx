@@ -336,7 +336,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   };
 
   return (
-    <div className="flex flex-col h-dvh w-full max-w-4xl mx-auto bg-white text-gray-900 overflow-hidden shadow-none sm:shadow-lg border-0 sm:border-x border-gray-200 animate-fadeIn">
+    <div className="flex flex-col h-full w-full max-w-4xl mx-auto bg-white text-gray-900 overflow-hidden shadow-none sm:shadow-lg border-0 sm:border-x border-gray-200 animate-fadeIn">
       {/* 1. Header Banner (Vibrant Atletico Red 360-degree LED board Style) */}
       {/*
         헤더 컨테이너 자체가 26/27 홈킷 스트라이프다.
@@ -557,7 +557,9 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
                   : '닉네임을 먼저 설정해 주세요'
               }
               maxLength={200}
-              className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
+              /* iOS는 16px 미만 입력창에 포커스가 가면 화면을 확대한다.
+                 모바일에서만 16px(text-base)로 올려 확대를 막고, 데스크톱은 기존 크기를 유지한다 */
+              className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-300 rounded-xl text-base sm:text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-400">
               {inputContent.length}/200

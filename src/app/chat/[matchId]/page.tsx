@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: MatchChatPageProps): Promise<
 export default async function MatchChatPage({ params }: MatchChatPageProps) {
   const resolvedParams = await params;
   return (
-    <div className="w-full h-dvh min-h-dvh bg-white flex flex-col items-center justify-center p-0 overflow-hidden">
+    <div className="w-full h-full bg-white flex flex-col items-center justify-center p-0 overflow-hidden">
       <ChatContainer initialMatchId={resolvedParams.matchId} />
     </div>
   );

@@ -137,7 +137,8 @@ export default function NicknameModal({
                   placeholder="예: 로히블랑코_77, Colchonero"
                   maxLength={12}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
+                  /* iOS 자동 확대(16px 미만 입력창) 방지 — 모바일에서만 16px */
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-base sm:text-sm font-bold text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
                 />
               </div>
             </div>
