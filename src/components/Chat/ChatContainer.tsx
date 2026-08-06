@@ -3,10 +3,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Client as StompClient } from '@stomp/stompjs';
-import { roomInfo, getRecentMatch } from '@/client/sdk.gen';
+import { roomInfo, getRecentMatch, reserveNickname } from '@/client/sdk.gen';
 import type { ChatMessage, RecentMatch } from '@/client/types.gen';
 import ChatMessageItem from './ChatMessageItem';
 import NicknameModal from './NicknameModal';
+import {
+  CLIENT_ID_STOMP_HEADER,
+  NICKNAME_FALLBACK_KEY,
+  NICKNAME_TAKEN,
+  chatClientHeaders,
+  getChatClientId,
+  nicknameKeyFor,
+} from './chatIdentity';
 import {
   Users,
   Send,
@@ -54,6 +62,15 @@ const FREE_ROOM_ID = 'free';
 
 const messageKey = (m: ChatMessage) => `${m.sentAt ?? ''}|${m.ipHash ?? ''}|${m.nickname}|${m.content}`;
 
+/** 서버가 거절 사유와 함께 내려주는 {error, code}를 꺼낸다 (ChatController.kt) */
+const readRejection = (body: unknown): { message: string; code: string } => {
+  const obj = (body ?? {}) as { error?: unknown; code?: unknown };
+  return {
+    message: typeof obj.error === 'string' ? obj.error : '',
+    code: typeof obj.code === 'string' ? obj.code : '',
+  };
+};
+
 // Trailing slashes are stripped so the paths appended below never produce '//'.
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://api.atleti.kr').replace(
   /\/+$/,
@@ -71,6 +88,8 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   // Nickname State
   const [myNickname, setMyNickname] = useState<string>('');
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState<boolean>(false);
+  // 저장된 닉네임이 거절돼 모달이 열린 경우 그 사유를 모달 안에 그대로 보여준다
+  const [nicknameError, setNicknameError] = useState<string>('');
 
   // Input State
   const [inputContent, setInputContent] = useState<string>('');
@@ -137,17 +156,48 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
 
   // Initialize nickname.
   // 방 키가 정해지기 전(placeholder)에 모달을 열면 존재하지 않는 방에 닉네임을 선점하게 되므로 기다린다.
+  //
+  // 저장해둔 닉네임을 그대로 믿지 않고 서버에 한 번 물어본다(선점 API는 주인이 다시 불러도 통과).
+  // 예전에는 저장된 이름이 있으면 모달을 건너뛰고 바로 채팅을 허용했는데,
+  // 그 이름이 이미 남에게 넘어갔거나 잠긴 경우 전송할 때마다 거절만 당하고
+  // 이름을 바꿀 방법이 없어 채팅이 영영 막혔다.
   useEffect(() => {
     if (typeof window === 'undefined' || !roomReady) return;
+
     const savedNick =
-      localStorage.getItem(`atleti_chat_nickname_${matchId}`) ||
-      localStorage.getItem('atleti_chat_nickname');
-    if (savedNick) {
-      setMyNickname(savedNick);
-      setIsNicknameModalOpen(false);
-    } else {
+      localStorage.getItem(nicknameKeyFor(matchId)) || localStorage.getItem(NICKNAME_FALLBACK_KEY);
+    if (!savedNick) {
       setIsNicknameModalOpen(true);
+      return;
     }
+
+    let cancelled = false;
+    // 확인이 끝나기 전까지도 이름은 보여준다 — 서버 응답을 기다리는 동안
+    // 입력창이 "닉네임을 먼저 설정해 주세요"로 깜빡이지 않도록.
+    setMyNickname(savedNick);
+    setIsNicknameModalOpen(false);
+
+    (async () => {
+      const res = await reserveNickname({
+        path: { matchId },
+        body: { nickname: savedNick },
+        headers: chatClientHeaders(),
+      }).catch(() => null);
+      if (cancelled || !res) return;              // 네트워크 장애면 그냥 두고 전송 시점에 판단
+      if (res.response?.ok) return;
+
+      const { message, code } = readRejection(res.error);
+      // 닉네임이 막힌 경우에만 다시 물어본다. 방이 아직 안 열린 것 같은 다른 사유로
+      // 모달을 띄우면 이름을 바꿔도 소용이 없어 더 헷갈린다.
+      if (code !== NICKNAME_TAKEN) return;
+      setMyNickname('');
+      setNicknameError(message || '저장된 닉네임을 쓸 수 없어요. 새로 정해주세요.');
+      setIsNicknameModalOpen(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [matchId, roomReady]);
 
   // 예전 버전이 브라우저에 쌓아둔 메시지 기록 정리.
@@ -214,9 +264,14 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   useEffect(() => {
     if (typeof window === 'undefined' || !roomReady) return;
 
+    // SockJS 핸드셰이크에는 커스텀 헤더를 실을 수 없어서 CONNECT 프레임으로 보낸다.
+    // 서버는 이 값으로 닉네임 주인을 판정한다 (WebSocketConfig.configureClientInboundChannel).
+    const clientId = getChatClientId();
+
     const client = new StompClient({
       // 백엔드가 .withSockJS()로 등록했으므로 raw WebSocket이 아니라 SockJS로 붙어야 한다
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      connectHeaders: clientId ? { [CLIENT_ID_STOMP_HEADER]: clientId } : {},
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -246,10 +301,19 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         // 정책 위반(닫힌 방·도배·금칙어·닉네임 중복)은 방 전체가 아니라 나에게만 온다.
         // 예전에는 이 채널을 구독하지 않아 거절 사유가 전혀 보이지 않았다.
         client.subscribe('/user/queue/errors', (frame) => {
+          let rejection = { message: '', code: '' };
           try {
-            setErrorNotice(JSON.parse(frame.body).error ?? '메시지를 보낼 수 없습니다.');
+            rejection = readRejection(JSON.parse(frame.body));
           } catch {
-            setErrorNotice('메시지를 보낼 수 없습니다.');
+            // 파싱 불가 프레임은 아래 기본 문구로
+          }
+          setErrorNotice(rejection.message || '메시지를 보낼 수 없습니다.');
+
+          // 닉네임이 막힌 거라면 안내만 하고 끝내면 안 된다 — 이름을 바꿀 길을 열어준다.
+          if (rejection.code === NICKNAME_TAKEN) {
+            setMyNickname('');
+            setNicknameError(rejection.message);
+            setIsNicknameModalOpen(true);
           }
         });
 
@@ -287,10 +351,17 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
   const handleNicknameSuccess = (newNickname: string) => {
     setMyNickname(newNickname);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`atleti_chat_nickname_${matchId}`, newNickname);
-      localStorage.setItem('atleti_chat_nickname', newNickname);
+      localStorage.setItem(nicknameKeyFor(matchId), newNickname);
+      localStorage.setItem(NICKNAME_FALLBACK_KEY, newNickname);
     }
+    setNicknameError('');
+    setErrorNotice('');
     setIsNicknameModalOpen(false);
+  };
+
+  const openNicknameModal = () => {
+    setNicknameError('');
+    setIsNicknameModalOpen(true);
   };
 
   /**
@@ -587,6 +658,18 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             <span className="hidden sm:inline">전송</span>
           </button>
         </form>
+
+        {/* 언제든 이름을 바꿀 수 있는 통로. 이게 없으면 저장된 닉네임이 막혔을 때
+            사용자가 스스로 빠져나올 방법이 없다 */}
+        <div className="mt-2 text-center">
+          <button
+            type="button"
+            onClick={openNicknameModal}
+            className="text-[10px] font-bold text-white/45 underline underline-offset-2 transition hover:text-white"
+          >
+            닉네임 변경
+          </button>
+        </div>
       </div>
 
       {/* 5. Nickname Setup Modal */}
@@ -594,6 +677,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         isOpen={isNicknameModalOpen}
         matchId={matchId}
         currentNickname={myNickname}
+        initialError={nicknameError}
         onSuccess={handleNicknameSuccess}
         onClose={myNickname ? () => setIsNicknameModalOpen(false) : undefined}
       />

@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { User, AlertCircle, CheckCircle2, Shield, Loader2 } from 'lucide-react';
 import { reserveNickname } from '@/client/sdk.gen';
+import { chatClientHeaders } from './chatIdentity';
 
 interface NicknameModalProps {
   isOpen: boolean;
   matchId: string;
   currentNickname?: string;
+  /** 저장해둔 닉네임이 서버에서 거절돼 모달이 열린 경우 그 사유 */
+  initialError?: string;
   onSuccess: (nickname: string) => void;
   onClose?: () => void;
 }
@@ -16,6 +19,7 @@ export default function NicknameModal({
   isOpen,
   matchId,
   currentNickname = '',
+  initialError = '',
   onSuccess,
   onClose,
 }: NicknameModalProps) {
@@ -26,9 +30,9 @@ export default function NicknameModal({
 
   useEffect(() => {
     setNickname(currentNickname);
-    setErrorMsg('');
+    setErrorMsg(initialError);
     setSuccessMsg('');
-  }, [currentNickname, isOpen]);
+  }, [currentNickname, initialError, isOpen]);
 
   if (!isOpen) return null;
 
@@ -59,6 +63,8 @@ export default function NicknameModal({
       const res = await reserveNickname({
         path: { matchId },
         body: { nickname: trimmed },
+        // 닉네임 주인 판정은 IP가 아니라 이 값으로 한다 (chatIdentity.ts)
+        headers: chatClientHeaders(),
       });
 
       if (res.error || !res.response?.ok) {
