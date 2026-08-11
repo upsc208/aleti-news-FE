@@ -18,7 +18,10 @@ import {
 
 import NicknameModal from '../NicknameModal';
 import { FREE_ROOM_ID, useChatRoom } from '../useChatRoom';
+import StadiumLights from './StadiumLights';
+import WinConfetti from './WinConfetti';
 import LedStrip from './LedStrip';
+import LedRing from './LedRing';
 import StadiumMessageItem from './StadiumMessageItem';
 import GoalCard from './GoalCard';
 import { buildFeed, type GoalEvent } from './feed';
@@ -78,13 +81,18 @@ export default function StadiumChatContainer({
   // 배경을 더 하얗게 눌러 대비를 올리는 통로를 준다.
   const [washed, setWashed] = useState(false);
 
+  // 보드는 WebGL 곡면판(LedRing)이 기본이다. WebGL을 못 쓰는 기기에서만
+  // CSS 보드(LedStrip)로 되돌린다 — 보드가 빠지면 헤더 아래가 빈 자리로 남는다.
+  const [ledFallback, setLedFallback] = useState(false);
+  const handleLedUnavailable = useCallback(() => setLedFallback(true), []);
+
   // 미리보기에서는 백엔드가 없으니 헤더·LED가 빈 채로 남는다. 가짜 경기로 채운다.
   const match = useMemo(
     () => recentMatch ?? (isPreview ? previewMatch() : null),
     [recentMatch, isPreview]
   );
 
-  const { celebrating, celebrate } = useGoalCelebration();
+  const { celebrating, celebrate, winning, celebrateWin } = useGoalCelebration();
 
   // 골 이벤트를 밀어주는 API가 아직 없다. 채널이 생기면 fireGoal()만 부르면
   // 피드·LED·연출이 전부 따라온다 (feed.ts 주석 참고).
@@ -234,19 +242,32 @@ export default function StadiumChatContainer({
         <div className="stadium-stage__photo" aria-hidden="true" />
         <div className="stadium-stage__scrim" aria-hidden="true" />
 
+        {/* 골 순간 스탠드를 훑는 LED 조명 — 붉은빛 + 분홍빛 (WebGL).
+            LedStrip보다 앞에 둬야 보드와 말풍선이 그 위에 그려진다.
+            평상시에는 렌더 루프가 멈춰 있어 비용이 들지 않는다. */}
+        <StadiumLights active={celebrating} dimmed={washed} />
+
         {/* 시계는 킥오프 시각에서 세는 근사값이다(하프타임 15분만 보정).
             서버가 진짜 경기 시계를 주면 clock prop으로 덮어쓰면 된다. */}
-        <LedStrip
-          mode={celebrating ? 'goal' : 'idle'}
-          homeTeam={homeTeam}
-          awayTeam={awayTeam}
-          homeScore={homeScore}
-          awayScore={awayScore}
-          competition={match?.tournament}
-          venue={match?.isHome === false ? undefined : 'Riyadh Air Metropolitano'}
-          kickoff={match?.matchDate}
-          scorer={lastGoal?.isAtleti ? lastGoal.scorer : undefined}
-        />
+        {/* 두 보드는 프로퍼티가 같다 — 자리만 바꿔 끼운다 */}
+        {(() => {
+          const boardProps = {
+            mode: celebrating ? ('goal' as const) : ('idle' as const),
+            homeTeam,
+            awayTeam,
+            homeScore,
+            awayScore,
+            competition: match?.tournament,
+            venue: match?.isHome === false ? undefined : 'Riyadh Air Metropolitano',
+            kickoff: match?.matchDate,
+            scorer: lastGoal?.isAtleti ? lastGoal.scorer : undefined,
+          };
+          return ledFallback ? (
+            <LedStrip {...boardProps} />
+          ) : (
+            <LedRing {...boardProps} onUnavailable={handleLedUnavailable} />
+          );
+        })()}
 
         <div className="stadium-stage">
         <div ref={scrollContainerRef} className="stadium-scroll">
@@ -352,6 +373,15 @@ export default function StadiumChatContainer({
         >
           초기화
         </button>
+        {/* 경기 종료를 알려주는 채널도 아직 없다. 생기면 "종료 + 아틀레티 승"에서
+            celebrateWin()만 부르면 된다 — 이 버튼만 지우면 그대로 넘어간다. */}
+        <button
+          type="button"
+          onClick={() => celebrateWin()}
+          className="stadium-testbar__btn is-win"
+        >
+          🎉 승리
+        </button>
       </div>
 
       {/* ── 4. 빠른 응원 ───────────────────────────────────────── */}
@@ -435,6 +465,10 @@ export default function StadiumChatContainer({
           </button>
         </div>
       </div>
+
+      {/* 승리 색종이는 방 전체를 덮는다 — 골 연출과 달리 경기장 사진 안에
+          가둘 이유가 없다. 입력창 위로도 떨어져야 "방이 축제"로 읽힌다. */}
+      <WinConfetti active={winning} />
 
       <NicknameModal
         isOpen={isNicknameModalOpen && !isPreview}

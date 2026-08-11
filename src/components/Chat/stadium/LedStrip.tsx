@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
-export type LedMode = 'idle' | 'goal';
+import { DEFAULT_VENUE, formatMatchClock, isAtleti, type LedMode } from './boardModel';
+import { latinCode, latinCompetition, latinPlayer, latinTeam } from './boardNames';
 
 interface LedStripProps {
   mode?: LedMode;
@@ -25,63 +26,10 @@ interface LedStripProps {
   scorer?: string;
 }
 
-type Cell =
-  | { kind: 'panel'; tone: 'red' | 'blue' | 'white'; text: string }
-  | { kind: 'gap' }
-  | { kind: 'score' };
-
-const DEFAULT_VENUE = 'RIYADH AIR METROPOLITANO';
-
-const HALF_MS = 45 * 60_000;
-const BREAK_MS = 15 * 60_000;
-const FULL_MS = 90 * 60_000;
-
-/**
- * 킥오프 시각에서 경기 시계를 만든다 — "47:12" 형식.
- *
- * 벽시계로 세는 근사값이다. 하프타임 15분만 빼주고 추가시간·중단은 모른다.
- * 서버가 진짜 경기 시계를 내려주면 clock prop으로 덮어쓰는 게 맞다.
- */
-function formatMatchClock(kickoffIso: string, now: number): string | null {
-  const kickoff = new Date(kickoffIso).getTime();
-  if (isNaN(kickoff)) return null;
-
-  let elapsed = now - kickoff;
-  if (elapsed < 0) return null;                       // 아직 킥오프 전
-
-  if (elapsed > HALF_MS + BREAK_MS) elapsed -= BREAK_MS;   // 후반 — 휴식만큼 되돌린다
-  else if (elapsed > HALF_MS) elapsed = HALF_MS;           // 하프타임 동안은 45:00에 멈춘다
-
-  const capped = Math.min(elapsed, FULL_MS);
-  const minutes = Math.floor(capped / 60_000);
-  const seconds = Math.floor((capped % 60_000) / 1000);
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-const isAtleti = (team: string) => /atl[ée]tico|아틀레티|아틀레띠/i.test(team);
-
-/** 흰 칸은 그 자체가 구분자 역할을 하므로 옆에 또 흰 칸을 붙이지 않는다 */
-const isWhitePanel = (cell: Cell) => cell.kind === 'panel' && cell.tone === 'white';
-
-/**
- * 팀 약칭 — 스코어 묶음의 흰 칸에 들어간다.
- *
- * 실제 보드는 여기에 구단 엠블럼이 붙지만, 엠블럼과 대회 로고는 상표·저작물이라
- * 라이선스 없이 쓸 수 없다. 글자로 팀을 가리키는 건 지시적 사용이라 문제가 없다.
- */
-function codeOf(team: string): string {
-  const name = team.trim();
-  if (isAtleti(name)) return 'ATM';
-
-  const words = name.split(/\s+/).filter(Boolean);
-  if (words.length >= 2) {
-    return words
-      .slice(0, 3)
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase();
-  }
-  return name.slice(0, 3).toUpperCase();
+/** 골 연출 때 흐르는 판 한 장. tone은 CSS의 .led-strip__cell--{tone} 이다 */
+interface GoalPanel {
+  tone: 'red' | 'scorer';
+  text: string;
 }
 
 /**
@@ -91,8 +39,9 @@ function codeOf(team: string): string {
  * 양옆으로 팀 약칭·득점, 그 바깥으로 구단명·대회명·경기장 이름이 대칭으로 깔린다.
  * 시계가 정확히 가운데에 오도록 좌우 칸은 폭을 맞춰 두었다.
  *
- * 골이 들어가면 그때만 보드가 흐른다 — 득점자 이름과 GOOOOOOOL이 지나간다.
- * 평소에 멈춰 있어야 이 순간이 사건으로 읽힌다.
+ * 골이 들어가면 그때만 보드가 흐른다 — 흰 판의 득점자 이름(파란 글자)과
+ * 빨간 판의 함성, 두 장만 번갈아 지나간다. 두 판은 폭이 같고 맞닿는 자리는
+ * 그라데이션으로 이어진다(globals.css). 평소에 멈춰 있어야 이 순간이 사건으로 읽힌다.
  *
  * 칸 색: 스코어·시계·경기장 = 파랑/흰글자, 대회명 = 흰색/붉은글자,
  * 구단명 = 빨강/흰글자. 색 칸 사이에는 좁은 흰 칸이 하나씩 낀다.
@@ -110,7 +59,9 @@ export default function LedStrip({
   kickoff,
   scorer,
 }: LedStripProps) {
-  const atletiName = isAtleti(homeTeam) ? homeTeam : awayTeam;
+  // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
+  const atletiName = latinTeam(isAtleti(homeTeam) ? homeTeam : awayTeam);
+  const competitionText = latinCompetition(competition, venue);
 
   // 시계는 이 안에서만 돌린다 — 위로 올리면 1초마다 채팅 전체가 다시 그려진다.
   // 첫 값을 setTimeout으로 미루는 이유: effect 본문에서 곧바로 setState하면
@@ -141,7 +92,7 @@ export default function LedStrip({
       </span>
       <span className="led-strip__cell led-strip__cell--code">
         <span className={`led-strip__code ${isAtleti(homeTeam) ? 'is-atleti' : 'is-rival'}`}>
-          {codeOf(homeTeam)}
+          {latinCode(homeTeam)}
         </span>
       </span>
       <span className="led-strip__cell led-strip__cell--blue led-strip__cell--clock">
@@ -149,7 +100,7 @@ export default function LedStrip({
       </span>
       <span className="led-strip__cell led-strip__cell--code">
         <span className={`led-strip__code ${isAtleti(awayTeam) ? 'is-atleti' : 'is-rival'}`}>
-          {codeOf(awayTeam)}
+          {latinCode(awayTeam)}
         </span>
       </span>
       <span className="led-strip__cell led-strip__cell--blue led-strip__cell--num">
@@ -159,59 +110,36 @@ export default function LedStrip({
   );
 
   // ── 골 연출: 이때만 보드가 흐른다 ──────────────────────────
-  const goalCells = useMemo<Cell[]>(() => {
-    const list: Cell[] = [
-      { kind: 'score' },
-      { kind: 'panel', tone: 'red', text: 'GOOOOOOOL!!!' },
-      ...(scorer ? ([{ kind: 'panel', tone: 'white', text: scorer }] as Cell[]) : []),
-      { kind: 'panel', tone: 'red', text: '¡GOL DEL ATLETI!' },
-      { kind: 'score' },
-      { kind: 'panel', tone: 'red', text: 'AÚPA ATLETI' },
-    ];
-
-    // 색 칸 사이마다 좁은 흰 칸을 끼워 넣는다. 흰 칸 옆은 건너뛴다 —
-    // 흰 판에 또 흰 칸을 붙이면 그냥 넓은 여백이 된다.
-    // 목록 끝과 처음 사이에도 넣어야 반복될 때 이음새가 보이지 않는다.
-    const out: Cell[] = [];
-    list.forEach((cell, i) => {
-      if (i > 0 && !isWhitePanel(cell) && !isWhitePanel(list[i - 1])) {
-        out.push({ kind: 'gap' });
-      }
-      out.push(cell);
-    });
-    if (!isWhitePanel(list[list.length - 1]) && !isWhitePanel(list[0])) {
-      out.push({ kind: 'gap' });
-    }
-    return out;
+  // 흰 판에 득점자(파란 글자), 빨간 판에 GOOOOOOOL!!!! — 이 두 장만 번갈아 흐른다.
+  // 스코어·대회명·구분 칸은 넣지 않는다. 골이 터진 순간에 읽을 것이 적을수록 세다.
+  const goalPanels = useMemo<GoalPanel[]>(() => {
+    const shout: GoalPanel = { tone: 'red', text: 'GOOOOOOOL!!!!' };
+    // 득점자를 모르는 골(서버가 이름을 안 준 경우)에는 함성만 흐른다
+    return scorer ? [{ tone: 'scorer', text: latinPlayer(scorer) }, shout] : [shout];
   }, [scorer]);
 
-  // 한 벌이 보드 너비보다 짧으면 -50% 지점에서 빈 구간이 보인다.
-  const goalRun = useMemo<Cell[]>(() => {
-    const out: Cell[] = [];
-    while (out.length < 24) out.push(...goalCells);
+  // 한 벌이 보드 너비보다 짧으면 -50% 지점에서 빈 구간이 드러난다.
+  // 다만 판이 두 장뿐이라 예전(24칸)만큼 늘리면 띠가 길어진 만큼 스크롤이 빨라진다 —
+  // 애니메이션은 길이와 무관하게 10초에 -50%를 가므로, 보드를 덮을 만큼만 채운다.
+  const goalRun = useMemo<GoalPanel[]>(() => {
+    const out: GoalPanel[] = [];
+    while (out.length < 6) out.push(...goalPanels);
     return out;
-  }, [goalCells]);
-
-  const renderCell = (cell: Cell, key: string) => {
-    if (cell.kind === 'gap') {
-      return <span className="led-strip__cell led-strip__cell--gap" key={key} />;
-    }
-    if (cell.kind === 'score') {
-      return renderScore(key);
-    }
-    return (
-      <span className={`led-strip__cell led-strip__cell--${cell.tone}`} key={key}>
-        <span className="led-strip__text">{cell.text}</span>
-      </span>
-    );
-  };
+  }, [goalPanels]);
 
   const body =
     mode === 'goal' ? (
       <div className="led-strip__track">
         {['a', 'b'].map((runKey) => (
           <span className="led-strip__run" key={runKey}>
-            {goalRun.map((cell, i) => renderCell(cell, `${runKey}-${i}`))}
+            {goalRun.map((panel, i) => (
+              <span
+                className={`led-strip__cell led-strip__cell--${panel.tone}`}
+                key={`${runKey}-${i}`}
+              >
+                <span className="led-strip__text">{panel.text}</span>
+              </span>
+            ))}
           </span>
         ))}
       </div>
@@ -219,19 +147,23 @@ export default function LedStrip({
       // 평상시 — 정지된 대칭 배치. 가운데가 시계다.
       <div className="led-strip__static">
         <span className="led-strip__cell led-strip__cell--white led-strip__cell--fill">
-          <span className="led-strip__text">{competition ?? venue}</span>
+          <span className="led-strip__text">{venue}</span>
         </span>
         <span className="led-strip__cell led-strip__cell--red">
           <span className="led-strip__text">{atletiName}</span>
         </span>
-        <span className="led-strip__cell led-strip__cell--gap" />
+        <span className="led-strip__cell led-strip__cell--league">
+          <span className="led-strip__text">{competitionText}</span>
+        </span>
         {renderScore('score')}
-        <span className="led-strip__cell led-strip__cell--gap" />
+        <span className="led-strip__cell led-strip__cell--league">
+          <span className="led-strip__text">{competitionText}</span>
+        </span>
         <span className="led-strip__cell led-strip__cell--red">
           <span className="led-strip__text">{atletiName}</span>
         </span>
         <span className="led-strip__cell led-strip__cell--white led-strip__cell--fill">
-          <span className="led-strip__text">{competition ?? venue}</span>
+          <span className="led-strip__text">{venue}</span>
         </span>
       </div>
     );

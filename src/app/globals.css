@@ -401,6 +401,8 @@ html {
    =================================================== */
 
 .stadium-room {
+  /* 승리 색종이(.stadium-confetti)가 방 전체를 덮는 기준이 된다 */
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -504,6 +506,17 @@ html {
   --led-blue: #1668e3;
   --led-red: #cf1126;
 
+  /*
+    보드 서체 — Bebas Neue.
+    좁고 높은 대문자 전용 서체라 실물 경기장 LED 보드의 글자에 가장 가깝다.
+    프로젝트가 이미 next/font로 싣고 있어서(layout.tsx) 추가 비용이 0이다.
+
+    한글 글리프가 없다 — boardNames.ts 표에서 빠진 팀 이름이 새어 나올 수 있으므로
+    뒤에 시스템 한글 글꼴을 받쳐 둔다.
+  */
+  --led-font: var(--font-bebas-neue), "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", sans-serif;
+
   position: relative;
   flex-shrink: 0;
   overflow: hidden;
@@ -514,21 +527,26 @@ html {
   /*
     360도 링을 아래에서 올려다보는 시점.
     보드 아래쪽이 눈에 가까워 크게 휘어 올라오고, 위쪽은 멀어서 거의 평평하다.
-    좌우 끝은 가까워 두껍고(100%), 맞은편인 가운데는 멀어 얇다(70%).
+    좌우 끝은 가까워 두껍고(100%), 맞은편인 가운데는 멀어 얇다(60%).
 
     윗변 살짝 / 아랫변 깊게 — 위아래를 똑같이 깎으면 그냥 잘록한 띠가 되고
     3D로 읽히지 않는다. 잘려나간 아래 공간으로 경기장이 보이는 것도 이 형태의 몫이다.
+
+    가운데를 60%보다 더 얇게 깎으면 그 자리의 글자(시계·스코어)가 위아래로 잘린다.
+    실루엣만으로 더 휘게 만드는 건 여기가 한계다.
   */
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,3 100,0 L100,20 Q50,11 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,3 100,0 L100,20 Q50,11 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,5 100,0 L100,20 Q50,9 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,5 100,0 L100,20 Q50,9 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 
   /* 아랫면이 앞으로 기울어 나온다 — 보드를 아래에서 올려다보므로
-     아래쪽이 가깝고 위쪽이 뒤로 물러난다. 각도를 더 주면 글자가 뭉개진다. */
-  perspective: 640px;
+     아래쪽이 가깝고 위쪽이 뒤로 물러난다.
+     원근을 짧게 잡을수록 물러난 윗변이 좌우로도 좁아져 사다리꼴이 뚜렷해진다.
+     560px 아래로 내리면 글자가 뭉개지기 시작한다. */
+  perspective: 560px;
 }
 
 @media (min-width: 640px) {
@@ -542,7 +560,7 @@ html {
 .led-strip__tilt {
   position: absolute;
   inset: 0;
-  transform: rotateX(7deg);
+  transform: rotateX(10deg);
   transform-origin: 50% 100%;
 }
 
@@ -619,11 +637,30 @@ html {
   color: var(--led-red);
 }
 
-/* 색 칸 사이에 끼는 좁은 흰 칸.
-   실물 보드는 여기에 대회·스폰서 로고가 들어가지만 전부 라이선스 대상이라 비워둔다 */
-.led-strip__cell--gap {
-  width: 1.25rem;
+/* 골 연출의 득점자 판 — 흰 바탕에 파란 글자.
+   위 --white를 그대로 못 쓴다. 저건 평상시 대회명 칸이 쓰고 있고 글자가 붉은색이라,
+   색을 바꾸면 골이 아닐 때의 보드까지 같이 바뀐다. */
+.led-strip__cell--scorer {
   background: #ffffff;
+  color: var(--led-blue);
+}
+
+/* 구단 칸과 스코어 사이의 리그 칸 — 흰 바탕에 붉은 글자.
+   예전에는 여기가 빈 흰 칸이었다. 실물 보드는 이 자리에 대회 로고가 들어가지만
+   로고는 상표라 못 쓰고, 대회명을 글자로 적는 건 지시적 사용이라 문제가 없다. */
+.led-strip__cell--league {
+  background: #ffffff;
+  color: var(--led-red);
+}
+
+.led-strip__cell--league .led-strip__text {
+  font-size: 0.9375rem;
+}
+
+@media (min-width: 640px) {
+  .led-strip__cell--league .led-strip__text {
+    font-size: 1rem;
+  }
 }
 
 /* 양 팀 표기가 올라가는 흰 칸 */
@@ -632,16 +669,25 @@ html {
   background: #ffffff;
 }
 
+/* Bebas Neue는 400 한 종뿐이다. 900을 주면 브라우저가 가짜로 굵혀 획이 뭉갠다 —
+   대신 좁은 서체인 만큼 크기를 한 단계씩 올려 판을 채운다. */
+.led-strip__text,
+.led-strip__code,
+.led-strip__num,
+.led-strip__clock {
+  font-family: var(--led-font);
+  font-weight: 400;
+}
+
 .led-strip__code {
-  font-size: 0.875rem;
-  font-weight: 900;
+  font-size: 1.0625rem;
   line-height: 1;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 @media (min-width: 640px) {
   .led-strip__code {
-    font-size: 1rem;
+    font-size: 1.1875rem;
   }
 }
 
@@ -651,8 +697,7 @@ html {
 /* 실제 보드는 글자가 판 높이를 거의 채운다. 자간을 줄여야 그만큼 키워도
    문구가 칸 밖으로 넘치지 않는다. */
 .led-strip__text {
-  font-size: 0.875rem;
-  font-weight: 900;
+  font-size: 1.0625rem;
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -662,7 +707,7 @@ html {
 
 @media (min-width: 640px) {
   .led-strip__text {
-    font-size: 1rem;
+    font-size: 1.1875rem;
   }
 }
 
@@ -693,19 +738,17 @@ html {
 .led-strip__cell--clock { min-width: 4.5rem; }
 
 .led-strip__num {
-  font-size: 1.25rem;
-  font-weight: 900;
+  font-size: 1.5rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #fff;
 }
 
 .led-strip__clock {
-  font-size: 1.0625rem;
-  font-weight: 800;
+  font-size: 1.25rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   color: #fff;
 }
 
@@ -714,8 +757,8 @@ html {
   .led-strip__cell--code { min-width: 3.25rem; }
   .led-strip__cell--clock { min-width: 5.25rem; }
 
-  .led-strip__num { font-size: 1.5rem; }
-  .led-strip__clock { font-size: 1.25rem; }
+  .led-strip__num { font-size: 1.75rem; }
+  .led-strip__clock { font-size: 1.4375rem; }
 }
 
 /* 픽셀 격자 — 보드가 LED임을 알려주는 유일한 질감.
@@ -740,27 +783,33 @@ html {
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(2, 6, 23, 0.16) 0%,
-    rgba(2, 6, 23, 0.04) 22%,
-    rgba(2, 6, 23, 0) 50%,
-    rgba(255, 255, 255, 0.08) 84%,
-    rgba(255, 255, 255, 0.22) 100%
+    rgba(2, 6, 23, 0.24) 0%,
+    rgba(2, 6, 23, 0.07) 24%,
+    rgba(2, 6, 23, 0) 52%,
+    rgba(255, 255, 255, 0.1) 84%,
+    rgba(255, 255, 255, 0.28) 100%
   );
 }
 
 /* 거리감 — 링의 맞은편(화면 가운데)이 가장 멀어서 어둡게 가라앉는다.
-   좌우 끝은 가까워 밝다. 이 명암이 없으면 그냥 평평한 띠를 오려낸 것처럼 보인다. */
+   좌우 끝은 가까워 밝다. 이 명암이 없으면 그냥 평평한 띠를 오려낸 것처럼 보인다.
+
+   CSS transform은 평면만 매핑하므로 가운데 글자를 실제로 좁힐 수가 없다.
+   원근 압축을 못 하는 대신 명암을 깊게 줘서 거리로 읽히게 한다 —
+   지금 이 보드가 곡면으로 보이는 이유의 절반이 이 층이다. */
 .led-strip__depth {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(2, 6, 23, 0.02) 26%,
-    rgba(2, 6, 23, 0.06) 50%,
-    rgba(2, 6, 23, 0.02) 74%,
-    rgba(255, 255, 255, 0.1) 100%
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.05) 13%,
+    rgba(2, 6, 23, 0.055) 31%,
+    rgba(2, 6, 23, 0.125) 50%,
+    rgba(2, 6, 23, 0.055) 69%,
+    rgba(255, 255, 255, 0.05) 87%,
+    rgba(255, 255, 255, 0.17) 100%
   );
 }
 
@@ -774,15 +823,75 @@ html {
   }
 }
 
-/* 골 — 링이 빨간 판으로 넘어가고 빨라진다.
-   스코어 패널은 파란 판 그대로 남겨 새 점수가 바로 읽히게 한다.
-   깜빡임 같은 필터는 걸지 않는다 — 바뀌는 건 판의 내용과 속도뿐이다 */
+/* 골 — 보드가 흐르기 시작한다. 판은 득점자(파랑)와 GOOOOOOOOOOL!!!!(빨강) 두 장뿐이다.
+   깜빡임 같은 필터는 걸지 않는다 — 바뀌는 건 판의 내용과 자간뿐이다 */
 .led-strip[data-mode='goal'] .led-strip__track {
   animation-duration: 10s;
 }
 
 .led-strip[data-mode='goal'] .led-strip__text {
   letter-spacing: 0.2em;
+}
+
+/* 두 판의 폭을 같게 맞춘다.
+   min-width를 손으로 재서 박으면 글꼴 크기(640px에서 커진다)와 득점자 이름 길이가
+   바뀔 때마다 어긋난다. 대신 grid의 1fr에 맡긴다 — 폭이 내용에 맞춰지는
+   컨테이너(width: max-content)에서 1fr 트랙은 전부 '가장 넓은 칸'의 폭을 갖는다.
+   즉 GOOOOOOOL 판이 기준이 되고 득점자 판이 거기에 맞춰 늘어난다. */
+.led-strip[data-mode='goal'] .led-strip__run {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+/* 늘어난 칸 안에서 글자는 가운데. 좌우 여백은 아래 그라데이션이 설 자리이기도 하다 */
+.led-strip[data-mode='goal'] .led-strip__cell {
+  justify-content: center;
+  padding-inline: 1.75rem;
+}
+
+/* 득점자 이름은 함성 판보다 한 단계 더 두껍게.
+   font-weight는 이미 900이라 올릴 곳이 없다(게다가 시스템 글꼴 스택이라 기기에 따라
+   900이 없으면 굵게에서 멈춘다). 글자 외곽에 획을 덧대 굵기를 만든다 —
+   획 색을 글자와 같게 둬야 테두리가 아니라 굵기로 읽힌다. */
+.led-strip[data-mode='goal'] .led-strip__cell--scorer .led-strip__text {
+  -webkit-text-stroke: 0.7px var(--led-blue);
+}
+
+/* 흰 판과 빨간 판이 맞닿는 자리를 그라데이션으로 잇는다.
+   흰 판은 단색으로 두고 빨간 판 양끝에서만 흰색으로 빠지게 하면,
+   경계를 넘어가는 색이 한 번만 변해서 이음매가 보이지 않는다.
+   빠지는 폭을 padding과 같은 1.75rem으로 맞춰야 글자가 시작되는 지점에서
+   빨강이 이미 단색이다 — 더 넓게 잡으면 G가 분홍 위에 얹힌다. */
+.led-strip[data-mode='goal'] .led-strip__cell--red {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0,
+    var(--led-red) 1.75rem,
+    var(--led-red) calc(100% - 1.75rem),
+    #ffffff 100%
+  );
+}
+
+/* ── WebGL LED 링 보드 ───────────────────────────────
+   LedStrip(CSS 보드)과 같은 자리에 들어가는 대체품. 높이도 같아야 화면이 안 흔들린다.
+   실루엣·기울기·명암을 전부 셰이더가 그리므로 mask도 perspective도 필요 없다. */
+.led-ring {
+  position: relative;
+  flex-shrink: 0;
+  height: 3.25rem;
+}
+
+@media (min-width: 640px) {
+  .led-ring {
+    height: 3.5rem;
+  }
+}
+
+.led-ring__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ── 경기장 배경 위의 피드 ────────────────────────── */
@@ -1063,10 +1172,14 @@ html {
   80% { transform: translate3d(4px, 0, 0); }
 }
 
-/* 화면을 훑고 지나가는 빛 */
+/* 화면을 훑고 지나가는 빛.
+   background-position이 아니라 transform으로 움직인다 — 화면을 덮는 층이라
+   background 계열로 애니메이션하면 매 프레임 다시 칠해야 하고, 하필 조명 웨이브가
+   GPU를 쓰고 있는 그 5초에 겹친다. transform은 컴포지터가 그냥 밀어준다.
+   좌우로 넉넉히 넓혀 두는 이유: 띠가 화면 밖에서 들어와 밖으로 빠져나가야 한다. */
 .stadium-goal-flash {
   position: absolute;
-  inset: 0;
+  inset: 0 -60%;
   z-index: 5;
   pointer-events: none;
   background: linear-gradient(
@@ -1076,13 +1189,76 @@ html {
     rgba(255, 255, 255, 0.55) 52%,
     transparent 70%
   );
-  background-size: 260% 100%;
-  animation: stadium-sweep 1.15s ease-out 2;
+  /* forwards가 없으면 안 된다 — 이 애니메이션은 2.3초에 끝나는데 골 연출은 5초다
+     (useGoalCelebration의 CELEBRATION_MS). 기본값(fill-mode: none)이면 끝난 뒤
+     transform이 없는 상태로 되돌아가서, 남은 2.7초 동안 이 넓은 띠가 화면
+     한복판에 붙박이로 서 있게 된다. forwards로 마지막 프레임(화면 오른쪽 밖)에 세워둔다. */
+  animation: stadium-sweep 1.15s ease-out 2 forwards;
+  will-change: transform;
 }
 
 @keyframes stadium-sweep {
-  from { background-position: 180% 0; }
-  to { background-position: -80% 0; }
+  from { transform: translate3d(-72%, 0, 0); }
+  to { transform: translate3d(72%, 0, 0); }
+}
+
+/* ── LED 조명 쇼 (WebGL) ─────────────────────────────
+   골이 터지면 지붕 조명이 붉고 분홍빛으로 스탠드를 훑는다.
+   사진(-2)과 흰 베일(-1) 위, LED 보드와 말풍선 아래에 깔린다 —
+   DOM에서 LedStrip보다 앞에 있으므로 z-index가 같아도 뒤에 그려진다. */
+.stadium-lights {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 낮 경기장 사진에 흰 베일까지 덮여 있어서, 배경을 그대로 두면 빛을
+   아무리 밝게 그려도 묻힌다. 위쪽을 잠깐 어둡게 눌러 빛이 설 자리를 만든다.
+   (골이 터지면 조명을 낮추고 쇼를 하는 실제 경기장과 같은 순서다.)
+   셰이더도 화면 아래 28%에서는 빛을 그리지 않는다 — 잔디와 입력창 자리다. */
+.stadium-lights__dim {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 12, 26, 0.62) 0%,
+    rgba(8, 12, 26, 0.44) 30%,
+    rgba(8, 12, 26, 0.16) 52%,
+    transparent 70%
+  );
+}
+
+.stadium-lights[data-active='true'] .stadium-lights__dim {
+  opacity: 1;
+}
+
+/* 배경 흐리게를 켠 사용자는 가독성을 고른 것이다 — 어둡게 누르는 폭도 줄인다 */
+.stadium-lights[data-active='true'][data-dimmed='true'] .stadium-lights__dim {
+  opacity: 0.5;
+}
+
+.stadium-lights__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── 승리 색종이 (canvas 2D) ─────────────────────────
+   방 전체를 덮는다. 헤더·입력창 위로도 떨어져야 방이 축제로 읽힌다.
+   조명 쇼와 달리 배경을 어둡게 누르지 않는다 — 연출이 9초라 그동안 채팅이 읽혀야 한다. */
+.stadium-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* ── 알림 ────────────────────────────────────────── */
@@ -1185,6 +1361,18 @@ html {
   background: #a0071b;
 }
 
+/* 승리는 골과 다른 사건이라 버튼도 다른 색으로 둔다 — 급할 때 잘못 누르지 않게 */
+.stadium-testbar__btn.is-win {
+  border-color: #1668e3;
+  background: #1668e3;
+  color: #fff;
+}
+
+.stadium-testbar__btn.is-win:hover {
+  background: #0f52b5;
+}
+
+
 /* ── 빠른 응원 ───────────────────────────────────── */
 .stadium-chants {
   display: flex;
@@ -1263,9 +1451,17 @@ html {
 /* 모션을 줄이기로 한 사용자에게는 흐르지도, 흔들리지도 않는다 */
 @media (prefers-reduced-motion: reduce) {
   .led-strip__track,
-  .stadium-room.is-celebrating .stadium-pitchview,
-  .stadium-goal-flash {
+  .stadium-room.is-celebrating .stadium-pitchview {
     animation: none;
+  }
+
+  /* 이 둘은 animation: none으로 멈추면 안 된다 — 섬광은 화면 한복판에 띠가
+     선 채로 5초를 버티고, 조명은 어둡게 누른 층만 남는다. 아예 뺀다.
+     (StadiumLights도 이 경우 WebGL 컨텍스트를 만들지 않는다) */
+  .stadium-goal-flash,
+  .stadium-lights,
+  .stadium-confetti {
+    display: none;
   }
 }
 
