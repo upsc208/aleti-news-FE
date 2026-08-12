@@ -317,7 +317,8 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         currentNickname={myNickname}
         initialError={nicknameError}
         onSuccess={handleNicknameSuccess}
-        onClose={myNickname ? closeNicknameModal : undefined}
+        /* 이름을 아직 안 정했어도 닫을 수 있다 — 읽기만 하러 온 사람도 있다 */
+        onClose={closeNicknameModal}
       />
     </div>
   );

@@ -31,8 +31,13 @@ export interface Seat {
   hue: number;
 }
 
-/** FNV-1a 32bit — 짧은 문자열을 고르게 흩어주면 충분해서 이걸로 족하다 */
-function hash32(input: string): number {
+/**
+ * FNV-1a 32bit — 짧은 문자열을 고르게 흩어주면 충분해서 이걸로 족하다.
+ *
+ * 티켓 모달의 일련번호·바코드도 이걸 쓴다. 난수가 아니라 해시여야
+ * 서버 렌더와 클라이언트 렌더가 같은 값을 내놓는다.
+ */
+export function hash32(input: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i);
