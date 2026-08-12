@@ -488,6 +488,38 @@ html {
   font-weight: 800;
 }
 
+/* 내 이름 — 누르면 입장 티켓이 다시 열린다.
+   접속자 수 칩과 같은 모양으로 둔다. 헤더에서 새 요소처럼 튀면 안 되고,
+   "지금 나는 누구인가"와 "바꾸기"는 같은 자리에 있는 편이 자연스럽다. */
+.stadium-namechip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 9rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #374151;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.stadium-namechip:hover {
+  background: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+/* 아직 이름이 없으면 이건 정보가 아니라 '해야 할 일'이다 — 회색 칩으로 두면 묻힌다 */
+.stadium-namechip.is-empty {
+  background: rgba(191, 9, 33, 0.1);
+  color: var(--aleti-red);
+}
+
+.stadium-namechip.is-empty:hover {
+  background: rgba(191, 9, 33, 0.18);
+}
+
 /* ── 360도 LED 보드 ───────────────────────────────── */
 /*
    실제 메트로폴리타노 링을 그대로 옮긴다:

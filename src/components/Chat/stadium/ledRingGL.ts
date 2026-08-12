@@ -193,7 +193,15 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
     antialias: true,
     depth: false,
     stencil: false,
-    preserveDrawingBuffer: false,
+    /*
+      이 보드는 평상시 한 장 그리고 rAF를 멈춘다(그게 이 화면의 비용을 0으로 만드는 방식이다).
+      그런데 기본값(false)이면 브라우저가 합성한 뒤 드로잉 버퍼를 비워버려서,
+      다시 그리기 전까지 보드가 사라진다 — 시계가 갱신되는 1초마다 깜빡이게 된다.
+      매 프레임 다시 그리는 골 모드에서는 드러나지 않아 놓치기 쉬운 함정이다.
+      912×56짜리 캔버스를 초당 한 번 그리는 용도라 유지 비용은 무시할 만하다.
+      (조명 쇼는 반대다 — 꺼질 때 비워져야 하므로 false가 맞다)
+    */
+    preserveDrawingBuffer: true,
     powerPreference: 'low-power',
   });
   if (!ctx || ctx.isContextLost()) return null;

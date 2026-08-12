@@ -35,8 +35,8 @@ export type NewsListResponse = {
 };
 
 export type PageNewsListResponse = {
-    totalElements?: number;
     totalPages?: number;
+    totalElements?: number;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
@@ -51,9 +51,9 @@ export type PageNewsListResponse = {
 export type PageableObject = {
     offset?: number;
     sort?: SortObject;
-    pageSize?: number;
-    pageNumber?: number;
     paged?: boolean;
+    pageNumber?: number;
+    pageSize?: number;
     unpaged?: boolean;
 };
 
@@ -101,8 +101,8 @@ export type CollectionLog = {
 };
 
 export type PageCollectionLog = {
-    totalElements?: number;
     totalPages?: number;
+    totalElements?: number;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
@@ -194,12 +194,46 @@ export type ChatMessage = {
     content: string;
     sentAt?: string;
     ipHash?: string;
+    type: 'USER' | 'GOAL' | 'GOAL_CANCELLED';
+    live?: LiveMatchState;
 };
 
 export type ChatRoomResponse = {
     open: boolean;
     onlineCount: number;
     messages: Array<ChatMessage>;
+    live?: LiveMatchState;
+};
+
+export type LiveMatchState = {
+    status: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeTeamLatin?: string;
+    awayTeamLatin?: string;
+    competition?: string;
+    competitionLatin?: string;
+    homeScore: number;
+    awayScore: number;
+    scorers: Array<LiveScorer>;
+    kickoff?: string;
+    periods?: LivePeriods;
+    updatedAt: string;
+};
+
+export type LivePeriods = {
+    firstHalfStarted?: string;
+    firstHalfEnded?: string;
+    secondHalfStarted?: string;
+};
+
+export type LiveScorer = {
+    name: string;
+    time: number;
+    addedTime: number;
+    isHome: boolean;
+    ownGoal: boolean;
+    nameLatin?: string;
 };
 
 export type ChatParticipant = {
@@ -272,6 +306,9 @@ export type SubmitRatingResponse = SubmitRatingResponses[keyof SubmitRatingRespo
 
 export type ReserveNicknameData = {
     body: NicknameRequest;
+    headers?: {
+        'X-Chat-Client-Id'?: string;
+    };
     path: {
         matchId: string;
     };

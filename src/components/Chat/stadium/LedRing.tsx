@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_VENUE,
   formatMatchClock,
+  type MatchPeriods,
   isAtleti,
   type BoardSpec,
   type LedMode,
@@ -22,6 +23,8 @@ interface LedRingProps {
   venue?: string;
   clock?: string;
   kickoff?: string;
+  /** 실제 전·후반 시작 시각. 있으면 예정 킥오프보다 이쪽이 정확하다 */
+  periods?: MatchPeriods | null;
   scorer?: string;
   /**
    * WebGL을 못 쓸 때 한 번 불린다. 보드는 다른 연출과 달리 빠지면
@@ -49,6 +52,7 @@ export default function LedRing({
   venue = DEFAULT_VENUE,
   clock,
   kickoff,
+  periods,
   scorer,
   onUnavailable,
 }: LedRingProps) {
@@ -99,7 +103,7 @@ export default function LedRing({
   }, []);
 
   const spec = useMemo<BoardSpec>(() => {
-    const clockText = clock ?? (kickoff && now ? formatMatchClock(kickoff, now) : null);
+    const clockText = clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
     return {
       mode,
       // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
@@ -116,7 +120,7 @@ export default function LedRing({
       scorer,
     };
   }, [
-    mode, competition, venue, clock, kickoff, now,
+    mode, competition, venue, clock, kickoff, periods, now,
     homeTeam, awayTeam, homeScore, awayScore, scorer,
   ]);
 

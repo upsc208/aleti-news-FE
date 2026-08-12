@@ -41,6 +41,10 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
   const isPreview =
     process.env.NODE_ENV === 'development' && query?.preview === '1';
 
+  // 입장 티켓(닉네임 모달)만 띄워 확인하는 통로(?preview=1&ticket=1).
+  // 평소 미리보기는 닉네임 모달을 건너뛰도록 되어 있어서, 티켓 디자인을 볼 방법이 없었다.
+  const previewTicket = isPreview && query?.ticket === '1';
+
   return (
     // 큰 화면에서는 방(최대 896px) 양옆이 남는다. 밝은 직관 화면이 도드라지도록
     // 어두운 중립색으로 감싼다 — 극장 레터박스처럼.
@@ -52,7 +56,11 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
       {isFreeRoom ? (
         <ChatContainer initialMatchId={matchId} />
       ) : (
-        <StadiumChatContainer initialMatchId={matchId} isPreview={isPreview} />
+        <StadiumChatContainer
+          initialMatchId={matchId}
+          isPreview={isPreview}
+          previewTicket={previewTicket}
+        />
       )}
     </div>
   );

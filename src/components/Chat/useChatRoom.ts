@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Client as StompClient } from '@stomp/stompjs';
 import { roomInfo, getRecentMatch, reserveNickname } from '@/client/sdk.gen';
-import type { ChatMessage, RecentMatch } from '@/client/types.gen';
+import type { ChatMessage, LiveMatchState, RecentMatch } from '@/client/types.gen';
 import { useRouter } from 'next/navigation';
 import {
   CLIENT_ID_STOMP_HEADER,
@@ -42,6 +42,17 @@ export const FREE_ROOM_ID = 'free';
 const messageKey = (m: ChatMessage) =>
   `${m.sentAt ?? ''}|${m.ipHash ?? ''}|${m.nickname}|${m.content}`;
 
+/**
+ * 사람이 친 말만 채팅 목록에 남긴다.
+ *
+ * 서버는 골 알림('매치봇')도 같은 채널·같은 목록에 실어 보낸다. 그것까지 말풍선으로
+ * 그리면 골이 몰아칠 때 채팅창이 봇 메시지로 덮인다. 골은 LED 보드가 맡으므로
+ * 여기서 걸러낸다 — 필요한 정보는 이미 [live] 스냅샷으로 따로 받는다.
+ *
+ * `type`이 없는 메시지는 이 필드가 생기기 전에 저장된 옛 기록이라 사람 것으로 본다.
+ */
+const isHumanMessage = (m: ChatMessage) => !m.type || m.type === 'USER';
+
 /** 서버가 거절 사유와 함께 내려주는 {error, code}를 꺼낸다 (ChatController.kt) */
 const readRejection = (body: unknown): { message: string; code: string } => {
   const obj = (body ?? {}) as { error?: unknown; code?: unknown };
@@ -62,6 +73,12 @@ export function useChatRoom(initialMatchId: string) {
   const [matchId, setMatchId] = useState<string>(initialMatchId);
   const [recentMatch, setRecentMatch] = useState<RecentMatch | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  /**
+   * 라이브 스코어 스냅샷 — LED 보드가 그리는 값 (백엔드 live-match-feed-design 6장).
+   * 골이 들어올 때마다, 그리고 입장·재접속 때마다 **통째로 교체**된다.
+   * 누적하지 않으므로 VAR 취소로 골이 사라져도 그대로 따라간다.
+   */
+  const [live, setLive] = useState<LiveMatchState | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -125,10 +142,11 @@ export function useChatRoom(initialMatchId: string) {
   // 저장해두면 서버에 도달하지 못한 내 메시지가 보내진 것처럼 남아,
   // "각자 자기 메시지만 보이는" 상태를 정상처럼 보이게 만든다.
   const appendMessages = useCallback((incoming: ChatMessage[]) => {
-    if (incoming.length === 0) return;
+    const human = incoming.filter(isHumanMessage);
+    if (human.length === 0) return;
     setMessages((prev) => {
       const seen = new Set(prev.map(messageKey));
-      const fresh = incoming.filter((m) => !seen.has(messageKey(m)));
+      const fresh = human.filter((m) => !seen.has(messageKey(m)));
       if (fresh.length === 0) return prev;
       return [...prev, ...fresh].slice(-MAX_HISTORY);
     });
@@ -223,6 +241,10 @@ export function useChatRoom(initialMatchId: string) {
       setOnlineCount(res.data.onlineCount ?? 0);
       setRoomOpen(res.data.open ?? true);
       if (Array.isArray(res.data.messages)) appendMessages(res.data.messages);
+
+      // 스코어보드 복구 경로 — 재연결로 골 알림을 놓쳤어도 이 한 번이면 현재 상태가 맞춰진다.
+      // 자유 채팅방이거나 경기 매핑 전이면 null이 오고, 그때는 보드가 경기 정보만 띄운다.
+      setLive(res.data.live ?? null);
     } catch (err) {
       console.error('Failed to fetch room info:', err);
     } finally {
@@ -271,7 +293,15 @@ export function useChatRoom(initialMatchId: string) {
 
         client.subscribe(`/topic/chat/${matchId}`, (frame) => {
           try {
-            appendMessages([JSON.parse(frame.body) as ChatMessage]);
+            const msg = JSON.parse(frame.body) as ChatMessage;
+
+            // 골·VAR 취소 메시지에는 스코어 스냅샷이 실려 온다. 메시지 하나가
+            // 「채팅 라인」과 「스코어보드 갱신」을 동시에 처리하는 구조라,
+            // 보드를 위해 따로 요청할 필요가 없다 (백엔드 설계 6장).
+            if (msg.live) setLive(msg.live);
+
+            // 봇 메시지는 여기서 걸러진다 (appendMessages 안의 isHumanMessage)
+            appendMessages([msg]);
           } catch {
             // 파싱 불가 프레임은 무시
           }
@@ -409,6 +439,7 @@ export function useChatRoom(initialMatchId: string) {
     matchId,
     recentMatch,
     messages,
+    live,
     onlineCount,
     isLoading,
     roomOpen,

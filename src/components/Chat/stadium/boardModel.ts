@@ -16,15 +16,57 @@ const HALF_MS = 45 * 60_000;
 const BREAK_MS = 15 * 60_000;
 const FULL_MS = 90 * 60_000;
 
+/** 서버가 주는 실제 전·후반 시작 시각 (LiveMatchState.periods) */
+export interface MatchPeriods {
+  firstHalfStarted?: string;
+  firstHalfEnded?: string;
+  secondHalfStarted?: string;
+}
+
+const at = (iso?: string): number | null => {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  return isNaN(t) ? null : t;
+};
+
+const mmss = (ms: number): string => {
+  const clamped = Math.max(0, ms);
+  return (
+    `${String(Math.floor(clamped / 60_000)).padStart(2, '0')}:` +
+    `${String(Math.floor((clamped % 60_000) / 1000)).padStart(2, '0')}`
+  );
+};
+
 /**
- * 킥오프 시각에서 경기 시계를 만든다 — "47:12" 형식.
+ * 경기 시계 — "47:12" 형식. 추가시간은 45:00에서 멈추지 않고 그대로 흘러간다
+ * (실물 보드가 그렇다. "45+2"는 중계 화면 표기법이다).
  *
- * 벽시계로 세는 근사값이다. 하프타임 15분만 빼주고 추가시간·중단은 모른다.
- * 서버가 진짜 경기 시계를 내려주면 clock prop으로 덮어쓰는 게 맞다.
+ * [periods]가 있으면 **실제로 공이 굴러간 시각**을 기준으로 센다. 이게 있으면
+ * 킥오프 지연·하프타임 길이·전반 추가시간이 전부 저절로 맞는다.
+ *
+ * 없으면 예정 킥오프로 어림한다 — 하프타임을 15분으로 가정하므로 그만큼 어긋난다.
  */
-export function formatMatchClock(kickoffIso: string, now: number): string | null {
-  const kickoff = new Date(kickoffIso).getTime();
-  if (isNaN(kickoff)) return null;
+export function formatMatchClock(
+  kickoffIso: string,
+  now: number,
+  periods?: MatchPeriods | null
+): string | null {
+  const firstStart = at(periods?.firstHalfStarted);
+  const firstEnd = at(periods?.firstHalfEnded);
+  const secondStart = at(periods?.secondHalfStarted);
+
+  // 후반 — 45:00부터 다시 센다. 전반 추가시간이 몇 분이었든 상관없다
+  if (secondStart !== null && now >= secondStart) return mmss(HALF_MS + (now - secondStart));
+
+  // 하프타임 — 전반이 끝난 시각에 멈춰 세운다 (45:00이 아니라 49:45처럼)
+  if (firstEnd !== null && firstStart !== null && now >= firstEnd) return mmss(firstEnd - firstStart);
+
+  // 전반
+  if (firstStart !== null) return now >= firstStart ? mmss(now - firstStart) : null;
+
+  // ── 기준점이 아직 없을 때: 예정 킥오프로 어림한다 ──
+  const kickoff = at(kickoffIso);
+  if (kickoff === null) return null;
 
   let elapsed = now - kickoff;
   if (elapsed < 0) return null;                            // 아직 킥오프 전
@@ -32,13 +74,18 @@ export function formatMatchClock(kickoffIso: string, now: number): string | null
   if (elapsed > HALF_MS + BREAK_MS) elapsed -= BREAK_MS;   // 후반 — 휴식만큼 되돌린다
   else if (elapsed > HALF_MS) elapsed = HALF_MS;           // 하프타임 동안은 45:00에 멈춘다
 
-  const capped = Math.min(elapsed, FULL_MS);
-  const minutes = Math.floor(capped / 60_000);
-  const seconds = Math.floor((capped % 60_000) / 1000);
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  return mmss(Math.min(elapsed, FULL_MS));
 }
 
-export const isAtleti = (team: string) => /atl[ée]tico|아틀레티|아틀레띠/i.test(team);
+/**
+ * 이 이름이 아틀레티코인지.
+ *
+ * `AT 마드리드`는 네이버 표기이자 **라이브 스코어가 실제로 주는 값**이다. 이게 빠지면
+ * 보드가 아틀레티를 상대팀으로 보고 큰 구단명 자리에 상대 이름을 띄운다.
+ * `마드리드`만으로 판정하면 레알 마드리드전에서 뒤집히므로 `AT`를 붙여 좁힌다.
+ */
+export const isAtleti = (team: string) =>
+  /atl[ée]tico|아틀레티|아틀레띠|at\s*마드리드/i.test(team);
 
 /** 보드 한 장에 그려야 할 내용 전부. 이 값이 같으면 텍스처를 다시 그리지 않는다. */
 export interface BoardSpec {

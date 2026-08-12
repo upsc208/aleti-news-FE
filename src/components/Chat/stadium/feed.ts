@@ -9,7 +9,13 @@ import type { ChatMessage } from '@/client/types.gen';
 export interface GoalEvent {
   /** 같은 골이 두 번 터지지 않게 하는 키 — 서버 이벤트 id를 그대로 쓰면 된다 */
   id: string;
+  /** 한글 표기 — 채팅·골 카드에 쓴다 */
   scorer: string;
+  /**
+   * 같은 선수의 라틴 표기. 서버가 FotMob의 같은 골에서 찾아 붙여 준다.
+   * LED 보드 전용이고, 못 찾았으면 없다 (그때는 boardNames의 표로 넘어간다).
+   */
+  nameLatin?: string;
   assist?: string;
   /** "62'" 같은 표기. 모르면 비워둔다 */
   minute?: string;
@@ -17,6 +23,8 @@ export interface GoalEvent {
   awayScore: number;
   /** 우리 골인지 — 실점이면 연출 톤이 반대로 간다 */
   isAtleti: boolean;
+  /** 자책골. 넣은 선수와 점수가 오르는 팀이 반대라 이름을 그대로 띄우면 오해를 부른다 */
+  ownGoal?: boolean;
   /** ISO 문자열. 피드 정렬에 쓴다 */
   at: string;
 }

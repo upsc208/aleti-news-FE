@@ -15,7 +15,6 @@ import {
   VolumeX,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface ChatContainerProps {
   initialMatchId?: string;
@@ -216,24 +215,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           </div>
         )}
 
-        {/*
-          El ramo de Margarita — since 1996 a bouquet of rojiblanco carnations sits by the
-          corner flag left of the south goal at every Metropolitano home match.
-          Ambient only: sits outside the scroll container so it stays pinned to the corner.
-        */}
-        <div
-          className="absolute bottom-0 left-0 -z-10 pointer-events-none select-none opacity-40"
-          aria-hidden="true"
-        >
-          <Image
-            src="/magarita.png"
-            alt=""
-            width={29}
-            height={32}
-            className="object-contain"
-            unoptimized
-          />
-        </div>
       </div>
 
 

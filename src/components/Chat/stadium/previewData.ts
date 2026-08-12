@@ -17,6 +17,7 @@ export function previewMessages(myNickname: string): ChatMessage[] {
   return [
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: '시메오네도',
       content: '메트로폴리타노 원정 온 형들 다 모여라 🔴⚪',
       sentAt: minutesAgo(9),
@@ -24,6 +25,7 @@ export function previewMessages(myNickname: string): ChatMessage[] {
     },
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: 'Marta_84',
       content: '선발 나왔다. 훌리안 + 그리즈만 투톱!',
       sentAt: minutesAgo(7),
@@ -31,6 +33,7 @@ export function previewMessages(myNickname: string): ChatMessage[] {
     },
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: 'colchonero_kr',
       content: 'ATLETI! ATLETI! ATLETI!',
       sentAt: minutesAgo(5),
@@ -38,18 +41,21 @@ export function previewMessages(myNickname: string): ChatMessage[] {
     },
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: mine,
       content: '오늘 무조건 이긴다. 심장 준비됐어',
       sentAt: minutesAgo(4),
     },
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: 'SYSTEM',
       content: '후반 시작 — 교체: 코케 → 바리오스',
       sentAt: minutesAgo(2),
     },
     {
       matchId: 'preview',
+      type: 'USER' as const,
       nickname: 'metroSur7',
       content: '¡Vamos Atleti!',
       sentAt: minutesAgo(1),

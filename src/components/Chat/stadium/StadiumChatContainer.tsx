@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -11,12 +12,13 @@ import {
   Send,
   Sun,
   SunDim,
+  User,
   Users,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 
-import NicknameModal from '../NicknameModal';
+import TicketNicknameModal from './TicketNicknameModal';
 import { FREE_ROOM_ID, useChatRoom } from '../useChatRoom';
 import StadiumLights from './StadiumLights';
 import WinConfetti from './WinConfetti';
@@ -24,6 +26,8 @@ import LedStrip from './LedStrip';
 import LedRing from './LedRing';
 import StadiumMessageItem from './StadiumMessageItem';
 import GoalCard from './GoalCard';
+import { isAtleti } from './boardModel';
+import { latinCompetition, latinPlayer, latinTeam } from './boardNames';
 import { buildFeed, type GoalEvent } from './feed';
 import { useGoalCelebration } from './useGoalCelebration';
 import { previewGoals, previewMatch, previewMessages } from './previewData';
@@ -32,11 +36,10 @@ interface StadiumChatContainerProps {
   initialMatchId: string;
   /** 백엔드 없이 화면만 확인하는 모드 — 페이지가 dev 빌드에서만 켜준다 (?preview=1) */
   isPreview?: boolean;
+  /** 입장 티켓 디자인만 띄워 보는 모드 (?preview=1&ticket=1) */
+  previewTicket?: boolean;
 }
 
-// 목업의 빠른 응원 칩. 선수 이름이 들어간 건 라인업이 바뀌면 어색해지므로 넣지 않았다.
-// 테스트 버튼이 돌려쓰는 득점자 이름. 실제 이벤트가 붙으면 서버 값을 쓴다.
-const TEST_SCORERS = ['훌리안 알바레스', '그리즈만', '소를로트', '코케', '가야르도'];
 
 const MATCH_CHANTS = [
   'Atleti! Atleti!',
@@ -50,11 +53,13 @@ const MATCH_CHANTS = [
 export default function StadiumChatContainer({
   initialMatchId,
   isPreview = false,
+  previewTicket = false,
 }: StadiumChatContainerProps) {
   const {
     matchId,
     recentMatch,
     messages,
+    live,
     onlineCount,
     isLoading,
     roomOpen,
@@ -94,59 +99,103 @@ export default function StadiumChatContainer({
 
   const { celebrating, celebrate, winning, celebrateWin } = useGoalCelebration();
 
-  // 골 이벤트를 밀어주는 API가 아직 없다. 채널이 생기면 fireGoal()만 부르면
-  // 피드·LED·연출이 전부 따라온다 (feed.ts 주석 참고).
-  //
-  // 미리보기 골도 같은 배열에 심는다 — 따로 두면 테스트 버튼이 그 골을 못 보고
-  // 스코어를 0부터 다시 세서 1-0이 두 번 나온다.
-  const [goals, setGoals] = useState<GoalEvent[]>(() => (isPreview ? previewGoals() : []));
+  /**
+   * LED 보드가 그리는 골 목록 — 서버 스냅샷(`live.scorers`)을 그대로 옮긴다.
+   *
+   * **쌓지 않는다.** 스냅샷은 매번 전체 목록이라, VAR로 골이 취소되면 그 골이 빠진 채로
+   * 오고 보드도 따라서 되돌아간다. 예전처럼 배열에 append 하면 취소된 골이 화면에 남는다.
+   *
+   * 미리보기는 백엔드가 없으니 가짜 골을 쓴다.
+   */
+  const goals = useMemo<GoalEvent[]>(() => {
+    if (isPreview) return previewGoals();
+    if (!live) return [];
+
+    const atletiIsHome = isAtleti(live.homeTeam);
+    let home = 0;
+    let away = 0;
+
+    // 서버가 시간순으로 정렬해 보내므로 앞에서부터 세면 각 골 시점의 스코어가 된다
+    return live.scorers.map((s) => {
+      // 자책골은 넣은 선수의 **반대편** 점수가 오른다
+      const scoredForHome = s.isHome !== s.ownGoal;
+      if (scoredForHome) home += 1;
+      else away += 1;
+
+      return {
+        id: `${s.isHome ? 'H' : 'A'}|${s.time}+${s.addedTime}|${s.name}|${s.ownGoal}`,
+        scorer: s.name,
+        nameLatin: s.nameLatin ?? undefined,
+        minute: s.addedTime ? `${s.time}+${s.addedTime}'` : `${s.time}'`,
+        homeScore: home,
+        awayScore: away,
+        isAtleti: scoredForHome === atletiIsHome,
+        ownGoal: s.ownGoal,
+        at: live.updatedAt,
+      };
+    });
+  }, [isPreview, live]);
 
   /**
-   * 골 하나를 피드에 넣고 연출을 켠다.
+   * 새로 들어온 골에만 연출을 켠다.
    *
-   * 지금은 아래 테스트 바가 유일한 호출자다. 나중에 이벤트 구독부에서
-   * 서버가 준 값으로 이 함수를 부르면 되고, 테스트 바만 지우면 된다.
+   * 첫 스냅샷은 기준선으로만 잡는다 — 입장 시점에 이미 3-0인 경기라면 들어오자마자
+   * 골 세리머니가 세 번 터진다.
    */
-  const fireGoal = useCallback(
-    (isAtleti: boolean) => {
-      setGoals((prev) => {
-        // 직전 골의 스코어에서 이어간다. 첫 골이면 경기 정보의 현재 스코어에서 시작
-        const last = prev[prev.length - 1];
-        const home = last?.homeScore ?? match?.homeScore ?? 0;
-        const away = last?.awayScore ?? match?.awayScore ?? 0;
+  const seenGoalIds = useRef<Set<string> | null>(null);
+  /**
+   * 지금 연출 중인 골.
+   *
+   * 보드에 "목록의 마지막 골"을 넘기면 안 된다. 목록은 분 순서라 같은 분에 상대 골이
+   * 섞이면 맨 뒤가 상대 골이 되고, 우리 골로 연출을 켜놓고 보드는 이름을 비운다.
+   * 연출을 켠 바로 그 골을 들고 있어야 한다.
+   */
+  const [celebratingGoal, setCelebratingGoal] = useState<GoalEvent | null>(null);
 
-        // 원정 경기면 아틀레티가 away 쪽이다
-        const atletiIsHome = match?.isHome !== false;
-        const homeScored = isAtleti ? atletiIsHome : !atletiIsHome;
+  useEffect(() => {
+    if (isPreview || !live) return;
 
-        const index = prev.length;
-        return [
-          ...prev,
-          {
-            id: `goal-${index + 1}`,
-            scorer: isAtleti ? TEST_SCORERS[index % TEST_SCORERS.length] : '상대 선수',
-            assist: isAtleti && index % 2 === 0 ? '그리즈만' : undefined,
-            minute: `${Math.min(90, 17 * (index + 1))}'`,
-            homeScore: home + (homeScored ? 1 : 0),
-            awayScore: away + (homeScored ? 0 : 1),
-            isAtleti,
-            at: new Date().toISOString(),
-          },
-        ];
-      });
+    const ids = new Set(goals.map((g) => g.id));
+    const previous = seenGoalIds.current;
+    seenGoalIds.current = ids;
+    if (previous === null) return;
 
-      // 실점에는 연출을 켜지 않는다 — 골이 짜릿하려면 실점은 조용해야 한다
-      if (isAtleti) celebrate();
-    },
-    [match, celebrate]
-  );
+    // 실점에는 연출을 켜지 않는다 — 골이 짜릿하려면 실점은 조용해야 한다
+    const fresh = goals.filter((g) => g.isAtleti && !previous.has(g.id));
+    if (fresh.length === 0) return;
+
+    // 한 턴에 여러 골이 잡혔으면 가장 늦은 골을 보드에 올린다
+    setCelebratingGoal(fresh[fresh.length - 1]);
+    celebrate();
+  }, [goals, live, isPreview, celebrate]);
+
+  /** 경기가 끝나고 아틀레티가 이겼으면 한 번만 축포를 띄운다 */
+  const celebratedWin = useRef(false);
+  useEffect(() => {
+    if (isPreview || !live || celebratedWin.current) return;
+    if (!live.status.includes('종료')) return;
+
+    celebratedWin.current = true;
+    const atletiIsHome = isAtleti(live.homeTeam);
+    const ours = atletiIsHome ? live.homeScore : live.awayScore;
+    const theirs = atletiIsHome ? live.awayScore : live.homeScore;
+    if (ours > theirs) celebrateWin();
+  }, [live, isPreview, celebrateWin]);
 
   // 미리보기에서는 닉네임 모달을 띄우지 않으므로 임시 이름으로 좌석/내 말풍선을 그린다
   const shownNickname = isPreview && !myNickname ? '나' : myNickname;
 
+  /**
+   * 채팅 피드에는 **사람이 친 말만** 올린다.
+   *
+   * 골은 LED 보드가 맡는다. 골 카드까지 피드에 섞으면 분당 3골이 들어오는 경기에서
+   * 대화가 골 카드에 파묻힌다. 봇 메시지 자체는 useChatRoom이 이미 걸러 낸다.
+   *
+   * 미리보기는 골 카드 디자인을 확인하는 자리이므로 그대로 섞어 보여준다.
+   */
   const feed = useMemo(() => {
-    const msgs = isPreview ? previewMessages(shownNickname) : messages;
-    return buildFeed(msgs, goals);
+    if (isPreview) return buildFeed(previewMessages(shownNickname), goals);
+    return buildFeed(messages, []);
   }, [isPreview, shownNickname, messages, goals]);
 
   // 골이 들어오면 카드가 화면 밖에 생기지 않도록 바닥으로 따라 내려간다.
@@ -156,19 +205,54 @@ export default function StadiumChatContainer({
     if (el) el.scrollTop = el.scrollHeight;
   }, [feed.length, scrollContainerRef]);
 
-  // 지금 스코어 — 골이 들어올 때마다 헤더와 LED 스코어 패널이 같이 올라간다.
-  // 경기 정보(match)는 방에 들어올 때 한 번 받은 값이라 그 뒤의 골은 골 이벤트가 들고 있다.
+  // 지금 스코어 — 서버 스냅샷이 있으면 그 값이 정답이다.
+  // 골 목록에서 다시 세지 않는 이유: 자책골 가산을 백엔드가 이미 계산해 두었고,
+  // 제공사가 스코어와 득점자 목록을 다르게 줄 때 스코어 쪽을 믿는 편이 맞다.
   const lastGoal = goals[goals.length - 1];
-  const homeScore = lastGoal?.homeScore ?? match?.homeScore ?? 0;
-  const awayScore = lastGoal?.awayScore ?? match?.awayScore ?? 0;
+  const homeScore = live?.homeScore ?? lastGoal?.homeScore ?? match?.homeScore ?? 0;
+  const awayScore = live?.awayScore ?? lastGoal?.awayScore ?? match?.awayScore ?? 0;
 
-  const homeTeam = match?.homeTeam ?? 'Atlético de Madrid';
-  const awayTeam = match?.awayTeam ?? 'Rival';
+  /**
+   * 보드에 올릴 팀 이름 — **라틴 표기만 넘긴다.**
+   *
+   * 서버가 FotMob에서 가져온 이름이 있으면 그걸 쓰고, 없으면 boardNames의 표로 떨어진다.
+   * (match는 "가장 최근에 끝난 경기"라 지금 보는 경기와 다를 수 있어 맨 뒤 폴백이다)
+   */
+  const homeTeam = latinTeam(live?.homeTeam ?? match?.homeTeam ?? 'Atlético de Madrid', live?.homeTeamLatin);
+  const awayTeam = latinTeam(live?.awayTeam ?? match?.awayTeam ?? 'Rival', live?.awayTeamLatin);
+
+  /**
+   * 보드에 흘릴 득점자. 미리보기에는 연출 추적이 없으니 마지막 골을 쓴다.
+   *
+   * **자책골에는 이름을 올리지 않는다.** 넣은 선수는 상대팀인데 점수는 우리 쪽에
+   * 오른 것이라, 이름만 크게 흐르면 그 선수가 우리 골을 넣은 것처럼 읽힌다.
+   */
+  const boardGoal = celebratingGoal ?? (isPreview ? lastGoal : null);
+  const boardScorer =
+    boardGoal && boardGoal.isAtleti && !boardGoal.ownGoal
+      ? latinPlayer(boardGoal.scorer, boardGoal.nameLatin) || undefined
+      : undefined;
 
   // 헤더는 "누구와 붙는 경기인지 · 무슨 대회인지 · 여기가 실시간 채팅방"까지만 말한다.
   // 스코어와 경기장 이름은 바로 아래 LED 보드가 이미 크게 띄우고 있다.
   const opponent = match ? (match.isHome ? match.awayTeam : match.homeTeam) : null;
   const title = opponent ? `vs ${opponent}` : '아틀레티코 마드리드';
+
+  // 입장 티켓에 인쇄할 줄. 보드와 같은 라틴 표기를 쓴다 (boardNames.ts)
+  const ticketFixture = opponent ? `vs ${latinTeam(opponent)}` : 'Atlético de Madrid';
+  const ticketMeta = [
+    latinCompetition(match?.tournament, 'Riyadh Air Metropolitano'),
+    match?.matchDate
+      ? new Date(match.matchDate).toLocaleString('ko-KR', {
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <div
@@ -218,6 +302,22 @@ export default function StadiumChatContainer({
             <span className="tabular-nums">{onlineCount.toLocaleString('ko-KR')}</span>
           </span>
 
+          {/* 내 이름 — 누르면 입장 티켓이 다시 열린다.
+              좁은 화면에서는 이름을 접어 아이콘만 남기지만, 이름이 아직 없을 때는
+              글자를 남긴다. 그때는 정보가 아니라 눌러야 할 버튼이기 때문이다. */}
+          <button
+            type="button"
+            onClick={openNicknameModal}
+            className={`stadium-namechip shrink-0 ${myNickname ? '' : 'is-empty'}`}
+            title={myNickname ? `닉네임 변경 (${myNickname})` : '이름 정하기'}
+            aria-label={myNickname ? `닉네임 변경. 현재 ${myNickname}` : '이름 정하기'}
+          >
+            <User size={12} className="shrink-0" />
+            <span className={`truncate ${myNickname ? 'hidden xs:inline' : ''}`}>
+              {myNickname || '이름 정하기'}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={toggleChant}
@@ -242,6 +342,27 @@ export default function StadiumChatContainer({
         <div className="stadium-stage__photo" aria-hidden="true" />
         <div className="stadium-stage__scrim" aria-hidden="true" />
 
+        {/*
+          El ramo de Margarita — 1996년부터 메트로폴리타노 홈 경기마다 남측 골대 왼쪽
+          코너 플래그 옆에 로히블랑코 카네이션 다발이 놓인다.
+          그 자리가 여기다 — 경기장 그림의 왼쪽 아래 구석. 스크롤 컨테이너 밖에 둬서
+          말풍선이 올라가도 코너에 붙어 있는다.
+          left-2는 틀이 방보다 8px 넓게 깔려 있는 것을 되돌리는 값이다(.stadium-pitchview).
+        */}
+        <div
+          className="pointer-events-none absolute bottom-0 left-2 z-0 select-none opacity-40"
+          aria-hidden="true"
+        >
+          <Image
+            src="/magarita.png"
+            alt=""
+            width={29}
+            height={32}
+            className="object-contain"
+            unoptimized
+          />
+        </div>
+
         {/* 골 순간 스탠드를 훑는 LED 조명 — 붉은빛 + 분홍빛 (WebGL).
             LedStrip보다 앞에 둬야 보드와 말풍선이 그 위에 그려진다.
             평상시에는 렌더 루프가 멈춰 있어 비용이 들지 않는다. */}
@@ -257,10 +378,18 @@ export default function StadiumChatContainer({
             awayTeam,
             homeScore,
             awayScore,
-            competition: match?.tournament,
+            // 지금 보는 경기의 대회명. FotMob 라틴 → 네이버 한글 → (마지막으로) 최근 경기 순.
+            // 셋 다 없거나 표에 없는 한국어면 latinCompetition이 경기장 이름으로 대신한다.
+            competition: live?.competitionLatin ?? live?.competition ?? match?.tournament,
             venue: match?.isHome === false ? undefined : 'Riyadh Air Metropolitano',
-            kickoff: match?.matchDate,
-            scorer: lastGoal?.isAtleti ? lastGoal.scorer : undefined,
+            // 지금 보고 있는 경기의 킥오프를 쓴다. match(=recentMatch)는 "가장 최근에 끝난
+            // 경기"라 여기 쓰면 며칠 전 시각으로 세다가 90:00에 눌러앉는다.
+            kickoff: live?.kickoff ?? match?.matchDate,
+            // 실제 전·후반 시작 시각이 오면 예정 킥오프 대신 이걸로 센다 (boardModel 참고)
+            periods: live?.periods,
+            // 보드에는 라틴 표기만 올린다. 서버가 준 이름이 있으면 그걸 쓰고,
+            // 없으면 boardNames의 표로, 그것도 없으면 이름 없이 함성만 흐른다.
+            scorer: boardScorer,
           };
           return ledFallback ? (
             <LedStrip {...boardProps} />
@@ -352,37 +481,8 @@ export default function StadiumChatContainer({
         </div>
       </div>
 
-      {/*
-        ── 테스트 바 ──────────────────────────────────────────
-        골 이벤트 API가 붙기 전까지 연출을 손으로 켜보는 줄.
-        실제 이벤트 구독부가 생기면 이 블록만 지우면 된다 — fireGoal()은 그대로 쓴다.
-      */}
-      <div className="stadium-testbar">
-        <span className="stadium-testbar__tag">TEST</span>
-        <button type="button" onClick={() => fireGoal(true)} className="stadium-testbar__btn is-goal">
-          ⚽ 골 넣기
-        </button>
-        <button type="button" onClick={() => fireGoal(false)} className="stadium-testbar__btn">
-          실점
-        </button>
-        <button
-          type="button"
-          onClick={() => setGoals([])}
-          className="stadium-testbar__btn"
-          disabled={goals.length === 0}
-        >
-          초기화
-        </button>
-        {/* 경기 종료를 알려주는 채널도 아직 없다. 생기면 "종료 + 아틀레티 승"에서
-            celebrateWin()만 부르면 된다 — 이 버튼만 지우면 그대로 넘어간다. */}
-        <button
-          type="button"
-          onClick={() => celebrateWin()}
-          className="stadium-testbar__btn is-win"
-        >
-          🎉 승리
-        </button>
-      </div>
+      {/* 테스트 바는 걷어냈다 — 골·실점·승리가 이제 전부 서버 스냅샷에서 온다.
+          연출만 따로 켜보고 싶으면 백엔드의 scripts/fake-live-match.js로 가짜 경기를 돌린다. */}
 
       {/* ── 4. 빠른 응원 ───────────────────────────────────────── */}
       <div className="stadium-chants no-scrollbar">
@@ -454,29 +554,25 @@ export default function StadiumChatContainer({
             <Send size={18} />
           </button>
         </form>
-
-        <div className="mt-2 text-center">
-          <button
-            type="button"
-            onClick={openNicknameModal}
-            className="text-[10px] font-bold text-gray-400 underline underline-offset-2 transition hover:text-gray-700"
-          >
-            닉네임 변경
-          </button>
-        </div>
+        {/* 닉네임을 바꾸는 통로는 헤더의 이름 칩 하나로 모았다 —
+            같은 동작을 한 화면에 두 번 두면 어느 쪽이 진짜인지 헷갈린다 */}
       </div>
 
       {/* 승리 색종이는 방 전체를 덮는다 — 골 연출과 달리 경기장 사진 안에
           가둘 이유가 없다. 입력창 위로도 떨어져야 "방이 축제"로 읽힌다. */}
       <WinConfetti active={winning} />
 
-      <NicknameModal
-        isOpen={isNicknameModalOpen && !isPreview}
+      <TicketNicknameModal
+        isOpen={previewTicket || (isNicknameModalOpen && !isPreview)}
         matchId={matchId}
+        fixture={ticketFixture}
+        meta={ticketMeta}
         currentNickname={myNickname}
         initialError={nicknameError}
         onSuccess={handleNicknameSuccess}
-        onClose={myNickname ? closeNicknameModal : undefined}
+        /* 이름을 아직 안 정했어도 닫을 수 있다 — 채팅을 읽기만 하러 온 사람도 있다.
+           입력창이 "닉네임을 먼저 정해주세요"로 막아주고, 아래 링크로 다시 열 수 있다. */
+        onClose={closeNicknameModal}
       />
     </div>
   );

@@ -2,7 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DEFAULT_VENUE, formatMatchClock, isAtleti, type LedMode } from './boardModel';
+import {
+  DEFAULT_VENUE,
+  formatMatchClock,
+  isAtleti,
+  type LedMode,
+  type MatchPeriods,
+} from './boardModel';
 import { latinCode, latinCompetition, latinPlayer, latinTeam } from './boardNames';
 
 interface LedStripProps {
@@ -22,6 +28,8 @@ interface LedStripProps {
   clock?: string;
   /** 킥오프 시각(ISO). clock이 없을 때 여기서 경과 시간을 계산한다 */
   kickoff?: string;
+  /** 실제 전·후반 시작 시각. 있으면 예정 킥오프보다 이쪽이 정확하다 */
+  periods?: MatchPeriods | null;
   /** 골 연출 중 흘려보낼 득점자 이름 */
   scorer?: string;
 }
@@ -57,6 +65,7 @@ export default function LedStrip({
   venue = DEFAULT_VENUE,
   clock,
   kickoff,
+  periods,
   scorer,
 }: LedStripProps) {
   // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
@@ -68,7 +77,7 @@ export default function LedStrip({
   // 연쇄 렌더를 유발하고, 렌더 중 Date.now()를 읽는 것도 순수하지 않아 둘 다 피한다.
   const [now, setNow] = useState(0);
   useEffect(() => {
-    if (clock || !kickoff) return;
+    if (clock || (!kickoff && !periods)) return;
     const update = () => setNow(Date.now());
     const first = setTimeout(update, 0);
     const timer = setInterval(update, 1000);
@@ -76,10 +85,10 @@ export default function LedStrip({
       clearTimeout(first);
       clearInterval(timer);
     };
-  }, [clock, kickoff]);
+  }, [clock, kickoff, periods]);
 
   const clockText =
-    clock ?? (kickoff && now ? formatMatchClock(kickoff, now) : null);
+    clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
 
   /**
    * 스코어 묶음 — [득점][홈 약칭][시계][원정 약칭][득점].
@@ -114,8 +123,10 @@ export default function LedStrip({
   // 스코어·대회명·구분 칸은 넣지 않는다. 골이 터진 순간에 읽을 것이 적을수록 세다.
   const goalPanels = useMemo<GoalPanel[]>(() => {
     const shout: GoalPanel = { tone: 'red', text: 'GOOOOOOOL!!!!' };
-    // 득점자를 모르는 골(서버가 이름을 안 준 경우)에는 함성만 흐른다
-    return scorer ? [{ tone: 'scorer', text: latinPlayer(scorer) }, shout] : [shout];
+    // 득점자를 모르는 골에는 함성만 흐른다. 이름을 라틴으로 못 바꾼 경우도 여기로 온다 —
+    // 빈 판이 끼면 보드에 검은 구간이 지나가는 것처럼 보인다 (boardNames.latinPlayer 참고)
+    const name = scorer ? latinPlayer(scorer) : '';
+    return name ? [{ tone: 'scorer', text: name }, shout] : [shout];
   }, [scorer]);
 
   // 한 벌이 보드 너비보다 짧으면 -50% 지점에서 빈 구간이 드러난다.
