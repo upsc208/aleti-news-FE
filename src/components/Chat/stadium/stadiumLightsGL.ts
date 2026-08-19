@@ -18,6 +18,31 @@ const FADE_OUT_MS = 900;
 /** 배경 흐리게(washed)를 켠 사용자는 가독성을 고른 것이다 — 빛도 같이 죽인다 */
 const DIMMED_SCALE = 0.5;
 
+/**
+ * 조명 캔버스의 해상도 상한 (CSS 픽셀 대비) — 기기에 따라 다르다.
+ *
+ * 이 셰이더는 픽셀당 조명 LAMPS개를 도는 프래그먼트 바운드라 **비용이 픽셀 수에 정비례한다.**
+ * 데스크톱 GPU는 감당하지만 폰 GPU는 못 그려서 프레임이 밀리는데, 그러면 같은 프레임에
+ * 실려 있던 **채팅 메시지도 같이 늦게 칠해진다** — 8/15 경기에서 "골 연출이 끝나야 내 채팅이
+ * 올라온다"고 보고된 증상이다 (aleti-news-BE/docs/live-match-8-15-postmortem.md).
+ *
+ * 그래서 모바일에서만 1 아래로 자른다. 뿌옇게 번지는 빛이라 해상도를 낮춰도 눈에 안 보이고,
+ * 0.75면 픽셀이 4분의 1이 된다.
+ */
+const LIGHTS_MAX_DPR_DESKTOP = 1.5;
+const LIGHTS_MAX_DPR_MOBILE = 0.75;
+
+/**
+ * 손가락으로 쓰는 기기인가 — 폰·태블릿.
+ *
+ * 화면 **너비로 판정하지 않는다.** 데스크톱 창을 좁게 줄인 것과 진짜 폰이 구분되지 않는데,
+ * 여기서 가리고 싶은 건 화면 크기가 아니라 GPU다. 마우스가 없는 기기(`hover: none`)면서
+ * 포인터가 뭉툭한(`pointer: coarse`) 것이 그나마 실제 모바일에 가장 가깝게 맞는다.
+ */
+function isMobileDevice(): boolean {
+  return window.matchMedia?.('(pointer: coarse) and (hover: none)').matches === true;
+}
+
 export interface StadiumLightsHandle {
   /** 골 연출 시작/종료. false로 내리면 서서히 꺼진 뒤 rAF가 멈춘다 */
   setActive(active: boolean): void;
@@ -92,12 +117,17 @@ void main() {
     vec2 d = p - origin;
     float ang = atan(d.x, max(d.y, 0.0001));
 
-    // 빔 — 조준 방향에서 멀어질수록 급히 어두워진다
-    float beam = exp(-pow((ang - dir) / 0.19, 2.0));
+    // 빔 — 조준 방향에서 멀어질수록 급히 어두워진다.
+    // pow(x, 2.0)이 아니라 x*x다. 결과는 같지만 드라이버에 따라 pow가
+    // exp2(2*log2(x))로 컴파일돼 곱셈 하나가 초월함수 두 개가 된다.
+    // 이 줄은 픽셀마다 LAMPS번 도므로 그 차이가 그대로 곱해진다.
+    float bx = (ang - dir) / 0.19;
+    float beam = exp(-bx * bx);
 
     float dist = length(d);
     float fall = smoothstep(1.05, 0.02, dist); // 멀리 갈수록 흐려진다
-    float flare = exp(-pow(dist / 0.13, 2.0)); // 등 바로 아래는 눈이 부시다
+    float fx = dist / 0.13;
+    float flare = exp(-fx * fx);               // 등 바로 아래는 눈이 부시다
 
     // 깜빡임은 셔터가 아니라 일렁임 수준으로. 0까지 떨어뜨리면 스트로브가 된다
     float blink = 0.62 + 0.38 * sin(u_time * 4.5 + phase * 2.3);
@@ -234,8 +264,13 @@ export function createStadiumLights(canvas: HTMLCanvasElement): StadiumLightsHan
    * "달라졌을 때만" 걸면 뷰포트가 0인 채로 살아난다.
    */
   function syncSize() {
-    // 조명은 부드러운 그라디언트라 해상도를 다 쓸 이유가 없다. 1.5배에서 자른다
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    // 조명은 부드러운 그라디언트라 해상도를 다 쓸 이유가 없다.
+    // 모바일에서는 CSS 크기보다도 낮게 자른다 — 이유는 상수 선언부 주석 참고.
+    //
+    // 매번 다시 판정한다: 창을 폰 크기로 줄였다 늘리거나, 태블릿을 회전하거나,
+    // 개발자도구 기기 모드를 켰다 끄면 값이 바뀐다.
+    const cap = isMobileDevice() ? LIGHTS_MAX_DPR_MOBILE : LIGHTS_MAX_DPR_DESKTOP;
+    const dpr = Math.min(window.devicePixelRatio || 1, cap);
     const cssW = Math.max(1, canvas.clientWidth);
     const cssH = Math.max(1, canvas.clientHeight);
     const w = Math.max(1, Math.round(cssW * dpr));
