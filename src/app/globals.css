@@ -463,6 +463,15 @@ html {
   border: 1px solid rgba(15, 23, 42, 0.1);
 }
 
+/* 경기장 화면 끄기 버튼의 글자 — 아이콘 자리에 들어가는 두 글자다.
+   무엇이 꺼지는지는 그림으로 안 읽혀서 글자로 뒀다. */
+.stadium-off {
+  font-size: 0.6875rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
 .stadium-live-badge {
   display: inline-flex;
   align-items: center;
@@ -537,6 +546,10 @@ html {
   /* 남색이 아니라 밝은 로열블루다 */
   --led-blue: #1668e3;
   --led-red: #cf1126;
+  /* LG 칸의 글자색 — boardModel.LG_PINK와 같은 값 */
+  --led-lg: #a50034;
+  /* 후원 판 남색 — boardModel.ATLETI_NAVY와 같은 값 */
+  --led-navy: #223a84;
 
   /*
     보드 서체 — Bebas Neue.
@@ -667,6 +680,110 @@ html {
 .led-strip__cell--white {
   background: #ffffff;
   color: var(--led-red);
+}
+
+/* ── 킥오프 전 보드의 세 판 ──
+   판마다 글자 크기·자간·여백이 다르다. 셋을 똑같이 두면 위계가 없어 그냥 색 줄무늬로
+   읽힌다 — WebGL 보드도 같은 위계로 굽는다 (ledBoardPainter.paintPre).
+   구단이 가장 크고, 후원 문구는 가장 작되 자간을 가장 넓게 벌린다. */
+.led-strip__cell--venue {
+  background: var(--led-blue);
+  color: #fff;
+}
+
+.led-strip__cell--venue .led-strip__text {
+  font-size: 1rem;
+  letter-spacing: 0.09em;
+}
+
+/* 항공사 이름(RIYADH AIR)만 다른 서체다 — 실물 보드에서도 이 자리는 항공사 워드마크라
+   경기장 이름과 서체가 갈린다. 보드 서체(좁고 높은 Bebas Neue) 옆에 폭이 넓은 일반
+   산세리프를 두면 두 이름이 확실히 구분된다.
+   대문자 높이가 Bebas보다 낮아서 크기를 0.7배로 맞춰야 글자 키가 같아진다. */
+.led-strip__strong {
+  font-family: Tahoma, Verdana, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.7em;
+  letter-spacing: 0.02em;
+}
+
+.led-strip__cell--club .led-strip__text {
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+}
+
+/* VISIT / RWANDA 두 줄을 바짝 붙여 쌓는다 — 실물 워드마크가 그 모양이다. */
+.led-strip__cell--sponsor {
+  /* 워드마크처럼 양옆을 비운다 — 이 칸은 글자보다 여백이 훨씬 넓다 */
+  padding-inline: 4.5rem;
+  flex-direction: column;
+  /* 세로로 쌓으면 justify-content가 세로축을 맡는다 — 안 주면 두 줄이 위로 붙어
+     마스크로 깎인 윗변에 첫 줄이 잘린다 */
+  justify-content: center;
+  gap: 0;
+  background: #ffffff;
+  color: var(--led-navy);
+}
+
+.led-strip__cell--sponsor .led-strip__text {
+  font-size: 0.9375rem;
+  line-height: 0.86;
+  letter-spacing: 0.1em;
+}
+
+/* LG 칸 — 보드 높이와 같은 정사각형, 흰 바탕. 테두리는 두르지 않는다.
+   앞뒤가 빨강·파랑 판이라 테두리 없이도 네모가 그대로 읽힌다. */
+.led-strip__cell--lg {
+  flex: 0 0 auto;
+  justify-content: center;
+  width: 3.875rem;
+  padding-inline: 0;
+  background: #ffffff;
+  color: var(--led-lg);
+}
+
+/* LG 워드마크는 두껍고 폭이 넓으며 두 글자가 거의 붙어 있다 — 보드 서체(좁고 가는
+   Bebas Neue)와 정반대라 이 칸만 굵은 기하학적 산세리프로 뽑는다.
+   로고 자체는 쓰지 않는다. 상표라 라이선스 없이 못 쓴다. */
+.led-strip__cell--lg .led-strip__text {
+  font-family: "Arial Black", "Arial Bold", Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-weight: 900;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+/* 구단 판 */
+.led-strip__cell--club {
+  padding-inline: 1.125rem;
+  background: var(--led-red);
+  color: #fff;
+}
+
+.led-strip__cell--club .led-strip__text {
+  font-size: 1.1875rem;
+  letter-spacing: 0.04em;
+}
+
+@media (min-width: 640px) {
+  .led-strip__cell--venue .led-strip__text {
+    font-size: 1.125rem;
+  }
+
+  .led-strip__cell--sponsor .led-strip__text {
+    font-size: 1rem;
+  }
+
+  .led-strip__cell--club .led-strip__text {
+    font-size: 1.25rem;
+  }
+
+  .led-strip__cell--lg {
+    width: 4.125rem;
+  }
+
+  .led-strip__cell--lg .led-strip__text {
+    font-size: 1.375rem;
+  }
 }
 
 /* 골 연출의 득점자 판 — 흰 바탕에 파란 글자.
@@ -855,6 +972,13 @@ html {
   }
 }
 
+/* 킥오프 전 — 같은 트랙을 아주 느리게 돌린다.
+   골(10초)과 같은 속도로 돌리면 경기 시작 전부터 화면이 부산해진다.
+   한 벌이 지나가는 데 45초쯤 걸리는 속도가 WebGL 보드(42px/초)와 얼추 맞는다. */
+.led-strip[data-mode='pre'] .led-strip__track {
+  animation-duration: 45s;
+}
+
 /* 골 — 보드가 흐르기 시작한다. 판은 득점자(파랑)와 GOOOOOOOOOOL!!!!(빨강) 두 장뿐이다.
    깜빡임 같은 필터는 걸지 않는다 — 바뀌는 건 판의 내용과 자간뿐이다 */
 .led-strip[data-mode='goal'] .led-strip__track {
@@ -991,8 +1115,7 @@ html {
 }
 
 /* 사진 위에 글을 얹으려면 반드시 필요한 흰 베일.
-   경기장 사진은 대비가 제멋대로라 이걸 빼면 어떤 사진에서도 글이 안 읽힌다.
-   밝기 스위치로 더 하얗게 눌러 대비를 올릴 수 있다. */
+   경기장 사진은 대비가 제멋대로라 이걸 빼면 어떤 사진에서도 글이 안 읽힌다. */
 .stadium-stage__scrim {
   position: absolute;
   inset: 0;
@@ -1006,13 +1129,35 @@ html {
   transition: background 0.35s ease;
 }
 
-.stadium-room[data-washed='true'] .stadium-stage__scrim {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(255, 255, 255, 0.8) 38%,
-    rgba(255, 255, 255, 0.88) 100%
-  );
+/* ── 경기장 화면 끄기(OFF) ─────────────────────────────
+   배경 사진도 LED 보드도 없이 흰 바탕에 대화만 남는다. 경기를 나중에 볼 사람이
+   결과를 모른 채 채팅만 따라가기 위한 자리다.
+
+   스코어가 적힌 것(보드)과 골이 터진 것을 알리는 연출(조명·섬광·흔들림·색종이)은
+   StadiumChatContainer가 아예 렌더하지 않는다 — 여기서는 배경만 지운다.
+   지우는 것과 안 그리는 것을 나눠 둔 이유: 연출은 CSS로 감춰도 WebGL 컨텍스트와
+   렌더 루프가 계속 돌아 비용만 남는다. */
+.stadium-room[data-plain='true'] .stadium-pitchview {
+  background: #ffffff;
+}
+
+.stadium-room[data-plain='true'] .stadium-stage__photo,
+.stadium-room[data-plain='true'] .stadium-stage__scrim {
+  display: none;
+}
+
+/* 흰 바탕에서는 말풍선이 유리판일 이유가 없다 — 그림자와 블러를 걷고
+   테두리로만 경계를 잡는다. 사진 위에서 필요했던 장치들이다. */
+.stadium-room[data-plain='true'] .stadium-bubble {
+  background: #ffffff;
+  backdrop-filter: none;
+  box-shadow: none;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+.stadium-room[data-plain='true'] .stadium-bubble--mine {
+  background: var(--aleti-red);
+  border-color: var(--aleti-red);
 }
 
 /* 좌우 여백에 8px씩 더 얹혀 있다 — 부모(.stadium-pitchview)가 흔들림 여유분만큼

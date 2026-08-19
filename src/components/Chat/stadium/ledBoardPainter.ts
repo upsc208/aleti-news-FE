@@ -8,7 +8,14 @@
  * 좌표는 전부 '텍스처 픽셀'이다. 화면 CSS 픽셀과의 환산은 TEX_SCALE이 맡는다.
  */
 
-import { BOARD_BLUE, BOARD_RED, type BoardSpec } from './boardModel';
+import {
+  ATLETI_NAVY,
+  BOARD_BLUE,
+  BOARD_RED,
+  LG_PINK,
+  PRE_SPONSOR,
+  type BoardSpec,
+} from './boardModel';
 import { latinPlayer } from './boardNames';
 
 /** 텍스처를 화면보다 이만큼 크게 굽는다 — 곡면 가운데가 눌리면서 확대되는 구간이 있다 */
@@ -54,6 +61,41 @@ function setSpacing(ctx: CanvasRenderingContext2D, value: string) {
 const font = (px: number) => `400 ${Math.round(px)}px ${boardFontStack()}`;
 
 /**
+ * 굵게 찍을 때 글자 외곽에 덧대는 획의 두께 (글자 크기 대비).
+ *
+ * Bebas Neue는 400 한 종뿐이라 굵은 자체가 없다. 0.1까지 올려봤더니 A·D·R의 속이
+ * 메워져 글자가 뭉갰다 — 이 값이 "굵어 보이되 안 뭉개는" 자리다.
+ */
+const BOLD_STROKE = 0.055;
+
+
+/**
+ * LG 칸만 쓰는 서체.
+ *
+ * 로고는 상표라 못 쓰지만, 글자를 실물 워드마크 비율에 맞출 수는 있다. LG 워드마크는
+ * **두껍고 폭이 넓으며 두 글자가 거의 붙어 있다** — 보드 서체(좁고 가느다란 Bebas Neue)와
+ * 정반대다. 그래서 이 칸만 굵은 기하학적 산세리프로 뽑는다. 실물 보드도 후원 칸은
+ * 그 브랜드의 서체로 나오니 여기서 서체가 달라지는 것이 오히려 맞다.
+ */
+const LG_FONT_STACK = '"Arial Black", "Arial Bold", Arial, "Helvetica Neue", Helvetica, sans-serif';
+const lgFont = (px: number) => `900 ${Math.round(px)}px ${LG_FONT_STACK}`;
+
+/**
+ * 항공사 이름("RIYADH AIR")만 쓰는 서체.
+ *
+ * 실물 보드에서도 이 자리는 항공사 워드마크라 경기장 이름과 서체가 다르다. 보드 서체는
+ * 좁고 높은 Bebas Neue인데, 그 옆에 폭이 넓은 일반 산세리프를 두면 두 이름이 확실히
+ * 갈린다 — 굵기만 다르게 줬을 때보다 훨씬 분명하다.
+ *
+ * 서체가 다르니 획을 덧대 굵히지 않아도 된다. 진짜 굵은 자체(600)를 쓴다.
+ * 대문자 높이가 Bebas보다 낮아서 크기는 0.82배로 맞춰야 두 이름의 글자 키가 같아진다.
+ */
+const RIYADH_FONT_STACK = 'Tahoma, Verdana, "Segoe UI", Helvetica, Arial, sans-serif';
+const riyadhFont = (px: number) => `700 ${Math.round(px)}px ${RIYADH_FONT_STACK}`;
+/** Bebas 대비 이 서체의 대문자 높이 보정 */
+const RIYADH_SIZE_RATIO = 0.7;
+
+/**
  * 보드를 굽는다.
  *
  * @param canvas     오프스크린 캔버스 (호출부가 들고 있는다)
@@ -71,9 +113,9 @@ export function paintBoard(
   if (!ctx) return null;
 
   const texH = Math.max(16, Math.round(cssH * TEX_SCALE));
-  return spec.mode === 'goal'
-    ? paintGoal(canvas, ctx, spec, texH)
-    : paintIdle(canvas, ctx, spec, unrollCssW, texH);
+  if (spec.mode === 'goal') return paintGoal(canvas, ctx, spec, texH);
+  if (spec.mode === 'pre') return paintPre(canvas, ctx, spec, texH);
+  return paintIdle(canvas, ctx, spec, unrollCssW, texH);
 }
 
 /** 색 판 하나 — 배경을 칠하고 가운데에 글자를 얹는다 */
@@ -90,23 +132,57 @@ function panel(
 ) {
   ctx.fillStyle = bg;
   ctx.fillRect(x, 0, w, h);
+  label(ctx, x, w, h, text, color, fontPx, align);
+}
 
+/**
+ * 이미 칠해진 판 위에 글자만 얹는다.
+ *
+ * [bold]는 글자 외곽에 같은 색 획을 덧대 굵기를 만든다. Bebas Neue는 400 한 종뿐이라
+ * 굵은 자체가 없고, 900을 주면 브라우저가 가짜로 굵혀 획이 뭉갠다. 골 연출의 득점자
+ * 이름도 같은 방법으로 굵힌다(globals.css의 -webkit-text-stroke).
+ */
+function label(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  w: number,
+  h: number,
+  text: string,
+  color: string,
+  fontPx: number,
+  align: 'center' | 'left' | 'right' = 'center',
+  bold = false,
+  fontCss?: string,
+  yRatio = 0.52
+) {
   if (!text) return;
 
   ctx.fillStyle = color;
-  ctx.font = font(fontPx);
+  ctx.font = fontCss ?? font(fontPx);
   ctx.textBaseline = 'middle';
 
   const pad = fontPx * 0.5;
+  const maxW = Math.max(1, w - pad);
+  const y = h * yRatio;
+
+  if (bold) {
+    ctx.strokeStyle = color;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = fontPx * BOLD_STROKE;
+  }
+
   if (align === 'center') {
     ctx.textAlign = 'center';
-    ctx.fillText(text, x + w / 2, h * 0.52, Math.max(1, w - pad));
+    ctx.fillText(text, x + w / 2, y, maxW);
+    if (bold) ctx.strokeText(text, x + w / 2, y, maxW);
   } else if (align === 'right') {
     ctx.textAlign = 'right';
-    ctx.fillText(text, x + w - pad, h * 0.52, Math.max(1, w - pad));
+    ctx.fillText(text, x + w - pad, y, maxW);
+    if (bold) ctx.strokeText(text, x + w - pad, y, maxW);
   } else {
     ctx.textAlign = 'left';
-    ctx.fillText(text, x + pad, h * 0.52, Math.max(1, w - pad));
+    ctx.fillText(text, x + pad, y, maxW);
+    if (bold) ctx.strokeText(text, x + pad, y, maxW);
   }
 }
 
@@ -205,6 +281,207 @@ function paintIdle(
   let x = remainder > 0 ? 0 : remainder / 2;
   for (const c of cells) {
     panel(ctx, x, c.w, texH, c.bg, c.text, c.color, c.font, c.align ?? 'center');
+    x += c.w;
+  }
+
+  return { periodCssW: texW / TEX_SCALE };
+}
+
+/** 킥오프 전 보드의 판 한 장 — 크기·자간·여백이 판마다 다르다 */
+interface PreCell extends Cell {
+  /** em 단위 자간 */
+  track: number;
+  /** 글자 외곽에 획을 덧대 굵힌다 */
+  bold?: boolean;
+  /** 보드 서체 대신 쓸 CSS font 문자열 (LG 칸) */
+  fontCss?: string;
+  /** 한 칸에 여러 줄로 쌓아 올릴 글자 (VISIT / RWANDA) */
+  lines?: string[];
+  /** 한 줄 안에서 서체·굵기가 다른 토막들 (RIYADH AIR + METROPOLITANO) */
+  segments?: { text: string; fontCss?: string; track?: number }[];
+}
+
+/** 킥오프 전 보드의 판 하나를 정하는 값. size·pad는 보드 높이 대비 비율, track은 em 자간 */
+interface PreDesign {
+  text?: string;
+  /** 두 줄 이상으로 쌓을 때 */
+  lines?: string[];
+  bg: string;
+  color: string;
+  size: number;
+  track: number;
+  pad: number;
+  bold?: boolean;
+  /** 마지막 낱말만 기본 굵기로 두고 앞은 굵게 — "RIYADH AIR" + "METROPOLITANO" */
+  leadBold?: boolean;
+}
+
+/**
+ * 킥오프 전 보드 — 스코어도 시계도 없다. 판이 왼쪽으로 흐른다.
+ *
+ * 한 벌:
+ *   [ATLÉTICO DE MADRID · 빨강][LG · 흰 정사각][RIYADH AIR METROPOLITANO · 파랑][VISIT RWANDA · 흰]
+ *
+ * 이 차례라 판 색이 빨강·흰·파랑·흰으로 번갈아 온다 — 같은 색이 맞닿는 자리가 없어서
+ * 판 사이에 따로 이음선을 끼우지 않아도 칸이 나뉜다.
+ *
+ * **텍스처는 딱 한 벌만 굽는다.** 띠를 채우는 일은 셰이더가 한다(텍스처 WRAP이 REPEAT다).
+ * 화면 폭에 맞춰 여러 벌을 구워 넣으면 텍스처 양 끝에서 판이 중간에 잘리고, 흐를 때
+ * 그 이음매가 한 바퀴마다 툭 튄다. 한 벌만 구우면 마지막 픽셀과 첫 픽셀이 그대로 이어진다.
+ * 그래서 좁은 화면이라고 글자를 줄일 필요도 없다 — 어차피 지나가면서 다 읽힌다.
+ */
+function paintPre(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  spec: BoardSpec,
+  texH: number
+): BoardPaint {
+  const white = '#ffffff';
+
+  const DESIGN: Record<'club' | 'venue' | 'sponsor', PreDesign> = {
+    club: { text: spec.atletiName.toUpperCase(), bg: BOARD_RED, color: white, size: 0.38, track: 0.05, pad: 1.0 },
+    // 항공사 이름만 굵고 경기장 이름은 기본 굵기다 — 실물 보드의 그 표기다
+    venue: { text: spec.venue, bg: BOARD_BLUE, color: white, size: 0.34, track: 0.09, pad: 1.0, leadBold: true },
+    /*
+      후원 문구는 실물 유니폼·보드처럼 VISIT / RWANDA 두 줄로 쌓고 남색으로 찍는다.
+      두 줄이라 한 줄일 때보다 글자를 키울 수 있어서, 칸은 좁아지는데 글자는 오히려 크다.
+    */
+    sponsor: {
+      lines: PRE_SPONSOR.split(' '),
+      bg: white,
+      color: ATLETI_NAVY,
+      size: 0.33,
+      track: 0.1,
+      // 워드마크처럼 양옆을 비운다 — 이 칸은 글자보다 여백이 훨씬 넓다
+      pad: 4.8,
+    },
+  };
+
+  /**
+   * 폭이 보드 높이와 같은 정사각형 후원 칸.
+   *
+   * 자간을 음수로 좁히고 획을 덧대 굵힌다 — 실물 워드마크가 두 글자를 거의 붙여 놓은
+   * 굵은 글자다. 보드 서체로 그리면 좁고 가늘어서 LG로 안 읽힌다 (LG_FONT_STACK 참고).
+   */
+  const lg = (): PreCell => ({
+    w: texH * 1.18,
+    bg: white,
+    text: 'LG',
+    color: LG_PINK,
+    font: texH * 0.46,
+    track: -0.02,
+    bold: true,
+    fontCss: lgFont(texH * 0.46),
+  });
+
+  /**
+   * 마지막 낱말만 기본 굵기로 남기고 앞을 굵게 — "RIYADH AIR" / "METROPOLITANO".
+   * 낱말이 하나뿐인 경기장 이름이면 쪼개지 않는다.
+   */
+  const splitLead = (text: string, fontPx: number) => {
+    const words = text.trim().split(/s+/);
+    if (words.length < 2) return undefined;
+    const last = words[words.length - 1];
+    return [
+      {
+        text: `${words.slice(0, -1).join(' ')} `,
+        fontCss: riyadhFont(fontPx * RIYADH_SIZE_RATIO),
+        track: 0.02,
+      },
+      { text: last },
+    ];
+  };
+
+  const textCell = (d: PreDesign): PreCell => {
+    const fontPx = texH * d.size;
+    setSpacing(ctx, `${d.track}em`);
+    ctx.font = font(fontPx);
+
+    const segments = d.leadBold && d.text ? splitLead(d.text, fontPx) : undefined;
+
+    // 토막마다 서체가 다르면 폭도 각자의 서체로 재야 한다 —
+    // 보드 서체로 한 번에 재면 실제로 그려지는 폭과 어긋나 글자가 판 밖으로 나간다.
+    const widest = segments
+      ? segments.reduce((sum, seg) => {
+          ctx.font = seg.fontCss ?? font(fontPx);
+          setSpacing(ctx, `${seg.track ?? d.track}em`);
+          return sum + ctx.measureText(seg.text).width;
+        }, 0)
+      : d.lines
+        ? Math.max(...d.lines.map((line) => ctx.measureText(line).width))
+        : ctx.measureText(d.text ?? '').width;
+
+    return {
+      w: widest + fontPx * d.pad * 2,
+      bg: d.bg,
+      text: d.lines ? '' : d.text ?? '',
+      lines: d.lines,
+      segments,
+      color: d.color,
+      font: fontPx,
+      track: d.track,
+      bold: d.bold ?? false,
+    };
+  };
+
+  const run: PreCell[] = [
+    textCell(DESIGN.club),
+    lg(),
+    textCell(DESIGN.venue),
+    textCell(DESIGN.sponsor),
+  ];
+
+  const runW = run.reduce((sum, c) => sum + c.w, 0);
+  const texW = Math.min(MAX_TEX_W, Math.max(64, Math.round(runW)));
+  // 반올림하면서 남거나 모자란 폭은 마지막 칸이 흡수한다. 텍스처 끝과 다음 벌의 시작이
+  // 반 픽셀이라도 어긋나면 흐를 때마다 그 자리에 흰 줄이 지나간다.
+  run[run.length - 1].w += texW - runW;
+
+  canvas.width = texW;
+  canvas.height = texH;
+
+  // 판 사이에 반픽셀 틈이 생겨도 경기장 사진이 비치지 않도록 바탕을 흰색으로 깐다
+  ctx.fillStyle = white;
+  ctx.fillRect(0, 0, texW, texH);
+
+  let x = 0;
+  for (const c of run) {
+    ctx.fillStyle = c.bg;
+    ctx.fillRect(x, 0, c.w, texH);
+    setSpacing(ctx, `${c.track}em`);
+    if (c.segments) {
+      // 토막마다 서체가 다르므로 한 번에 그릴 수 없다. 폭을 먼저 다 재서 전체를
+      // 가운데에 놓고, 왼쪽부터 토막을 이어 붙인다.
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+
+      const apply = (seg: { fontCss?: string; track?: number }) => {
+        ctx.font = seg.fontCss ?? font(c.font);
+        setSpacing(ctx, `${seg.track ?? c.track}em`);
+      };
+
+      const widths = c.segments.map((seg) => {
+        apply(seg);
+        return ctx.measureText(seg.text).width;
+      });
+
+      let sx = x + (c.w - widths.reduce((a, b) => a + b, 0)) / 2;
+      ctx.fillStyle = c.color;
+      c.segments.forEach((seg, i) => {
+        apply(seg);
+        ctx.fillText(seg.text, sx, texH * 0.52);
+        sx += widths[i];
+      });
+    } else if (c.lines) {
+      // 줄 간격은 글자 크기의 0.86배 — 실물 워드마크처럼 두 줄을 바짝 붙여 쌓는다
+      const step = (c.font * 0.86) / texH;
+      c.lines.forEach((line, i) => {
+        const offset = (i - (c.lines!.length - 1) / 2) * step;
+        label(ctx, x, c.w, texH, line, c.color, c.font, 'center', c.bold, undefined, 0.52 + offset);
+      });
+    } else {
+      label(ctx, x, c.w, texH, c.text, c.color, c.font, 'center', c.bold, c.fontCss);
+    }
     x += c.w;
   }
 

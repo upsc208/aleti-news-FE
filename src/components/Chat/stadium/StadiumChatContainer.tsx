@@ -10,8 +10,6 @@ import {
   MessageSquare,
   Radio,
   Send,
-  Sun,
-  SunDim,
   User,
   Users,
   Volume2,
@@ -38,22 +36,24 @@ interface StadiumChatContainerProps {
   isPreview?: boolean;
   /** 입장 티켓 디자인만 띄워 보는 모드 (?preview=1&ticket=1) */
   previewTicket?: boolean;
+  /** 킥오프 전 화면을 띄워 보는 모드 (?preview=1&pre=1) */
+  previewPre?: boolean;
 }
 
 
 const MATCH_CHANTS = [
-  'Atleti! Atleti!',
+  '👍',
   '¡Vamos!',
-  '코르차네로 🔴⚪',
   'GOOOL! ⚽',
-  '심판 뭐하나 😤',
   '¡Aúpa Atleti!',
+  'Atleti! Atleti!',
 ];
 
 export default function StadiumChatContainer({
   initialMatchId,
   isPreview = false,
   previewTicket = false,
+  previewPre = false,
 }: StadiumChatContainerProps) {
   const {
     matchId,
@@ -82,9 +82,14 @@ export default function StadiumChatContainer({
     handleBack,
   } = useChatRoom(initialMatchId);
 
-  // 경기장 사진은 대비가 제멋대로라 글이 안 읽히는 경우가 생긴다.
-  // 배경을 더 하얗게 눌러 대비를 올리는 통로를 준다.
-  const [washed, setWashed] = useState(false);
+  /**
+   * 경기장 화면을 통째로 끄는 스위치.
+   *
+   * 배경 사진도 LED 보드도 없이 흰 바탕에 대화만 남는다. 스코어가 적힌 것(보드)과
+   * 골이 터진 것을 알리는 연출(조명·섬광·흔들림·색종이)을 전부 렌더하지 않으므로,
+   * 경기를 나중에 볼 사람이 결과를 모른 채 채팅만 따라갈 수 있다.
+   */
+  const [lightsOff, setLightsOff] = useState(false);
 
   // 보드는 WebGL 곡면판(LedRing)이 기본이다. WebGL을 못 쓰는 기기에서만
   // CSS 보드(LedStrip)로 되돌린다 — 보드가 빠지면 헤더 아래가 빈 자리로 남는다.
@@ -93,8 +98,8 @@ export default function StadiumChatContainer({
 
   // 미리보기에서는 백엔드가 없으니 헤더·LED가 빈 채로 남는다. 가짜 경기로 채운다.
   const match = useMemo(
-    () => recentMatch ?? (isPreview ? previewMatch() : null),
-    [recentMatch, isPreview]
+    () => recentMatch ?? (isPreview ? previewMatch(previewPre) : null),
+    [recentMatch, isPreview, previewPre]
   );
 
   const { celebrating, celebrate, winning, celebrateWin } = useGoalCelebration();
@@ -108,7 +113,8 @@ export default function StadiumChatContainer({
    * 미리보기는 백엔드가 없으니 가짜 골을 쓴다.
    */
   const goals = useMemo<GoalEvent[]>(() => {
-    if (isPreview) return previewGoals();
+    // 킥오프 전 미리보기에는 골이 없다 — 아직 시작도 안 한 경기다
+    if (isPreview) return previewPre ? [] : previewGoals();
     if (!live) return [];
 
     const atletiIsHome = isAtleti(live.homeTeam);
@@ -134,7 +140,7 @@ export default function StadiumChatContainer({
         at: live.updatedAt,
       };
     });
-  }, [isPreview, live]);
+  }, [isPreview, previewPre, live]);
 
   /**
    * 새로 들어온 골에만 연출을 켠다.
@@ -256,8 +262,8 @@ export default function StadiumChatContainer({
 
   return (
     <div
-      className={`stadium-room ${celebrating ? 'is-celebrating' : ''}`}
-      data-washed={washed ? 'true' : 'false'}
+      className={`stadium-room ${celebrating && !lightsOff ? 'is-celebrating' : ''}`}
+      data-plain={lightsOff ? 'true' : 'false'}
     >
       {/* ── 1. 헤더 ───────────────────────────────────────────── */}
       <header className="stadium-header">
@@ -349,29 +355,32 @@ export default function StadiumChatContainer({
           말풍선이 올라가도 코너에 붙어 있는다.
           left-2는 틀이 방보다 8px 넓게 깔려 있는 것을 되돌리는 값이다(.stadium-pitchview).
         */}
-        <div
-          className="pointer-events-none absolute bottom-0 left-2 z-0 select-none opacity-40"
-          aria-hidden="true"
-        >
-          <Image
-            src="/magarita.png"
-            alt=""
-            width={29}
-            height={32}
-            className="object-contain"
-            unoptimized
-          />
-        </div>
+        {!lightsOff && (
+          <div
+            className="pointer-events-none absolute bottom-0 left-2 z-0 select-none opacity-40"
+            aria-hidden="true"
+          >
+            <Image
+              src="/magarita.png"
+              alt=""
+              width={29}
+              height={32}
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+        )}
 
         {/* 골 순간 스탠드를 훑는 LED 조명 — 붉은빛 + 분홍빛 (WebGL).
             LedStrip보다 앞에 둬야 보드와 말풍선이 그 위에 그려진다.
             평상시에는 렌더 루프가 멈춰 있어 비용이 들지 않는다. */}
-        <StadiumLights active={celebrating} dimmed={washed} />
+        <StadiumLights active={celebrating && !lightsOff} />
 
         {/* 시계는 킥오프 시각에서 세는 근사값이다(하프타임 15분만 보정).
             서버가 진짜 경기 시계를 주면 clock prop으로 덮어쓰면 된다. */}
-        {/* 두 보드는 프로퍼티가 같다 — 자리만 바꿔 끼운다 */}
-        {(() => {
+        {/* 두 보드는 프로퍼티가 같다 — 자리만 바꿔 끼운다.
+            화면을 끈 사람에게는 아예 렌더하지 않는다 — 스코어가 여기 적혀 있다 */}
+        {!lightsOff && (() => {
           const boardProps = {
             mode: celebrating ? ('goal' as const) : ('idle' as const),
             homeTeam,
@@ -436,7 +445,7 @@ export default function StadiumChatContainer({
         </div>
 
         {/* 골 순간 화면을 훑고 지나가는 빛 — 흔들림과 LED만으로는 밋밋하다 */}
-        {celebrating && <div className="stadium-goal-flash" aria-hidden="true" />}
+        {celebrating && !lightsOff && <div className="stadium-goal-flash" aria-hidden="true" />}
 
         {/* 방이 아직 안 열림 — 경기 채팅방은 킥오프 1시간 전부터 종료 3시간 후까지만 열린다 */}
         {!roomOpen && !isLoading && !errorNotice && (
@@ -507,14 +516,19 @@ export default function StadiumChatContainer({
           }}
           className="flex items-center gap-2 sm:gap-3"
         >
+          {/* 경기장 화면 끄기 — 아이콘 대신 글자다. 무엇이 꺼지는지 그림으로는 안 읽힌다 */}
           <button
             type="button"
-            onClick={() => setWashed((v) => !v)}
-            className={`stadium-icon-btn stadium-icon-btn--round shrink-0 ${washed ? 'is-active' : ''}`}
-            aria-pressed={washed}
-            title={washed ? '배경 선명하게' : '배경 흐리게 (글씨가 잘 보여요)'}
+            onClick={() => setLightsOff((v) => !v)}
+            className={`stadium-icon-btn stadium-icon-btn--round shrink-0 ${lightsOff ? 'is-active' : ''}`}
+            aria-pressed={lightsOff}
+            title={
+              lightsOff
+                ? '경기장 화면 켜기'
+                : '경기장 화면 끄기 (스코어·연출을 감추고 대화만 봅니다)'
+            }
           >
-            {washed ? <SunDim size={18} /> : <Sun size={18} />}
+            <span className="stadium-off">OFF</span>
           </button>
 
           <div className="relative flex-1">
@@ -560,7 +574,7 @@ export default function StadiumChatContainer({
 
       {/* 승리 색종이는 방 전체를 덮는다 — 골 연출과 달리 경기장 사진 안에
           가둘 이유가 없다. 입력창 위로도 떨어져야 "방이 축제"로 읽힌다. */}
-      <WinConfetti active={winning} />
+      <WinConfetti active={winning && !lightsOff} />
 
       <TicketNicknameModal
         isOpen={previewTicket || (isNicknameModalOpen && !isPreview)}

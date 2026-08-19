@@ -7,6 +7,7 @@ import {
   formatMatchClock,
   type MatchPeriods,
   isAtleti,
+  resolveLedMode,
   type BoardSpec,
   type LedMode,
 } from './boardModel';
@@ -102,10 +103,13 @@ export default function LedRing({
     };
   }, []);
 
+  const clockText = clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
+  // 킥오프 전에는 스코어보드 대신 후원 보드가 선다 (boardModel.resolveLedMode)
+  const boardMode = resolveLedMode(mode, clockText, Boolean(clock) || now > 0);
+
   const spec = useMemo<BoardSpec>(() => {
-    const clockText = clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
     return {
-      mode,
+      mode: boardMode,
       // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
       competition: latinCompetition(competition, venue).toUpperCase(),
       venue: venue.toUpperCase(),
@@ -120,7 +124,7 @@ export default function LedRing({
       scorer,
     };
   }, [
-    mode, competition, venue, clock, kickoff, periods, now,
+    boardMode, competition, venue, clockText,
     homeTeam, awayTeam, homeScore, awayScore, scorer,
   ]);
 
@@ -130,7 +134,7 @@ export default function LedRing({
   }, [ready, spec]);
 
   return (
-    <div className="led-ring" data-mode={mode} role="presentation" aria-hidden="true">
+    <div className="led-ring" data-mode={boardMode} role="presentation" aria-hidden="true">
       <canvas ref={canvasRef} className="led-ring__canvas" />
     </div>
   );

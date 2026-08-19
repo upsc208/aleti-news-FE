@@ -49,6 +49,36 @@ const UNROLL_RATIO = 1.15;
 /** 골 연출 때 흐르는 속도 (CSS px/초) */
 const SCROLL_PX_PER_SEC = 130;
 
+/**
+ * 킥오프 전 보드가 흐르는 속도 (CSS px/초).
+ *
+ * 골보다 한참 느리다. 이건 사건이 아니라 배경이라, 눈이 따라가지 않아도 되는 속도여야 한다.
+ */
+const PRE_SCROLL_PX_PER_SEC = 42;
+
+/**
+ * 킥오프 전 보드는 초당 30장이면 충분하다.
+ *
+ * 이 화면은 킥오프 한 시간 전부터 계속 떠 있다. 42px/초짜리 움직임에 60fps를 쓰는 건
+ * 폰 배터리를 태우는 것 말고 하는 일이 없다 — 골 연출은 짧고 세야 하니 그대로 60fps다.
+ */
+const PRE_FRAME_MS = 32;
+
+/**
+ * 움직임을 줄여달라고 해둔 사람에게는 킥오프 전 보드를 세워둔다.
+ *
+ * 골 연출은 몇 초짜리 사건이지만 이 보드는 한 시간을 흐른다 — 화면 위에서 계속 움직이는
+ * 것을 못 견디는 사람에게는 그게 문제다. CSS 보드도 같은 질의로 애니메이션을 끈다.
+ */
+const prefersStill = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** 이 화면이 흐르는가 */
+const scrolls = (mode: BoardSpec['mode']) =>
+  mode === 'goal' || (mode === 'pre' && !prefersStill());
+
 export interface LedRingHandle {
   /** 보드에 그릴 내용. 같은 값이면 텍스처를 다시 굽지 않는다 */
   setSpec(spec: BoardSpec): void;
@@ -340,6 +370,15 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
     rafId = null;
     if (disposed || contextLost || !program) return;
 
+    const pre = spec?.mode === 'pre';
+
+    // 킥오프 전 보드는 프레임을 솎는다. 건너뛴 프레임의 시간은 lastFrame을 그대로 둬서
+    // 다음 장에 합산된다 — 솎아도 흐르는 속도는 같다.
+    if (pre && now - lastFrame < PRE_FRAME_MS && lastFrame) {
+      rafId = requestAnimationFrame(frame);
+      return;
+    }
+
     const dt = Math.min(now - (lastFrame || now), 50) / 1000;
     lastFrame = now;
 
@@ -347,7 +386,8 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
 
     // 한 벌이 지나가는 데 걸리는 시간 = periodCssW / 속도.
     // UV는 '한 벌 = 1'이므로 그 역수만큼 오프셋을 민다.
-    uOffset = (uOffset + (dt * SCROLL_PX_PER_SEC) / periodCssW) % 1;
+    const speed = pre ? PRE_SCROLL_PX_PER_SEC : SCROLL_PX_PER_SEC;
+    uOffset = (uOffset + (dt * speed) / periodCssW) % 1;
     draw();
 
     rafId = requestAnimationFrame(frame);
@@ -374,7 +414,7 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
     if (!buildProgram()) return;
     syncSize();
     bake();
-    if (spec?.mode === 'goal') {
+    if (spec && scrolls(spec.mode)) {
       rafId = requestAnimationFrame(frame);
     } else {
       draw();
@@ -422,14 +462,15 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
 
       if (changed) bake();
 
-      if (next.mode === 'goal') {
-        if (modeChanged) uOffset = 0; // 골마다 같은 자리에서 시작한다
+      // 흐르는 화면은 둘이다: 골 연출과 킥오프 전 보드.
+      if (scrolls(next.mode)) {
+        if (modeChanged) uOffset = 0; // 골마다, 그리고 보드가 바뀔 때마다 같은 자리에서 시작한다
         if (rafId === null) {
           lastFrame = 0;
           rafId = requestAnimationFrame(frame);
         }
       } else {
-        // 평상시에는 흐르지 않는다 — 한 장 그리고 루프를 멈춘다. 여기가 비용을 0으로 만드는 자리다
+        // 경기 중에는 흐르지 않는다 — 한 장 그리고 루프를 멈춘다. 여기가 비용을 0으로 만드는 자리다
         stopLoop();
         uOffset = 0;
         if (changed || modeChanged) draw();

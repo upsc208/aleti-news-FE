@@ -4,13 +4,49 @@
  * 두 보드가 같은 경기를 다르게 표시하면 안 되므로 계산은 여기 한 곳에만 둔다.
  */
 
-export type LedMode = 'idle' | 'goal';
+/**
+ * 보드가 그리는 세 화면.
+ *
+ * `pre`는 킥오프 전이다 — 셀 시계도, 벌어질 스코어도 아직 없다.
+ * 그 상태로 스코어보드를 세워두면 `0 ATM — ATM 0`짜리 죽은 보드가 되므로,
+ * 실물 경기장이 경기 전에 그러듯 후원 판을 세워둔다.
+ */
+export type LedMode = 'pre' | 'idle' | 'goal';
 
 export const BOARD_RED = '#cf1126';
 export const BOARD_BLUE = '#1668e3';
 export const BOARD_WHITE = '#ffffff';
+/** 킥오프 전 보드의 LG 칸 글자색 — LG가 로고에 쓰는 그 진한 자홍빛이다 */
+export const LG_PINK = '#a50034';
+/** 후원 판의 남색 — 보드의 밝은 파랑(BOARD_BLUE)보다 어둡되 푸른 기가 남아 있다 */
+export const ATLETI_NAVY = '#223a84';
 
 export const DEFAULT_VENUE = 'RIYADH AIR METROPOLITANO';
+
+/**
+ * 킥오프 전 보드에 도는 후원 문구.
+ *
+ * 로고는 상표라 못 쓰지만 이름을 글자로 적는 것은 지시적 사용이라 문제가 없다
+ * (보드가 구단 엠블럼 대신 약칭을 쓰는 것과 같은 이유다 — boardNames.latinCode).
+ */
+export const PRE_SPONSOR = 'VISIT RWANDA';
+
+/**
+ * 지금 보드가 그릴 화면을 고른다.
+ *
+ * [clockText]가 없으면 아직 공이 안 굴렀다는 뜻이다(formatMatchClock이 킥오프 전에 null을 준다).
+ * 다만 시계를 아직 한 번도 재보지 않은 첫 프레임(now === 0)도 같은 모양이라,
+ * 그때는 지금까지처럼 스코어보드를 세워둔다 — 안 그러면 진행 중인 경기에 들어갈 때마다
+ * 후원 보드가 한 프레임 스쳤다가 바뀐다.
+ */
+export function resolveLedMode(
+  requested: LedMode,
+  clockText: string | null,
+  clockEvaluated: boolean
+): LedMode {
+  if (requested === 'goal') return 'goal';
+  return clockEvaluated && clockText === null ? 'pre' : 'idle';
+}
 
 const HALF_MS = 45 * 60_000;
 const BREAK_MS = 15 * 60_000;
@@ -89,7 +125,7 @@ export const isAtleti = (team: string) =>
 
 /** 보드 한 장에 그려야 할 내용 전부. 이 값이 같으면 텍스처를 다시 그리지 않는다. */
 export interface BoardSpec {
-  mode: 'idle' | 'goal';
+  mode: LedMode;
   /** 스코어 양옆 리그 칸 — "LALIGA EA SPORTS" */
   competition: string;
   /** 바깥 칸 — 경기장 이름. 리그와 같은 글자를 네 번 돌리지 않으려고 나눠 둔다 */

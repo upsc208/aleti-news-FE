@@ -6,6 +6,8 @@ import {
   DEFAULT_VENUE,
   formatMatchClock,
   isAtleti,
+  PRE_SPONSOR,
+  resolveLedMode,
   type LedMode,
   type MatchPeriods,
 } from './boardModel';
@@ -90,6 +92,14 @@ export default function LedStrip({
   const clockText =
     clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
 
+  // 킥오프 전에는 스코어보드 대신 후원 보드가 선다 (boardModel.resolveLedMode)
+  const boardMode = resolveLedMode(mode, clockText, Boolean(clock) || now > 0);
+
+  // 경기장 이름의 마지막 낱말만 기본 굵기로 남긴다 — "RIYADH AIR" / "METROPOLITANO"
+  const venueWords = venue.trim().split(/s+/);
+  const venueLead = venueWords.length > 1 ? venueWords.slice(0, -1).join(' ') : '';
+  const venueTail = venueWords[venueWords.length - 1];
+
   /**
    * 스코어 묶음 — [득점][홈 약칭][시계][원정 약칭][득점].
    * 양옆 칸의 폭을 고정해 두어야 약칭 길이(ATM/RB)가 달라도 시계가 가운데에 선다.
@@ -139,7 +149,7 @@ export default function LedStrip({
   }, [goalPanels]);
 
   const body =
-    mode === 'goal' ? (
+    boardMode === 'goal' ? (
       <div className="led-strip__track">
         {['a', 'b'].map((runKey) => (
           <span className="led-strip__run" key={runKey}>
@@ -150,6 +160,46 @@ export default function LedStrip({
               >
                 <span className="led-strip__text">{panel.text}</span>
               </span>
+            ))}
+          </span>
+        ))}
+      </div>
+    ) : boardMode === 'pre' ? (
+      // ── 킥오프 전 — 스코어도 시계도 없다 ──────────────────────
+      // 메트로폴리타노 지붕 띠와 같은 차례로 왼쪽으로 흐른다 (ledBoardPainter.paintPre).
+      // 골 연출과 같은 트랙을 쓰되 훨씬 느리게 돈다 (globals.css의 data-mode='pre').
+      //
+      // 골 연출과 같은 이유로 목록을 두 벌 깔았다 — 애니메이션이 -50%까지 가면 두 번째
+      // 벌이 첫 번째 벌 자리에 정확히 들어와 이음매가 안 보인다. 한 벌 안에서 문구를
+      // 세 번 반복하는 것은 넓은 화면에서 트랙이 화면보다 짧아지지 않게 하려는 것이다.
+      <div className="led-strip__track">
+        {['a', 'b'].map((runKey) => (
+          <span className="led-strip__run" key={runKey}>
+            {[0, 1, 2].map((run) => (
+              <React.Fragment key={run}>
+                <span className="led-strip__cell led-strip__cell--club">
+                  <span className="led-strip__text">{atletiName}</span>
+                </span>
+                <span className="led-strip__cell led-strip__cell--lg">
+                  <span className="led-strip__text">LG</span>
+                </span>
+                <span className="led-strip__cell led-strip__cell--venue">
+                  <span className="led-strip__text">
+                    {/* 항공사 이름만 굵고 경기장 이름은 기본 굵기다 (ledBoardPainter의 splitLead) */}
+                    <span className="led-strip__strong">{venueLead}</span>
+                    {venueLead ? ' ' : ''}
+                    {venueTail}
+                  </span>
+                </span>
+                {/* 실물 유니폼·보드처럼 VISIT / RWANDA 두 줄로 쌓는다 */}
+                <span className="led-strip__cell led-strip__cell--sponsor">
+                  {PRE_SPONSOR.split(' ').map((word) => (
+                    <span className="led-strip__text" key={word}>
+                      {word}
+                    </span>
+                  ))}
+                </span>
+              </React.Fragment>
             ))}
           </span>
         ))}
@@ -180,7 +230,7 @@ export default function LedStrip({
     );
 
   return (
-    <div className="led-strip" data-mode={mode} role="presentation" aria-hidden="true">
+    <div className="led-strip" data-mode={boardMode} role="presentation" aria-hidden="true">
       {/* 아래에서 올려다보는 각도 — 아랫단이 앞으로 나오고 윗단이 뒤로 물러난다 */}
       <div className="led-strip__tilt">
         {body}

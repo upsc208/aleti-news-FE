@@ -222,42 +222,55 @@ export function latinCode(team: string, latin?: string | null): string {
 /**
  * 성(姓)만 올린다. 실제 보드도 그렇고, 흐르는 판에 풀네임을 넣으면
  * 판이 길어져 GOOOOOOOL이 화면에 잘 안 들어온다.
+ *
+ * **26/27 스쿼드 기준이다.** 이적시장이 열릴 때마다 손봐야 하는 유일한 표다 —
+ * 다만 서버가 FotMob에서 라틴 표기를 같이 내려주면(latinPlayer의 1순위) 표에 없는
+ * 신입도 그냥 되므로, 여기가 비어 있다고 이름이 안 나오는 것은 아니다.
+ * 한 명씩 여러 키를 두는 것은 네이버가 같은 선수를 다르게 적기 때문이다.
  */
 const PLAYERS: Record<string, string> = {
   // 공격
   알바레스: 'J. ÁLVAREZ',
   쇠를로트: 'SØRLOTH',
   소를로트: 'SØRLOTH',
-  그리즈만: 'GRIEZMANN',
-  리켈메: 'RIQUELME',
   루크만: 'LOOKMAN',
-  알마다: 'ALMADA',
+  // 한국 이름은 성만 떼면 'LEE'뿐이라 누구인지 안 남는다. 실제 보드 표기대로 붙여 쓴다
+  이강인: 'LEE KANG-IN',
+  강인: 'LEE KANG-IN',
+  시메오네: 'G. SIMEONE',
+  마르틴: 'C. MARTÍN',
+  카를로스마르틴: 'C. MARTÍN',
+  쿠보: 'CUBO',
+  미겔쿠보: 'CUBO',
 
   // 중원
   코케: 'KOKE',
   바리오스: 'BARRIOS',
-  갤러거: 'GALLAGHER',
-  갈라거: 'GALLAGHER',
-  요렌테: 'LLORENTE',
-  파울: 'DE PAUL',
   바에나: 'BAENA',
-  시메오네: 'G. SIMEONE',
+  카르도소: 'CARDOSO',
+  요렌테: 'LLORENTE',
+  휼만: 'HJULMAND',
+  율만: 'HJULMAND',
+  히울만: 'HJULMAND',
+  르마르: 'LEMAR',
+  르마: 'LEMAR',
+  바르가스: 'VARGAS',
+  멘도사: 'MENDOZA',
+  멘도자: 'MENDOZA',
+  오르티스: 'ORTIZ',
+  오르티즈: 'ORTIZ',
+  아르나우오르티스: 'ORTIZ',
 
   // 수비
   르노르망: 'LE NORMAND',
   노르망: 'LE NORMAND',
   히메네스: 'GIMÉNEZ',
-  렌글레: 'LENGLET',
-  렝글레: 'LENGLET',
-  몰리나: 'MOLINA',
-  갈란: 'GALÁN',
-  가야르도: 'GALLARDO',
-  리노: 'LINO',
-  루게리: 'RUGGERI',
+  그리말도: 'GRIMALDO',
+  로메로: 'ROMERO',
+  크리스티안로메로: 'ROMERO',
   푸비: 'PUBILL',
+  푸빌: 'PUBILL',
   한츠코: 'HANCKO',
-  카르도소: 'CARDOSO',
-
   // 골키퍼
   오블락: 'OBLAK',
   무소: 'MUSSO',

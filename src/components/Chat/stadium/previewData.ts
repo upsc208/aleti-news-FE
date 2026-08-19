@@ -11,6 +11,7 @@ import type { GoalEvent } from './feed';
 
 // 시각은 렌더 시점 기준으로 만든다 — 하드코딩하면 "3년 전 메시지"처럼 보인다.
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+const minutesLater = (m: number) => new Date(Date.now() + m * 60_000).toISOString();
 
 export function previewMessages(myNickname: string): ChatMessage[] {
   const mine = myNickname || '나';
@@ -64,15 +65,21 @@ export function previewMessages(myNickname: string): ChatMessage[] {
   ];
 }
 
-/** 헤더와 LED 스코어 패널을 채우기 위한 가짜 경기. 미리보기에서만 쓴다. */
-export function previewMatch(): RecentMatch {
+/**
+ * 헤더와 LED 스코어 패널을 채우기 위한 가짜 경기. 미리보기에서만 쓴다.
+ *
+ * [upcoming]이면 킥오프를 앞으로 잡는다 — 킥오프 전 LED 보드를 보는 통로다
+ * (?preview=1&pre=1). 보드는 킥오프 시각 하나로 화면을 고르므로, 모드를 따로
+ * 주입하지 않고 여기서 시각만 바꿔야 실제 경로를 그대로 확인할 수 있다.
+ */
+export function previewMatch(upcoming = false): RecentMatch {
   return {
     matchId: 'preview',
     homeTeam: 'Atlético Madrid',
     awayTeam: 'Real Betis',
-    homeScore: 1,
+    homeScore: upcoming ? 0 : 1,
     awayScore: 0,
-    matchDate: minutesAgo(62),
+    matchDate: upcoming ? minutesLater(38) : minutesAgo(62),
     isHome: true,
     tournament: 'LALIGA EA SPORTS',
     stats: {},

@@ -41,6 +41,10 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
   const isPreview =
     process.env.NODE_ENV === 'development' && query?.preview === '1';
 
+  // 킥오프 전 LED 보드를 확인하는 통로(?preview=1&pre=1) — 가짜 경기의 킥오프를
+  // 앞으로 당겨두면 보드가 알아서 킥오프 전 화면을 고른다.
+  const previewPre = isPreview && query?.pre === '1';
+
   // 입장 티켓(닉네임 모달)만 띄워 확인하는 통로(?preview=1&ticket=1).
   // 평소 미리보기는 닉네임 모달을 건너뛰도록 되어 있어서, 티켓 디자인을 볼 방법이 없었다.
   const previewTicket = isPreview && query?.ticket === '1';
@@ -60,6 +64,7 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
           initialMatchId={matchId}
           isPreview={isPreview}
           previewTicket={previewTicket}
+          previewPre={previewPre}
         />
       )}
     </div>
