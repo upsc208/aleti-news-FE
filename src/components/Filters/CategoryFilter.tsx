@@ -60,7 +60,9 @@ export default function CategoryFilter() {
       <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-gray-50 dark:from-[#0a0b10] to-transparent z-10 pointer-events-none md:hidden"></div>
 
       <div className="overflow-x-auto pb-2 scrollbar-hide">
-        <div className="flex items-center justify-start md:justify-center gap-2 min-w-max px-6 md:px-1">
+        {/* 폰에서는 칩을 한 단계 줄인다 — 예전 크기로는 한 화면에 두 개하고 조금밖에
+            안 들어와서, 옆으로 더 있다는 게 보이지 않았다. PC는 그대로다 */}
+        <div className="flex items-center justify-start md:justify-center gap-1.5 md:gap-2 min-w-max px-4 md:px-1">
           {categories.map((category) => {
             const isActive = currentCategory === category.id;
             const Icon = category.icon;
@@ -69,13 +71,18 @@ export default function CategoryFilter() {
                 key={category.id}
                 onClick={() => handleCategoryChange(category.id)}
                 className={`
-                  flex items-center gap-3 px-7 py-3.5 rounded-full text-base font-black transition-all whitespace-nowrap border
+                  flex items-center gap-1.5 md:gap-3 px-3.5 md:px-7 py-2 md:py-3.5 rounded-full
+                  text-[13px] md:text-base font-black transition-all whitespace-nowrap border
                   ${isActive
                     ? 'bg-aleti-red dark:bg-volt/90 text-white dark:text-black border-transparent shadow-xl shadow-aleti-red/20 dark:shadow-volt/10'
                     : 'bg-white dark:bg-[#111318] border-gray-100 dark:border-white/[0.04] text-gray-500 dark:text-gray-400 hover:border-aleti-red/30 dark:hover:border-volt/15 hover:text-aleti-red dark:hover:text-volt hover:bg-aleti-red/5 dark:hover:bg-volt/5'}
                 `}
               >
-                <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'} />
+                {/* 아이콘 크기는 숫자 prop이라 반응형이 안 된다 — CSS로 덮어쓴다 */}
+                <Icon
+                  size={20}
+                  className={`h-4 w-4 md:h-5 md:w-5 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-aleti-red'}`}
+                />
                 {category.label}
               </button>
             );
