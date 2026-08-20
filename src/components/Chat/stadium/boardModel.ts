@@ -82,10 +82,29 @@ const mmss = (ms: number): string => {
  *
  * 없으면 예정 킥오프로 어림한다 — 하프타임을 15분으로 가정하므로 그만큼 어긋난다.
  */
+/**
+ * 서버(네이버)가 주는 상태 문구 중 "아직 공이 안 굴렀다"는 것들.
+ *
+ * **대회마다 표기가 다르다.** 라리가는 `경기전`인데 K리그는 `시작전`이다(2026-08-20 실측).
+ * 지금 이 방은 아틀레티 경기만 쓰지만, 모르는 표기가 들어오면 "굴렀다"로 보고 예전처럼
+ * 어림하므로 새 표기를 놓쳐도 시계가 죽지는 않는다.
+ */
+const NOT_STARTED = new Set(['경기전', '시작전', '경기취소', '취소', '연기']);
+
+/**
+ * 공이 굴렀는가 — 서버 상태 문구로 판정한다.
+ *
+ * 모르면(`status`가 없으면) **굴렀다고 본다.** 서버가 상태를 안 주는 상황에서 시계를
+ * 통째로 끄면 진행 중인 경기에서 보드가 죽는다.
+ */
+export const hasKickedOff = (status?: string | null): boolean =>
+  !status ? true : !NOT_STARTED.has(status.replace(/\s/g, ''));
+
 export function formatMatchClock(
   kickoffIso: string,
   now: number,
-  periods?: MatchPeriods | null
+  periods?: MatchPeriods | null,
+  status?: string | null
 ): string | null {
   const firstStart = at(periods?.firstHalfStarted);
   const firstEnd = at(periods?.firstHalfEnded);
@@ -101,6 +120,16 @@ export function formatMatchClock(
   if (firstStart !== null) return now >= firstStart ? mmss(now - firstStart) : null;
 
   // ── 기준점이 아직 없을 때: 예정 킥오프로 어림한다 ──
+  //
+  // 다만 **경기가 실제로 시작했을 때만** 어림한다. 2026-08-20 말라가전에서 가드 오브 아너와
+  // 추모 세레머니로 실제 킥오프가 예정보다 8분 20초 늦었는데, 예정 시각이 되자마자 시계가
+  // 돌기 시작해 8분 넘게 틀린 값을 자신 있게 띄웠다. 서버가 `경기전`이라고 말해주고 있었는데
+  // 그걸 안 보고 있었던 것이다. (docs/round1.md)
+  //
+  // 안 굴렀으면 null을 돌려주고, 보드는 후원 화면(pre)으로 남는다 — 실물 링이 경기 전에
+  // 그러는 모습 그대로다 (resolveLedMode).
+  if (!hasKickedOff(status)) return null;
+
   const kickoff = at(kickoffIso);
   if (kickoff === null) return null;
 

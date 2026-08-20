@@ -241,7 +241,10 @@ export default function StadiumChatContainer({
 
   // 헤더는 "누구와 붙는 경기인지 · 무슨 대회인지 · 여기가 실시간 채팅방"까지만 말한다.
   // 스코어와 경기장 이름은 바로 아래 LED 보드가 이미 크게 띄우고 있다.
-  const opponent = match ? (match.isHome ? match.awayTeam : match.homeTeam) : null;
+  // **live가 1순위다.** match는 "가장 최근에 끝난 경기"라, 이걸 먼저 쓰면 8/20 말라가전
+  // 헤더에 8/15 마르세유가 떴던 것처럼 지난 경기 상대가 뜬다 (docs/round1.md).
+  const liveOpponent = live ? (isAtleti(live.homeTeam) ? live.awayTeam : live.homeTeam) : null;
+  const opponent = liveOpponent ?? (match ? (match.isHome ? match.awayTeam : match.homeTeam) : null);
   const title = opponent ? `vs ${opponent}` : '아틀레티코 마드리드';
 
   // 입장 티켓에 인쇄할 줄. 보드와 같은 라틴 표기를 쓴다 (boardNames.ts)
@@ -396,6 +399,8 @@ export default function StadiumChatContainer({
             kickoff: live?.kickoff ?? match?.matchDate,
             // 실제 전·후반 시작 시각이 오면 예정 킥오프 대신 이걸로 센다 (boardModel 참고)
             periods: live?.periods,
+            // 공이 실제로 굴렀는지 — 세레머니로 킥오프가 늦어도 시계가 먼저 돌지 않게 한다
+            status: live?.status,
             // 보드에는 라틴 표기만 올린다. 서버가 준 이름이 있으면 그걸 쓰고,
             // 없으면 boardNames의 표로, 그것도 없으면 이름 없이 함성만 흐른다.
             scorer: boardScorer,

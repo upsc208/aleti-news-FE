@@ -32,6 +32,8 @@ interface LedStripProps {
   kickoff?: string;
   /** 실제 전·후반 시작 시각. 있으면 예정 킥오프보다 이쪽이 정확하다 */
   periods?: MatchPeriods | null;
+  /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
+  status?: string | null;
   /** 골 연출 중 흘려보낼 득점자 이름 */
   scorer?: string;
 }
@@ -68,6 +70,7 @@ export default function LedStrip({
   clock,
   kickoff,
   periods,
+  status,
   scorer,
 }: LedStripProps) {
   // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
@@ -90,7 +93,7 @@ export default function LedStrip({
   }, [clock, kickoff, periods]);
 
   const clockText =
-    clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
+    clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods, status) : null);
 
   // 킥오프 전에는 스코어보드 대신 후원 보드가 선다 (boardModel.resolveLedMode)
   const boardMode = resolveLedMode(mode, clockText, Boolean(clock) || now > 0);

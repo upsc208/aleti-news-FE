@@ -26,6 +26,8 @@ interface LedRingProps {
   kickoff?: string;
   /** 실제 전·후반 시작 시각. 있으면 예정 킥오프보다 이쪽이 정확하다 */
   periods?: MatchPeriods | null;
+  /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
+  status?: string | null;
   scorer?: string;
   /**
    * WebGL을 못 쓸 때 한 번 불린다. 보드는 다른 연출과 달리 빠지면
@@ -54,6 +56,7 @@ export default function LedRing({
   clock,
   kickoff,
   periods,
+  status,
   scorer,
   onUnavailable,
 }: LedRingProps) {
@@ -103,7 +106,7 @@ export default function LedRing({
     };
   }, []);
 
-  const clockText = clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods) : null);
+  const clockText = clock ?? (now ? formatMatchClock(kickoff ?? '', now, periods, status) : null);
   // 킥오프 전에는 스코어보드 대신 후원 보드가 선다 (boardModel.resolveLedMode)
   const boardMode = resolveLedMode(mode, clockText, Boolean(clock) || now > 0);
 
