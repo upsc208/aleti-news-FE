@@ -99,9 +99,50 @@ export default function LedStrip({
   const boardMode = resolveLedMode(mode, clockText, Boolean(clock) || now > 0);
 
   // 경기장 이름의 마지막 낱말만 기본 굵기로 남긴다 — "RIYADH AIR" / "METROPOLITANO"
-  const venueWords = venue.trim().split(/s+/);
+  const venueWords = venue.trim().split(' ').filter(Boolean);
   const venueLead = venueWords.length > 1 ? venueWords.slice(0, -1).join(' ') : '';
   const venueTail = venueWords[venueWords.length - 1];
+
+  /**
+   * 경기장 판 — 킥오프 전 보드와 같은 디자인이다(파란 판, 항공사 이름만 다른 서체).
+   * [bar]를 주면 그쪽 끝에 흰 세로 바가 선다 — 경기 중 보드에서 구단 판과 닿는 면이다.
+   */
+  const venueCell = (cellKey: string, bar?: 'left' | 'right') => (
+    <span
+      className={`led-strip__cell led-strip__cell--venue ${bar ? `led-strip__cell--bar-${bar}` : ''}`}
+      key={cellKey}
+    >
+      <span className="led-strip__text">
+        <span className="led-strip__strong">{venueLead}</span>
+        {venueLead ? ' ' : ''}
+        {venueTail}
+      </span>
+    </span>
+  );
+
+  /**
+   * 리그 칸 — 라리가면 실물 보드처럼 빨간 판에 LALIGA + EA 동그라미로 간다.
+   * 다른 대회는 로고를 흉내 낼 근거가 없으니 흰 판에 대회명을 적는다.
+   * (WebGL 보드의 laligaPanel()과 같은 그림이다)
+   */
+  const league = competitionText.toUpperCase();
+  const isLaliga = league.startsWith('LALIGA');
+  const isUcl = league.includes('CHAMPIONS LEAGUE');
+  const leagueCell = (cellKey: string) =>
+    isLaliga ? (
+      <span className="led-strip__cell led-strip__cell--laliga" key={cellKey}>
+        <span className="led-strip__text">LALIGA</span>
+        <span className="led-strip__ea">EA</span>
+      </span>
+    ) : isUcl ? (
+      <span className="led-strip__cell led-strip__cell--ucl" key={cellKey}>
+        <span className="led-strip__text">{competitionText}</span>
+      </span>
+    ) : (
+      <span className="led-strip__cell led-strip__cell--league" key={cellKey}>
+        <span className="led-strip__text">{competitionText}</span>
+      </span>
+    );
 
   /**
    * 스코어 묶음 — [득점][홈 약칭][시계][원정 약칭][득점].
@@ -186,14 +227,7 @@ export default function LedStrip({
                 <span className="led-strip__cell led-strip__cell--lg">
                   <span className="led-strip__text">LG</span>
                 </span>
-                <span className="led-strip__cell led-strip__cell--venue">
-                  <span className="led-strip__text">
-                    {/* 항공사 이름만 굵고 경기장 이름은 기본 굵기다 (ledBoardPainter의 splitLead) */}
-                    <span className="led-strip__strong">{venueLead}</span>
-                    {venueLead ? ' ' : ''}
-                    {venueTail}
-                  </span>
-                </span>
+                {venueCell(`${runKey}${run}-venue`)}
                 {/* 실물 유니폼·보드처럼 VISIT / RWANDA 두 줄로 쌓는다 */}
                 <span className="led-strip__cell led-strip__cell--sponsor">
                   {PRE_SPONSOR.split(' ').map((word) => (
@@ -210,24 +244,16 @@ export default function LedStrip({
     ) : (
       // 평상시 — 정지된 대칭 배치. 가운데가 시계다.
       <div className="led-strip__static">
-        <span className="led-strip__cell led-strip__cell--white led-strip__cell--fill">
-          <span className="led-strip__text">{venue}</span>
-        </span>
-        <span className="led-strip__cell led-strip__cell--red">
+        <span className="led-strip__cell led-strip__cell--red led-strip__cell--fill">
           <span className="led-strip__text">{atletiName}</span>
         </span>
-        <span className="led-strip__cell led-strip__cell--league">
-          <span className="led-strip__text">{competitionText}</span>
-        </span>
+        {venueCell('venue-left', 'left')}
+        {leagueCell('league-left')}
         {renderScore('score')}
-        <span className="led-strip__cell led-strip__cell--league">
-          <span className="led-strip__text">{competitionText}</span>
-        </span>
-        <span className="led-strip__cell led-strip__cell--red">
+        {leagueCell('league-right')}
+        {venueCell('venue-right', 'right')}
+        <span className="led-strip__cell led-strip__cell--red led-strip__cell--fill">
           <span className="led-strip__text">{atletiName}</span>
-        </span>
-        <span className="led-strip__cell led-strip__cell--white led-strip__cell--fill">
-          <span className="led-strip__text">{venue}</span>
         </span>
       </div>
     );

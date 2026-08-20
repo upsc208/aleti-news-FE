@@ -16,6 +16,15 @@ export type LedMode = 'pre' | 'idle' | 'goal';
 export const BOARD_RED = '#cf1126';
 export const BOARD_BLUE = '#1668e3';
 export const BOARD_WHITE = '#ffffff';
+/**
+ * 챔피언스리그 판의 두 파랑 — 대회 고유의 밤하늘 색이다.
+ *
+ * 짙은 쪽에서 밝은 쪽으로 번지게 칠한다. 한 가지 파랑으로 채우면 그냥 파란 판이고,
+ * 두 색이 겹쳐야 깊이가 생겨 우주처럼 읽힌다.
+ */
+export const UCL_DEEP = '#020a24';
+export const UCL_GLOW = '#3b82f6';
+
 /** 킥오프 전 보드의 LG 칸 글자색 — LG가 로고에 쓰는 그 진한 자홍빛이다 */
 export const LG_PINK = '#a50034';
 /** 후원 판의 남색 — 보드의 밝은 파랑(BOARD_BLUE)보다 어둡되 푸른 기가 남아 있다 */

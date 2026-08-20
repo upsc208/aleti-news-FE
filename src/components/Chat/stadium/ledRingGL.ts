@@ -14,7 +14,7 @@
  * 그래서 평상시(idle)에는 rAF가 아예 돌지 않는다. 한 프레임 그리고 멈춘다.
  */
 
-import { boardFontStack, paintBoard } from './ledBoardPainter';
+import { boardFontStack, paintBoard, riyadhFontStack } from './ledBoardPainter';
 import { sameSpec, type BoardSpec } from './boardModel';
 
 /** 가로로 쪼개는 기둥 수. 많을수록 곡면이 매끈하지만 정점이 는다 */
@@ -144,8 +144,11 @@ void main() {
  */
 function loadBoardFont(): Promise<void> {
   if (typeof document === 'undefined' || !document.fonts) return Promise.resolve();
-  return document.fonts
-    .load(`400 40px ${boardFontStack()}`)
+  // 보드 서체와 항공사 이름 서체 둘 다 — 하나라도 늦으면 그 자리만 폴백으로 구워진다
+  return Promise.all([
+    document.fonts.load(`400 40px ${boardFontStack()}`),
+    document.fonts.load(`600 40px ${riyadhFontStack()}`),
+  ])
     .then(() => undefined)
     .catch(() => undefined);
 }

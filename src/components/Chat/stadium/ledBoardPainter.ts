@@ -14,9 +14,25 @@ import {
   BOARD_RED,
   LG_PINK,
   PRE_SPONSOR,
+  UCL_DEEP,
+  UCL_GLOW,
   type BoardSpec,
 } from './boardModel';
 import { latinPlayer } from './boardNames';
+
+/** 리그 칸이 라리가인지 가리는 말 — latinCompetition이 'LALIGA EA SPORTS'로 맞춰 준다 */
+const LALIGA_WORDMARK = 'LALIGA';
+
+/** 챔피언스리그인지 가리는 말 — latinCompetition이 'UEFA CHAMPIONS LEAGUE'로 맞춰 준다 */
+const UCL_MARK = 'CHAMPIONS LEAGUE';
+
+/**
+ * 판을 끊어주는 흰 세로 바의 두께 (보드 높이 대비).
+ *
+ * 같은 색이나 비슷한 톤의 판이 맞닿으면 한 덩어리로 붙어 보인다. 라리가 칸 양옆과
+ * 경기장 판의 바깥쪽(구단 판과 닿는 면)이 그 자리다.
+ */
+const PANEL_BAR = 0.14;
 
 /** 텍스처를 화면보다 이만큼 크게 굽는다 — 곡면 가운데가 눌리면서 확대되는 구간이 있다 */
 const TEX_SCALE = 2;
@@ -81,19 +97,31 @@ const LG_FONT_STACK = '"Arial Black", "Arial Bold", Arial, "Helvetica Neue", Hel
 const lgFont = (px: number) => `900 ${Math.round(px)}px ${LG_FONT_STACK}`;
 
 /**
- * 항공사 이름("RIYADH AIR")만 쓰는 서체.
+ * 항공사 이름("RIYADH AIR")만 쓰는 서체 — El Messiri.
  *
- * 실물 보드에서도 이 자리는 항공사 워드마크라 경기장 이름과 서체가 다르다. 보드 서체는
- * 좁고 높은 Bebas Neue인데, 그 옆에 폭이 넓은 일반 산세리프를 두면 두 이름이 확실히
- * 갈린다 — 굵기만 다르게 줬을 때보다 훨씬 분명하다.
+ * 실물 보드에서도 이 자리는 항공사 워드마크라 경기장 이름과 서체가 다르다. 아랍어 서체
+ * 가족이라 라틴 글자에도 서예 느낌의 미세한 플레어가 남아 있어서, 사우디 항공사 이름에
+ * 어울리면서도 읽기는 그대로다. 후보를 나란히 놓고 골랐다 — Cairo·Tajawal·Almarai는
+ * 라틴이 그냥 산세리프라 차이가 안 나고, Lalezar는 반대로 장식이 과했다.
  *
  * 서체가 다르니 획을 덧대 굵히지 않아도 된다. 진짜 굵은 자체(600)를 쓴다.
- * 대문자 높이가 Bebas보다 낮아서 크기는 0.82배로 맞춰야 두 이름의 글자 키가 같아진다.
+ *
+ * next/font가 실제 패밀리 이름을 빌드마다 새로 만들므로(boardFontStack과 같은 사정)
+ * CSS 변수에서 계산된 값을 읽어 온다.
  */
-const RIYADH_FONT_STACK = 'Tahoma, Verdana, "Segoe UI", Helvetica, Arial, sans-serif';
-const riyadhFont = (px: number) => `700 ${Math.round(px)}px ${RIYADH_FONT_STACK}`;
+const RIYADH_FALLBACK = 'Tahoma, Verdana, "Segoe UI", Helvetica, Arial, sans-serif';
+
+export function riyadhFontStack(): string {
+  if (typeof document === 'undefined') return RIYADH_FALLBACK;
+  const v = getComputedStyle(document.documentElement)
+    .getPropertyValue('--font-el-messiri')
+    .trim();
+  return v ? `${v}, ${RIYADH_FALLBACK}` : RIYADH_FALLBACK;
+}
+
+const riyadhFont = (px: number) => `600 ${Math.round(px)}px ${riyadhFontStack()}`;
 /** Bebas 대비 이 서체의 대문자 높이 보정 */
-const RIYADH_SIZE_RATIO = 0.7;
+const RIYADH_SIZE_RATIO = 0.86;
 
 /**
  * 보드를 굽는다.
@@ -193,6 +221,200 @@ interface Cell {
   color: string;
   font: number;
   align?: 'center' | 'left' | 'right';
+  /** 글자 대신 라리가 표기(LALIGA + EA 동그라미)가 들어가는 칸 */
+  laliga?: boolean;
+  /** 챔피언스리그 판 — 밤하늘 배경에 흰 글자 */
+  ucl?: boolean;
+  /** 한 줄 안에서 서체가 다른 토막들 (RIYADH AIR + METROPOLITANO) */
+  segments?: Segment[];
+  /** 이 칸의 어느 쪽 끝에 흰 세로 바를 세울지 */
+  bar?: 'left' | 'right';
+}
+
+/** 한 줄 안에서 서체·자간이 따로 노는 토막 */
+interface Segment {
+  text: string;
+  fontCss?: string;
+  track?: number;
+}
+
+/**
+ * 경기장 이름을 두 토막으로 쪼갠다 — **마지막 낱말만 보드 서체로 남기고 앞은 항공사 서체.**
+ * "RIYADH AIR" / "METROPOLITANO"가 그것이다. 낱말이 하나뿐인 이름이면 쪼개지 않는다.
+ *
+ * 킥오프 전 보드와 경기 중 보드가 같은 경기장 판을 쓰므로 여기 한 곳에만 둔다.
+ */
+function venueSegments(text: string, fontPx: number): Segment[] | undefined {
+  const words = text.trim().split(' ').filter(Boolean);
+  if (words.length < 2) return undefined;
+  return [
+    {
+      text: `${words.slice(0, -1).join(' ')} `,
+      fontCss: riyadhFont(fontPx * RIYADH_SIZE_RATIO),
+      track: 0.02,
+    },
+    { text: words[words.length - 1] },
+  ];
+}
+
+/** 토막마다 서체가 다르므로 폭도 각자의 서체로 재서 더한다 */
+function segmentsWidth(
+  ctx: CanvasRenderingContext2D,
+  segments: Segment[],
+  fontPx: number,
+  track: number
+): number {
+  return segments.reduce((sum, seg) => {
+    ctx.font = seg.fontCss ?? font(fontPx);
+    setSpacing(ctx, `${seg.track ?? track}em`);
+    return sum + ctx.measureText(seg.text).width;
+  }, 0);
+}
+
+/**
+ * 토막들을 칸 가운데에 이어 붙인다.
+ *
+ * 한 번에 그릴 수 없으므로 폭을 먼저 다 재서 전체를 가운데에 놓고 왼쪽부터 붙여 나간다.
+ */
+function drawSegments(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  w: number,
+  h: number,
+  segments: Segment[],
+  color: string,
+  fontPx: number,
+  track: number
+) {
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  const apply = (seg: Segment) => {
+    ctx.font = seg.fontCss ?? font(fontPx);
+    setSpacing(ctx, `${seg.track ?? track}em`);
+  };
+
+  const widths = segments.map((seg) => {
+    apply(seg);
+    return ctx.measureText(seg.text).width;
+  });
+
+  let sx = x + (w - widths.reduce((a, b) => a + b, 0)) / 2;
+  ctx.fillStyle = color;
+  segments.forEach((seg, i) => {
+    apply(seg);
+    ctx.fillText(seg.text, sx, h * 0.52);
+    sx += widths[i];
+  });
+}
+
+/**
+ * 챔피언스리그 판 — 대회 고유의 밤하늘에 흰 글자.
+ *
+ * 파랑 하나로 채우면 그냥 파란 판이라 옆의 스코어 판과 구분이 안 된다. **짙은 남색을 깔고
+ * 글자 뒤에서 밝은 파랑이 번지게** 두 번 칠한다 — 그 겹침이 깊이를 만들어 우주로 읽힌다.
+ *
+ * 라리가 칸과 마찬가지로 양 끝에 흰 바를 세운다. 이 판은 어두워서 밝은 이웃 판과
+ * 그냥 붙여 두면 경계가 번져 보인다.
+ */
+function uclPanel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  w: number,
+  h: number,
+  text: string,
+  fontPx: number
+) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, 0, w, h);
+  ctx.clip();
+
+  // 1. 밤하늘 — 위가 가장 짙고 아래로 갈수록 풀린다
+  const night = ctx.createLinearGradient(x, 0, x, h);
+  night.addColorStop(0, UCL_DEEP);
+  night.addColorStop(1, '#071a4d');
+  ctx.fillStyle = night;
+  ctx.fillRect(x, 0, w, h);
+
+  // 2. 아래에서 올라오는 빛.
+  //    처음엔 글자 뒤에 크게 깔았더니 밝은 파랑이 판을 다 덮어서 옆의 스코어 판과
+  //    구분이 안 됐다 — 좁게, 아래쪽에서만 번지게 두어야 남색이 살아남는다.
+  const glow = ctx.createRadialGradient(x + w / 2, h * 0.95, 0, x + w / 2, h * 0.95, w * 0.42);
+  glow.addColorStop(0, UCL_GLOW);
+  glow.addColorStop(0.5, 'rgba(59, 130, 246, 0.4)');
+  glow.addColorStop(1, 'rgba(59, 130, 246, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(x, 0, w, h);
+
+  const bar = Math.max(3, h * PANEL_BAR);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, 0, bar, h);
+  ctx.fillRect(x + w - bar, 0, bar, h);
+
+  ctx.restore();
+
+  label(ctx, x, w, h, text, '#ffffff', fontPx);
+}
+
+/**
+ * 라리가 칸 — 빨간 판에 흰 LALIGA, 그 옆에 흰 동그라미 안의 빨간 EA.
+ *
+ * 실물 보드에서 리그 로고가 붙는 자리다. 로고 이미지는 상표라 못 쓰지만 글자와 동그라미로
+ * 옮기는 것은 문제가 없다 — 이 파일이 구단 엠블럼 대신 약칭을 쓰는 것과 같은 이유다.
+ *
+ * EA만 자간을 0으로 되돌린다. 자간은 마지막 글자 뒤에도 붙어서, 그대로 두면 가운데 정렬한
+ * 글자가 동그라미 안에서 왼쪽으로 밀린다.
+ *
+ * 양 끝에는 흰 세로 바를 세운다. 왼쪽 이웃이 같은 빨간 구단 판이라 바가 없으면 두 판이
+ * 한 덩어리로 붙어 버린다.
+ */
+function laligaPanel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  w: number,
+  h: number,
+  fontPx: number
+) {
+  ctx.fillStyle = BOARD_RED;
+  ctx.fillRect(x, 0, w, h);
+
+  const bar = Math.max(3, h * PANEL_BAR);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, 0, bar, h);
+  ctx.fillRect(x + w - bar, 0, bar, h);
+
+  const dot = h * 0.52;
+  const gap = fontPx * 0.34;
+
+  ctx.font = font(fontPx);
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  const textW = ctx.measureText(LALIGA_WORDMARK).width;
+  const startX = x + (w - (textW + gap + dot)) / 2;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(LALIGA_WORDMARK, startX, h * 0.52, textW);
+
+  const cx = startX + textW + gap + dot / 2;
+  ctx.beginPath();
+  ctx.arc(cx, h * 0.5, dot / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  setSpacing(ctx, '0');
+  const eaFont = dot * 0.54;
+  ctx.fillStyle = BOARD_RED;
+  ctx.font = font(eaFont);
+  ctx.textAlign = 'center';
+  ctx.fillText('EA', cx, h * 0.52, dot * 0.82);
+  // 동그라미 안에서 두 글자가 가늘어 보인다 — 다른 판보다 두껍게 획을 덧댄다.
+  // 여기서 더 올리면 A의 속이 메워진다.
+  ctx.strokeStyle = BOARD_RED;
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = eaFont * 0.09;
+  ctx.strokeText('EA', cx, h * 0.52, dot * 0.82);
+  setSpacing(ctx, '0.06em');
 }
 
 /**
@@ -214,7 +436,10 @@ function paintIdle(
   canvas.width = texW;
   canvas.height = texH;
 
-  // Bebas Neue는 좁고 높은 서체라 같은 판을 채우는 데 더 큰 크기가 필요하다
+  // Bebas Neue는 좁고 높은 서체라 같은 판을 채우는 데 더 큰 크기가 필요하다.
+  //
+  // 한 번 글자를 판 높이에 닿을 만큼 키워봤다가(fMain 0.86, fNum 1.0) 되돌렸다 —
+  // 판이 그만큼 넓어져서 폰에서는 스코어 묶음 말고는 화면에 들어오지 않았다.
   const fMain = texH * 0.42;
   const fLeague = texH * 0.35;
   const fNum = texH * 0.62;
@@ -238,10 +463,64 @@ function paintIdle(
   const white = '#ffffff';
   const red = { bg: white, color: BOARD_RED };
 
+  /**
+   * 리그 칸 — 예전에는 여기가 빈 흰 칸이었다.
+   *
+   * 라리가면 실물 보드처럼 빨간 판에 LALIGA + EA 동그라미로 간다. 다른 대회는 로고를
+   * 흉내 낼 근거가 없으니 지금까지처럼 흰 판에 대회명을 적는다.
+   */
+  const isLaliga = spec.competition.startsWith(LALIGA_WORDMARK);
+  // 챔스는 대회명을 그대로 띄운다 — 라리가처럼 줄여 쓸 표기가 없다
+  const isUcl = spec.competition.includes(UCL_MARK);
+
+  const league = (): Cell =>
+    isLaliga
+      ? {
+          // 글자 + 사이 + EA 동그라미 + 양옆 여백(흰 바와 그 안쪽 빨강).
+          // 여백을 pad 1.6배에서 3.2배로 늘렸다 — 바가 글자에 바짝 붙어 판이 답답했다.
+          w: wOf(LALIGA_WORDMARK, fLeague) + fLeague * 0.34 + texH * 0.52 + pad * 3.2,
+          bg: BOARD_RED,
+          text: LALIGA_WORDMARK,
+          color: white,
+          font: fLeague,
+          laliga: true,
+        }
+      : isUcl
+        ? {
+            w: wOf(spec.competition, fLeague) + pad * 2.2 + texH * PANEL_BAR * 2,
+            bg: UCL_DEEP,
+            text: spec.competition,
+            color: white,
+            font: fLeague,
+            ucl: true,
+          }
+        : { w: wOf(spec.competition, fLeague) + pad * 1.3, ...red, text: spec.competition, font: fLeague };
+
+  /**
+   * 경기장 판 — 킥오프 전 보드와 같은 디자인이다(파란 판, 흰 글자, 항공사 이름만 다른 서체).
+   * 리그 칸 바로 옆이 이 자리다. 구단명은 양 끝 칸으로 밀려난다.
+   */
+  const venue = (bar: 'left' | 'right'): Cell => {
+    const segments = venueSegments(spec.venue, fLeague);
+    return {
+      // 바깥쪽 끝에 흰 바 하나 — 그 너머가 빨간 구단 판이라 없으면 두 판이 붙어 보인다.
+      // 바가 차지하는 만큼 폭을 더해야 글자가 안쪽으로 밀리지 않는다.
+      w:
+        (segments ? segmentsWidth(ctx, segments, fLeague, 0.06) : wOf(spec.venue, fLeague)) +
+        pad * 1.4 +
+        texH * PANEL_BAR,
+      bg: BOARD_BLUE,
+      text: segments ? '' : spec.venue,
+      color: white,
+      font: fLeague,
+      segments,
+      bar,
+    };
+  };
+
   const cells: Cell[] = [
-    { w: wOf(club, fMain) + pad * 1.5, bg: BOARD_RED, text: club, color: white, font: fMain },
-    // 요청받은 리그 칸 — 예전에는 여기가 빈 흰 칸이었다
-    { w: wOf(spec.competition, fLeague) + pad * 1.3, ...red, text: spec.competition, font: fLeague },
+    venue('left'),
+    league(),
 
     { w: Math.max(fNum * 1.25, wOf(home, fNum) + pad), bg: BOARD_BLUE, text: home, color: white, font: fNum },
     {
@@ -261,26 +540,44 @@ function paintIdle(
     },
     { w: Math.max(fNum * 1.25, wOf(away, fNum) + pad), bg: BOARD_BLUE, text: away, color: white, font: fNum },
 
-    { w: wOf(spec.competition, fLeague) + pad * 1.3, ...red, text: spec.competition, font: fLeague },
-    { w: wOf(club, fMain) + pad * 1.5, bg: BOARD_RED, text: club, color: white, font: fMain },
+    league(),
+    venue('right'),
   ];
 
   const inner = cells.reduce((sum, c) => sum + c.w, 0);
   const remainder = texW - inner;
 
-  // 남는 폭이 있으면 양 끝을 경기장 이름으로 채운다. 글자는 안쪽에 붙여
+  // 남는 폭이 있으면 양 끝을 구단 이름으로 채운다. 글자는 안쪽에 붙여
   // 바깥으로 이어지는 것처럼 자른다.
   if (remainder > 0) {
     const half = remainder / 2;
-    cells.unshift({ w: half, ...red, text: spec.venue, font: fLeague, align: 'right' });
-    cells.push({ w: half, ...red, text: spec.venue, font: fLeague, align: 'left' });
+    cells.unshift({ w: half, bg: BOARD_RED, text: club, color: white, font: fMain, align: 'right' });
+    cells.push({ w: half, bg: BOARD_RED, text: club, color: white, font: fMain, align: 'left' });
   }
 
   // 폭이 모자라면 음수에서 시작해 좌우로 똑같이 넘친다 —
   // 시계가 텍스처 정중앙에 남아야 화면 정중앙에 선다.
   let x = remainder > 0 ? 0 : remainder / 2;
   for (const c of cells) {
-    panel(ctx, x, c.w, texH, c.bg, c.text, c.color, c.font, c.align ?? 'center');
+    if (c.laliga) {
+      laligaPanel(ctx, x, c.w, texH, c.font);
+    } else if (c.ucl) {
+      uclPanel(ctx, x, c.w, texH, c.text, c.font);
+    } else if (c.segments) {
+      ctx.fillStyle = c.bg;
+      ctx.fillRect(x, 0, c.w, texH);
+
+      if (c.bar) {
+        const bar = Math.max(3, texH * PANEL_BAR);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(c.bar === 'left' ? x : x + c.w - bar, 0, bar, texH);
+      }
+
+      drawSegments(ctx, x, c.w, texH, c.segments, c.color, c.font, 0.06);
+      setSpacing(ctx, '0.06em');
+    } else {
+      panel(ctx, x, c.w, texH, c.bg, c.text, c.color, c.font, c.align ?? 'center');
+    }
     x += c.w;
   }
 
@@ -297,8 +594,6 @@ interface PreCell extends Cell {
   fontCss?: string;
   /** 한 칸에 여러 줄로 쌓아 올릴 글자 (VISIT / RWANDA) */
   lines?: string[];
-  /** 한 줄 안에서 서체·굵기가 다른 토막들 (RIYADH AIR + METROPOLITANO) */
-  segments?: { text: string; fontCss?: string; track?: number }[];
 }
 
 /** 킥오프 전 보드의 판 하나를 정하는 값. size·pad는 보드 높이 대비 비율, track은 em 자간 */
@@ -340,7 +635,7 @@ function paintPre(
 
   const DESIGN: Record<'club' | 'venue' | 'sponsor', PreDesign> = {
     club: { text: spec.atletiName.toUpperCase(), bg: BOARD_RED, color: white, size: 0.38, track: 0.05, pad: 1.0 },
-    // 항공사 이름만 굵고 경기장 이름은 기본 굵기다 — 실물 보드의 그 표기다
+    // 항공사 이름만 서체가 다르다 — 실물 보드의 그 표기다
     venue: { text: spec.venue, bg: BOARD_BLUE, color: white, size: 0.34, track: 0.09, pad: 1.0, leadBold: true },
     /*
       후원 문구는 실물 유니폼·보드처럼 VISIT / RWANDA 두 줄로 쌓고 남색으로 찍는다.
@@ -374,39 +669,17 @@ function paintPre(
     fontCss: lgFont(texH * 0.46),
   });
 
-  /**
-   * 마지막 낱말만 기본 굵기로 남기고 앞을 굵게 — "RIYADH AIR" / "METROPOLITANO".
-   * 낱말이 하나뿐인 경기장 이름이면 쪼개지 않는다.
-   */
-  const splitLead = (text: string, fontPx: number) => {
-    const words = text.trim().split(/s+/);
-    if (words.length < 2) return undefined;
-    const last = words[words.length - 1];
-    return [
-      {
-        text: `${words.slice(0, -1).join(' ')} `,
-        fontCss: riyadhFont(fontPx * RIYADH_SIZE_RATIO),
-        track: 0.02,
-      },
-      { text: last },
-    ];
-  };
-
   const textCell = (d: PreDesign): PreCell => {
     const fontPx = texH * d.size;
     setSpacing(ctx, `${d.track}em`);
     ctx.font = font(fontPx);
 
-    const segments = d.leadBold && d.text ? splitLead(d.text, fontPx) : undefined;
+    const segments = d.leadBold && d.text ? venueSegments(d.text, fontPx) : undefined;
 
     // 토막마다 서체가 다르면 폭도 각자의 서체로 재야 한다 —
     // 보드 서체로 한 번에 재면 실제로 그려지는 폭과 어긋나 글자가 판 밖으로 나간다.
     const widest = segments
-      ? segments.reduce((sum, seg) => {
-          ctx.font = seg.fontCss ?? font(fontPx);
-          setSpacing(ctx, `${seg.track ?? d.track}em`);
-          return sum + ctx.measureText(seg.text).width;
-        }, 0)
+      ? segmentsWidth(ctx, segments, fontPx, d.track)
       : d.lines
         ? Math.max(...d.lines.map((line) => ctx.measureText(line).width))
         : ctx.measureText(d.text ?? '').width;
@@ -450,28 +723,7 @@ function paintPre(
     ctx.fillRect(x, 0, c.w, texH);
     setSpacing(ctx, `${c.track}em`);
     if (c.segments) {
-      // 토막마다 서체가 다르므로 한 번에 그릴 수 없다. 폭을 먼저 다 재서 전체를
-      // 가운데에 놓고, 왼쪽부터 토막을 이어 붙인다.
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'left';
-
-      const apply = (seg: { fontCss?: string; track?: number }) => {
-        ctx.font = seg.fontCss ?? font(c.font);
-        setSpacing(ctx, `${seg.track ?? c.track}em`);
-      };
-
-      const widths = c.segments.map((seg) => {
-        apply(seg);
-        return ctx.measureText(seg.text).width;
-      });
-
-      let sx = x + (c.w - widths.reduce((a, b) => a + b, 0)) / 2;
-      ctx.fillStyle = c.color;
-      c.segments.forEach((seg, i) => {
-        apply(seg);
-        ctx.fillText(seg.text, sx, texH * 0.52);
-        sx += widths[i];
-      });
+      drawSegments(ctx, x, c.w, texH, c.segments, c.color, c.font, c.track);
     } else if (c.lines) {
       // 줄 간격은 글자 크기의 0.86배 — 실물 워드마크처럼 두 줄을 바짝 붙여 쌓는다
       const step = (c.font * 0.86) / texH;

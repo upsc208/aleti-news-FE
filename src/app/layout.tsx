@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Kanit } from "next/font/google";
+import { Bebas_Neue, El_Messiri, Kanit } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
 import MainLayoutWrapper from "@/components/MainLayoutWrapper";
@@ -9,6 +9,18 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 const bebasNeue = Bebas_Neue({
   weight: "400",
   variable: "--font-bebas-neue",
+  subsets: ["latin"],
+});
+
+/**
+ * LED 보드의 항공사 이름(RIYADH AIR)에만 쓴다.
+ *
+ * 아랍어 서체 가족이라 라틴 글자에도 서예 느낌의 미세한 플레어가 남아 있다 —
+ * 보드 서체(Bebas Neue)와 확실히 갈리면서 읽기는 그대로다.
+ */
+const elMessiri = El_Messiri({
+  weight: ["600", "700"],
+  variable: "--font-el-messiri",
   subsets: ["latin"],
 });
 
@@ -95,7 +107,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${bebasNeue.variable} ${kanit.variable} h-full antialiased`}
+      className={`${bebasNeue.variable} ${elMessiri.variable} ${kanit.variable} h-full antialiased`}
     >
       <body className="min-h-dvh flex flex-col bg-gray-50 dark:bg-[#0a0b10] text-gray-950 dark:text-gray-100 font-sans overflow-x-hidden transition-colors duration-300 dark-geo-pattern antialiased">
         <script
