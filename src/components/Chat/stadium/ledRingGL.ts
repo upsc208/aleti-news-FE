@@ -15,7 +15,7 @@
  */
 
 import { boardFontStack, paintBoard, riyadhFontStack } from './ledBoardPainter';
-import { sameSpec, type BoardSpec } from './boardModel';
+import { sameSpec, UNROLL_RATIO, type BoardSpec } from './boardModel';
 
 /** 가로로 쪼개는 기둥 수. 많을수록 곡면이 매끈하지만 정점이 는다 */
 const COLUMNS = 96;
@@ -44,7 +44,7 @@ const BAND_H = 0.3;
 const EYE_Y = -0.09;
 
 /** 펼친 띠는 화면 폭보다 길다. 텍스처를 그만큼 넉넉히 굽는다 */
-const UNROLL_RATIO = 1.15;
+
 
 /** 골 연출 때 흐르는 속도 (CSS px/초) */
 const SCROLL_PX_PER_SEC = 130;
@@ -375,6 +375,14 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
 
     const pre = spec?.mode === 'pre';
 
+    /*
+      교체 보드는 흐르지 않는다. 한 벌이 링을 통째로 덮으므로(paintSub) uScale이 1이고,
+      uOffset이 0이면 텍스처가 보드에 정확히 1:1로 얹힌다 — IN/OUT이 한가운데 선다.
+      흘려보내면 3초 안에 이름이 화면 밖으로 밀려 누가 들어오는지 못 읽는다.
+      (모드가 바뀔 때 uOffset은 아래에서 이미 0으로 되돌아간다)
+    */
+    const sub = spec?.mode === 'sub';
+
     // 킥오프 전 보드는 프레임을 솎는다. 건너뛴 프레임의 시간은 lastFrame을 그대로 둬서
     // 다음 장에 합산된다 — 솎아도 흐르는 속도는 같다.
     if (pre && now - lastFrame < PRE_FRAME_MS && lastFrame) {
@@ -389,7 +397,7 @@ export function createLedRing(canvas: HTMLCanvasElement): LedRingHandle | null {
 
     // 한 벌이 지나가는 데 걸리는 시간 = periodCssW / 속도.
     // UV는 '한 벌 = 1'이므로 그 역수만큼 오프셋을 민다.
-    const speed = pre ? PRE_SCROLL_PX_PER_SEC : SCROLL_PX_PER_SEC;
+    const speed = sub ? 0 : pre ? PRE_SCROLL_PX_PER_SEC : SCROLL_PX_PER_SEC;
     uOffset = (uOffset + (dt * speed) / periodCssW) % 1;
     draw();
 

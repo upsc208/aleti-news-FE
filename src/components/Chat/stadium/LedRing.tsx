@@ -10,9 +10,13 @@ import {
   resolveLedMode,
   type BoardSpec,
   type LedMode,
+  type SubEvent,
 } from './boardModel';
 import { latinCode, latinCompetition, latinTeam } from './boardNames';
 import { createLedRing, type LedRingHandle } from './ledRingGL';
+
+/** 교체 보드 등장에 이름이 모이는 시간 */
+const SUB_SLIDE_MS = 450;
 
 interface LedRingProps {
   mode?: LedMode;
@@ -28,6 +32,8 @@ interface LedRingProps {
   periods?: MatchPeriods | null;
   /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
   status?: string | null;
+  /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 쓰인다 */
+  sub?: SubEvent;
   scorer?: string;
   /**
    * WebGL을 못 쓸 때 한 번 불린다. 보드는 다른 연출과 달리 빠지면
@@ -57,6 +63,7 @@ export default function LedRing({
   kickoff,
   periods,
   status,
+  sub,
   scorer,
   onUnavailable,
 }: LedRingProps) {
@@ -71,6 +78,46 @@ export default function LedRing({
   useEffect(() => {
     unavailableRef.current = onUnavailable;
   }, [onUnavailable]);
+
+  /*
+    교체 보드 등장 — 이름 두 개가 바깥에서 가운데로 모인다.
+
+    글자가 텍스처 안에 있어서 **다시 굽는 것 말고는 움직일 방법이 없다.** 보드가 휜 링이라
+    CSS로 덧씌워도 글자 위치에 안 맞는다. 그래서 등장 0.45초 동안만 진행도를 굴리고
+    멈춘다 — 60fps로 쳐도 스물몇 장이고, 골 연출처럼 내내 도는 비용이 아니다
+    (aleti-news-BE/docs/round1.md의 GPU 항목).
+  */
+  const [subPhase, setSubPhase] = useState(1);
+  useEffect(() => {
+    if (mode !== 'sub' || !sub) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setSubPhase(1);
+      return;
+    }
+
+    let raf = 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / SUB_SLIDE_MS);
+      setSubPhase(t);
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+
+    setSubPhase(0);
+    raf = requestAnimationFrame(step);
+
+    /*
+      배경 탭에서는 requestAnimationFrame이 멈춘다. 그대로 두면 이름이 바깥에 나간 채로
+      굳고, 사용자가 탭으로 돌아왔을 때 반쯤 그려진 보드를 보게 된다.
+      끝나야 할 시각에 한 번 더 못을 박아 둔다 — 이미 끝났으면 같은 값이라 아무 일도 없다.
+    */
+    const settle = setTimeout(() => setSubPhase(1), SUB_SLIDE_MS + 120);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(settle);
+    };
+  }, [mode, sub]);
 
   // 시계는 이 안에서만 돌린다 — 위로 올리면 1초마다 채팅 전체가 다시 그려진다.
   // (LedStrip과 같은 이유로 첫 값을 setTimeout으로 미룬다)
@@ -125,9 +172,11 @@ export default function LedRing({
       homeScore,
       awayScore,
       scorer,
+      sub,
+      subPhase,
     };
   }, [
-    boardMode, competition, venue, clockText,
+    boardMode, competition, venue, clockText, sub, subPhase,
     homeTeam, awayTeam, homeScore, awayScore, scorer,
   ]);
 
@@ -139,6 +188,7 @@ export default function LedRing({
   return (
     <div className="led-ring" data-mode={boardMode} role="presentation" aria-hidden="true">
       <canvas ref={canvasRef} className="led-ring__canvas" />
+
     </div>
   );
 }

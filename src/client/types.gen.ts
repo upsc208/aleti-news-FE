@@ -37,13 +37,13 @@ export type NewsListResponse = {
 export type PageNewsListResponse = {
     totalPages?: number;
     totalElements?: number;
+    first?: boolean;
+    last?: boolean;
+    numberOfElements?: number;
     size?: number;
     content?: Array<NewsListResponse>;
     number?: number;
     sort?: SortObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
 };
@@ -103,13 +103,13 @@ export type CollectionLog = {
 export type PageCollectionLog = {
     totalPages?: number;
     totalElements?: number;
+    first?: boolean;
+    last?: boolean;
+    numberOfElements?: number;
     size?: number;
     content?: Array<CollectionLog>;
     number?: number;
     sort?: SortObject;
-    first?: boolean;
-    last?: boolean;
-    numberOfElements?: number;
     pageable?: PageableObject;
     empty?: boolean;
 };
@@ -194,7 +194,7 @@ export type ChatMessage = {
     content: string;
     sentAt?: string;
     ipHash?: string;
-    type: 'USER' | 'GOAL' | 'GOAL_CANCELLED';
+    type: 'USER' | 'GOAL' | 'GOAL_CANCELLED' | 'STATUS';
     live?: LiveMatchState;
 };
 
@@ -216,6 +216,7 @@ export type LiveMatchState = {
     homeScore: number;
     awayScore: number;
     scorers: Array<LiveScorer>;
+    substitutions: Array<LiveSubstitution>;
     kickoff?: string;
     periods?: LivePeriods;
     updatedAt: string;
@@ -234,6 +235,15 @@ export type LiveScorer = {
     isHome: boolean;
     ownGoal: boolean;
     nameLatin?: string;
+};
+
+export type LiveSubstitution = {
+    minute: number;
+    addedTime: number;
+    isHome: boolean;
+    playerOut: string;
+    playerIn: string;
+    injury: boolean;
 };
 
 export type ChatParticipant = {

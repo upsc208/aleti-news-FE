@@ -45,6 +45,9 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
   // 앞으로 당겨두면 보드가 알아서 킥오프 전 화면을 고른다.
   const previewPre = isPreview && query?.pre === '1';
 
+  // 교체 보드를 확인하는 통로(?preview=1&sub=1) — 경기를 기다리지 않고 배치와 색을 본다.
+  const previewSub = isPreview && query?.sub === '1';
+
   // 입장 티켓(닉네임 모달)만 띄워 확인하는 통로(?preview=1&ticket=1).
   // 평소 미리보기는 닉네임 모달을 건너뛰도록 되어 있어서, 티켓 디자인을 볼 방법이 없었다.
   const previewTicket = isPreview && query?.ticket === '1';
@@ -65,6 +68,7 @@ export default async function MatchChatPage({ params, searchParams }: MatchChatP
           isPreview={isPreview}
           previewTicket={previewTicket}
           previewPre={previewPre}
+          previewSub={previewSub}
         />
       )}
     </div>

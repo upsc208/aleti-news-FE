@@ -11,12 +11,15 @@
 import {
   ATLETI_NAVY,
   BOARD_BLUE,
+  BOARD_GREEN,
   BOARD_RED,
+  UNROLL_RATIO,
   LG_PINK,
   PRE_SPONSOR,
   UCL_DEEP,
   UCL_GLOW,
   type BoardSpec,
+  type SubEvent,
 } from './boardModel';
 import { latinPlayer } from './boardNames';
 
@@ -142,9 +145,207 @@ export function paintBoard(
 
   const texH = Math.max(16, Math.round(cssH * TEX_SCALE));
   if (spec.mode === 'goal') return paintGoal(canvas, ctx, spec, texH);
+  if (spec.mode === 'sub' && spec.sub) {
+    return paintSub(canvas, ctx, spec.sub, spec.subPhase ?? 1, unrollCssW, texH);
+  }
   if (spec.mode === 'pre') return paintPre(canvas, ctx, spec, texH);
   return paintIdle(canvas, ctx, spec, unrollCssW, texH);
 }
+
+/**
+ * 교체 화면 — `⇄ 46'` 판과 `LLORENTE ▸ DOMÍNGUEZ` 판.
+ *
+ * **골보다 조용하다.** 골은 흰 판에 파란 이름 + 빨간 함성으로 터지는데, 교체는 사건이
+ * 아니라 정보다. 파란 판에 흰 글씨로 담담하게 간다 — 실물 보드도 교체는 그렇게 띄운다.
+ *
+ * 이름은 성만 쓴다. 두 명이 한 줄에 들어가야 해서 전체 이름으로는 판이 화면을 넘는다.
+ */
+function paintSub(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  sub: SubEvent,
+  phase: number,
+  unrollCssW: number,
+  texH: number
+): BoardPaint {
+  /*
+    실물 교체판의 배치다.
+
+        [ MENDOZA >>> ][ IN ╱ OUT ][ <<< BAENA ]
+            흰·파랑      연두 빨강     흰·파랑
+
+    **두 무리가 좌우에서 들어와 가운데서 맞물린다.** 왼쪽 무리는 들어오는 선수·화살표·
+    초록 쐐기, 오른쪽 무리는 빨강 쐐기·화살표·나가는 선수다. 쐐기 두 장이 만나는 순간
+    사선 `/`가 완성된다 — 교체가 성립하는 장면을 그대로 그린 것이다.
+
+    **한 벌이 보드를 통째로 채운다.** 골 보드처럼 짧은 판을 반복해 흘리지 않는다 —
+    3초만 서 있다 사라지는 화면이라 같은 이름이 두 번 지나가면 누가 들어오고
+    누가 나가는지 읽기 전에 헷갈린다. paintIdle과 같은 방식으로 링 한 바퀴를 한 벌로 잡는다.
+  */
+  const texW = Math.min(MAX_TEX_W, Math.max(64, Math.round(unrollCssW * TEX_SCALE)));
+
+  canvas.width = texW;
+  canvas.height = texH;
+  setSpacing(ctx, '0.2em'); // 캔버스 크기를 바꾸면 컨텍스트 상태가 초기화된다
+  ctx.clearRect(0, 0, texW, texH);
+
+  // latinPlayer는 이미 라틴 표기면 성만 떼어 준다 (boardNames.ts)
+  const into = latinPlayer(sub.playerIn).toUpperCase();
+  const out = latinPlayer(sub.playerOut).toUpperCase();
+
+  /*
+    **판이 좁으면 IN/OUT을 조인다.**
+
+    폰은 보드 폭이 높이의 열 배 안팎인데 데스크톱은 스무 배쯤 된다. 같은 크기로 그리면
+    폰에서 표와 화살표가 폭을 다 먹고 이름 자리가 남지 않아 이름이 잘린다.
+    표가 조금 작은 편이 이름이 잘리는 것보다 낫다 — 누가 들어오고 나가는지가 먼저다.
+
+    화면 크기(px)가 아니라 **판의 가로세로 비**로 판단한다. 그래야 기기 판정 없이
+    같은 규칙으로 돌고, 창을 줄여도 그대로 따라온다.
+  */
+  /*
+    **화면에 실제로 보이는 폭.** 텍스처는 링에 UNROLL_RATIO만큼 펼쳐 감기므로 양 끝이
+    뒤로 돌아간다. 텍스처 전체 폭에 맞춰 놓으면 딱 그만큼 이름이 잘린다 —
+    긴 성(SØRLOTH)에서 먼저 드러난다.
+  */
+  const usableW = texW / UNROLL_RATIO;
+
+  const narrow = usableW / texH < 13;
+
+  const fTag = texH * (narrow ? 0.44 : 0.56);
+  // 대각선이 눕는 정도. 판 높이에 비례해야 어느 화면에서나 같은 기울기로 보인다
+  const slant = texH * (narrow ? 0.6 : 0.75);
+
+  ctx.font = font(fTag);
+  const tagTextW = Math.max(ctx.measureText('IN').width, ctx.measureText('OUT').width);
+  const tagW = tagTextW * 2 + slant + texH * (narrow ? 1.0 : 2.1);
+
+  /*
+    화살표는 판 위아래에 닿을락 말락 하게 세운다 — 이 보드에서 가장 큰 글자다.
+
+    **글자 크기가 아니라 실제 획 높이로 맞춘다.** `>`는 대문자보다 한참 낮게 그려지는
+    글자라 이름과 같은 배수를 주면 눈에 띄게 작아진다. 그려질 높이를 재서 역산한다.
+  */
+  const ARROW_FILL = 0.94;
+  let fArrow = texH * 0.9;
+  ctx.font = font(fArrow);
+  const probe = ctx.measureText('>');
+  const glyphH = (probe.actualBoundingBoxAscent ?? 0) + (probe.actualBoundingBoxDescent ?? 0);
+  if (glyphH > 0) fArrow = (fArrow * texH * ARROW_FILL) / glyphH;
+
+  /*
+    화살표는 자간을 붙인다. 이 보드의 다른 글자는 0.2em으로 벌려 쓰는데, 그 배수를
+    이만큼 큰 글자에 그대로 주면 화살표 세 개가 판 폭을 다 먹고 이름이 읽을 수 없게 작아진다.
+
+    그리고 **이름 자리를 먼저 떼어 둔다.** 남는 폭에 화살표를 맞추지, 그 반대가 아니다 —
+    누가 들어오고 나가는지가 화살표보다 중요하다.
+  */
+  setSpacing(ctx, '0em');
+  const nameMin = usableW * 0.2;
+  const arrowRoom = Math.max(texH * 0.7, (usableW - tagW) / 2 - nameMin);
+
+  ctx.font = font(fArrow);
+  let arrowTextW = ctx.measureText('>>>').width;
+  if (arrowTextW > arrowRoom) {
+    fArrow *= arrowRoom / arrowTextW;
+    ctx.font = font(fArrow);
+    arrowTextW = ctx.measureText('>>>').width;
+  }
+  const arrowW = arrowTextW + texH * 0.3;
+  setSpacing(ctx, '0.2em');
+
+  /*
+    **내용 크기대로 묶어 가운데에 세운다.** 남는 폭을 이름 칸이 다 가져가면 글자가 칸
+    한가운데 놓여 화살표와 멀어지고, 폰처럼 좁은 판에서는 칸에 맞추느라 글자만 작아진다.
+    이름 칸을 글자 너비에 맞춰 잡고, 다섯 조각을 붙여 세운 뒤 통째로 가운데로 민다.
+  */
+  let fName = texH * 0.82;
+  ctx.font = font(fName);
+  let widest = Math.max(ctx.measureText(into).width, ctx.measureText(out).width);
+
+  // 다 붙여도 판을 넘으면 그때 이름을 줄인다 — 줄이는 건 마지막 수단이다
+  const nameRoom = (usableW - tagW - arrowW * 2) / 2 - texH * 0.2;
+  if (widest > nameRoom && widest > 0) {
+    fName *= nameRoom / widest;
+    ctx.font = font(fName);
+    widest = Math.max(ctx.measureText(into).width, ctx.measureText(out).width);
+  }
+
+  const nameW = Math.max(0, widest) + texH * 0.2;
+  const blockW = nameW * 2 + arrowW * 2 + tagW;
+  const x0 = Math.max(0, (texW - blockW) / 2);
+
+  // 자리 (다 도착했을 때)
+  const xNameIn = x0;
+  const xArrowL = x0 + nameW;
+  const xTag = xArrowL + arrowW;
+  const xArrowR = xTag + tagW;
+  const xNameOut = xArrowR + arrowW;
+  const mid = xTag + tagW / 2;
+
+  // 흰 바탕은 처음부터 제자리다. 무리만 좌우에서 들어온다
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, texW, texH);
+
+  const eased = 1 - Math.pow(1 - Math.min(1, Math.max(0, phase)), 3);
+  const shift = (1 - eased) * (blockW / 2 + x0);
+
+  ctx.globalAlpha = eased;
+
+  // ── 왼쪽 무리: 들어오는 선수 · >>> · 초록 쐐기 ──
+  ctx.save();
+  ctx.translate(-shift, 0);
+  label(ctx, xNameIn, nameW, texH, into, BOARD_BLUE, fName);
+  setSpacing(ctx, '0em');
+  label(ctx, xArrowL, arrowW, texH, '>>>', BOARD_GREEN, fArrow);
+  setSpacing(ctx, '0.2em');
+
+  ctx.beginPath();
+  ctx.moveTo(xTag, 0);
+  ctx.lineTo(mid + slant / 2, 0);
+  ctx.lineTo(mid - slant / 2, texH);
+  ctx.lineTo(xTag, texH);
+  ctx.closePath();
+  ctx.fillStyle = BOARD_GREEN;
+  ctx.fill();
+
+  label(ctx, xTag, tagW * 0.44, texH, 'IN', '#ffffff', fTag);
+  ctx.restore();
+
+  // ── 오른쪽 무리: 빨강 쐐기 · <<< · 나가는 선수 ──
+  ctx.save();
+  ctx.translate(shift, 0);
+
+  ctx.beginPath();
+  ctx.moveTo(mid + slant / 2, 0);
+  ctx.lineTo(xTag + tagW, 0);
+  ctx.lineTo(xTag + tagW, texH);
+  ctx.lineTo(mid - slant / 2, texH);
+  ctx.closePath();
+  ctx.fillStyle = BOARD_RED;
+  ctx.fill();
+
+  // 두 색 사이의 흰 사선. 빨강 무리가 들고 들어와 초록에 맞대는 변이다 —
+  // 초록과 빨강이 맞닿으면 경계가 탁해 보이는데, 흰 선을 끼우면 `/`가 한 획으로 읽힌다
+  ctx.beginPath();
+  ctx.moveTo(mid + slant / 2, 0);
+  ctx.lineTo(mid - slant / 2, texH);
+  ctx.lineWidth = Math.max(2, texH * 0.075);
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+
+  label(ctx, mid + slant * 0.15, tagW * 0.5, texH, 'OUT', '#ffffff', fTag);
+  setSpacing(ctx, '0em');
+  label(ctx, xArrowR, arrowW, texH, '<<<', BOARD_RED, fArrow);
+  setSpacing(ctx, '0.2em');
+  label(ctx, xNameOut, nameW, texH, out, BOARD_BLUE, fName);
+  ctx.restore();
+
+  ctx.globalAlpha = 1;
+
+  return { periodCssW: texW / TEX_SCALE };
+}
+
 
 /** 색 판 하나 — 배경을 칠하고 가운데에 글자를 얹는다 */
 function panel(
@@ -753,7 +954,15 @@ function paintGoal(
   spec: BoardSpec,
   texH: number
 ): BoardPaint {
-  const fMain = texH * 0.5;
+  /*
+    득점자 이름은 판 높이를 거의 채운다 — 위아래가 판 끝에 닿을랑 말랑이다.
+    골이 터진 순간 화면에 남아야 할 것은 이름이라 함성보다 크게 간다.
+
+    0.86이 상한이다: Bebas Neue의 악센트 붙은 대문자(ÁLVAREZ·GIMÉNEZ·GALÁN)는
+    글자 크기의 0.88배를 차지해서, 더 키우면 악센트가 판 윗변에 잘린다(실측).
+  */
+  const fName = texH * 0.86;
+  const fShout = texH * 0.5;
   const pad = texH * 0.7;
 
   setSpacing(ctx, '0.2em');
@@ -761,8 +970,10 @@ function paintGoal(
   const shout = 'GOOOOOOOL!!!!';
   const name = spec.scorer ? latinPlayer(spec.scorer).toUpperCase() : '';
 
-  ctx.font = font(fMain);
+  // 두 판의 글자 크기가 다르므로 폭도 각자의 크기로 잰다
+  ctx.font = font(fShout);
   const wShout = ctx.measureText(shout).width;
+  ctx.font = font(fName);
   const wName = name ? ctx.measureText(name).width : 0;
 
   // 두 판의 폭을 같게 — CSS 보드의 grid 1fr과 같은 결과다
@@ -779,7 +990,7 @@ function paintGoal(
   let x = 0;
 
   if (name) {
-    panel(ctx, x, cell, texH, '#ffffff', name, BOARD_BLUE, fMain);
+    panel(ctx, x, cell, texH, '#ffffff', name, BOARD_BLUE, fName);
     x += cell;
   }
 
@@ -790,7 +1001,7 @@ function paintGoal(
   grad.addColorStop(ramp, BOARD_RED);
   grad.addColorStop(1 - ramp, BOARD_RED);
   grad.addColorStop(1, '#ffffff');
-  panel(ctx, x, cell, texH, grad, shout, '#ffffff', fMain);
+  panel(ctx, x, cell, texH, grad, shout, '#ffffff', fShout);
 
   return { periodCssW: texW / TEX_SCALE };
 }

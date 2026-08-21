@@ -24,7 +24,8 @@ import LedStrip from './LedStrip';
 import LedRing from './LedRing';
 import StadiumMessageItem from './StadiumMessageItem';
 import GoalCard from './GoalCard';
-import { isAtleti } from './boardModel';
+import { isAtleti, matchMinuteNow, type SubEvent } from './boardModel';
+import type { LiveSubstitution } from '@/client/types.gen';
 import { latinCompetition, latinPlayer, latinTeam } from './boardNames';
 import { buildFeed, type GoalEvent } from './feed';
 import { useGoalCelebration } from './useGoalCelebration';
@@ -38,8 +39,36 @@ interface StadiumChatContainerProps {
   previewTicket?: boolean;
   /** 킥오프 전 화면을 띄워 보는 모드 (?preview=1&pre=1) */
   previewPre?: boolean;
+  /** 교체 보드를 세워둔 채로 확인한다 (?preview=1&sub=1) */
+  previewSub?: boolean;
 }
 
+
+/** 교체 화면이 보드를 잠깐 가로채는 시간. 한 건당 이만큼씩, 여러 건이면 차례로 */
+const SUB_BOARD_MS = 3000;
+
+/**
+ * ?preview=1&sub=1 로 교체 보드를 세워둘 때 쓰는 값.
+ *
+ * **일부러 긴 성을 골랐다.** 짧은 이름으로만 보면 폰에서 이름이 잘리는 것을 못 잡는다.
+ */
+const PREVIEW_SUB: SubEvent = {
+  minute: "62'",
+  playerIn: 'Giuliano Simeone',
+  playerOut: 'Alexander Sørloth',
+};
+
+/**
+ * 경기 시계보다 이만큼(분) 넘게 뒤처진 교체는 연출하지 않는다.
+ * FotMob 캐시로 뒤늦게 도착한 것을 방금 일어난 일처럼 띄우지 않기 위한 것이다.
+ */
+const SUB_FRESH_MINUTES = 3;
+
+/**
+ * 경기가 정말 끝난 상태. **부분 일치로 보면 안 된다** — 네이버의 하프타임 표기가
+ * `전반종료`라 `includes('종료')`로 보면 하프타임에 축포가 터진다 (docs/round1.md).
+ */
+const FINAL_STATUS = new Set(['경기종료', '종료', '경기취소', '취소', '연기', '몰수']);
 
 const MATCH_CHANTS = [
   '👍',
@@ -54,6 +83,7 @@ export default function StadiumChatContainer({
   isPreview = false,
   previewTicket = false,
   previewPre = false,
+  previewSub = false,
 }: StadiumChatContainerProps) {
   const {
     matchId,
@@ -175,11 +205,88 @@ export default function StadiumChatContainer({
     celebrate();
   }, [goals, live, isPreview, celebrate]);
 
+  /**
+   * 보드에 잠깐 띄울 교체.
+   *
+   * 골과 달리 채팅 메시지를 만들지 않는다 — 이름이 라틴 표기뿐이라(FotMob이 유일한 소스)
+   * 한글 채팅에 섞이면 어색하고, 경기당 여러 번이라 대화가 밀린다. 보드는 원래 로마자다.
+   */
+  const seenSubKeys = useRef<Set<string> | null>(null);
+  /** 지금 보드에 서 있는 교체 */
+  const [subEvent, setSubEvent] = useState<SubEvent | null>(null);
+  /** 아직 못 보여준 교체들 — 한 턴에 여러 건이 도착할 수 있다 */
+  const [subQueue, setSubQueue] = useState<SubEvent[]>([]);
+  const subTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isPreview || !live) return;
+
+    const subs = live.substitutions ?? [];
+    const keyOf = (s: LiveSubstitution) =>
+      `${s.isHome ? 'H' : 'A'}|${s.minute}+${s.addedTime}|${s.playerOut}>${s.playerIn}`;
+
+    const keys = new Set(subs.map(keyOf));
+    const previous = seenSubKeys.current;
+    seenSubKeys.current = keys;
+    // 입장 시점에 이미 있던 교체는 연출하지 않는다 (골과 같은 규칙)
+    if (previous === null) return;
+
+    // 상대팀 교체는 띄우지 않는다 — 보드가 너무 자주 바뀐다
+    const atletiIsHome = isAtleti(live.homeTeam);
+    const fresh = subs.filter((s) => s.isHome === atletiIsHome && !previous.has(keyOf(s)));
+    if (fresh.length === 0) return;
+
+    /*
+      FotMob 캐시 때문에 한참 지난 교체가 뒤늦게 도착할 수 있다(2026-08-20 종료 경기
+      실측 max-age=900). 그런 건 목록에만 담고 보드는 가로채지 않는다 — 15분 전 교체를
+      방금 일어난 것처럼 띄우면 없느니만 못하다.
+    */
+    const minuteNow = matchMinuteNow(live.kickoff ?? '', Date.now(), live.periods, live.status);
+    const recent = fresh.filter(
+      (s) => minuteNow === null || minuteNow - (s.minute + s.addedTime) <= SUB_FRESH_MINUTES
+    );
+    if (recent.length === 0) return;
+
+    /*
+      **한 번에 여러 건이 올 수 있다.** 더블 교체는 실제로 흔하고, 게다가 FotMob을
+      45초마다 보므로 그 사이의 교체가 한 턴에 몰려 도착한다. 마지막 것만 띄우면
+      나머지는 화면에 한 번도 안 나온다. 차례로 하나씩 보여준다.
+    */
+    setSubQueue((prev) => [
+      ...prev,
+      ...recent.map((s) => ({
+        minute: s.addedTime > 0 ? `${s.minute}+${s.addedTime}'` : `${s.minute}'`,
+        playerOut: s.playerOut,
+        playerIn: s.playerIn,
+        injury: s.injury,
+      })),
+    ]);
+  }, [live, isPreview]);
+
+  /** 대기열에서 하나씩 꺼내 [SUB_BOARD_MS]만큼 보드에 세운다 */
+  useEffect(() => {
+    if (subEvent || subQueue.length === 0) return;
+
+    setSubEvent(subQueue[0]);
+    setSubQueue((prev) => prev.slice(1));
+
+    subTimer.current = setTimeout(() => {
+      subTimer.current = null;
+      setSubEvent(null);
+    }, SUB_BOARD_MS);
+  }, [subEvent, subQueue]);
+
+  useEffect(() => () => {
+    if (subTimer.current) clearTimeout(subTimer.current);
+  }, []);
+
   /** 경기가 끝나고 아틀레티가 이겼으면 한 번만 축포를 띄운다 */
   const celebratedWin = useRef(false);
   useEffect(() => {
     if (isPreview || !live || celebratedWin.current) return;
-    if (!live.status.includes('종료')) return;
+    // **`포함`이 아니라 정확 일치다.** 네이버의 하프타임 표기가 `전반종료`라
+    // includes('종료')로 보면 전반 끝나고 앞서 있을 때 축포가 터진다 (docs/round1.md)
+    if (!FINAL_STATUS.has(live.status.replace(/\s/g, ''))) return;
 
     celebratedWin.current = true;
     const atletiIsHome = isAtleti(live.homeTeam);
@@ -385,7 +492,13 @@ export default function StadiumChatContainer({
             화면을 끈 사람에게는 아예 렌더하지 않는다 — 스코어가 여기 적혀 있다 */}
         {!lightsOff && (() => {
           const boardProps = {
-            mode: celebrating ? ('goal' as const) : ('idle' as const),
+            // 골이 교체보다 세다 — 교체 화면이 떠 있는데 골이 터지면 골로 덮는다
+            mode: celebrating
+              ? ('goal' as const)
+              : subEvent || previewSub
+                ? ('sub' as const)
+                : ('idle' as const),
+            sub: subEvent ?? (previewSub ? PREVIEW_SUB : undefined),
             homeTeam,
             awayTeam,
             homeScore,

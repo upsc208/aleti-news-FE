@@ -10,6 +10,7 @@ import {
   resolveLedMode,
   type LedMode,
   type MatchPeriods,
+  type SubEvent,
 } from './boardModel';
 import { latinCode, latinCompetition, latinPlayer, latinTeam } from './boardNames';
 
@@ -34,13 +35,15 @@ interface LedStripProps {
   periods?: MatchPeriods | null;
   /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
   status?: string | null;
+  /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 쓰인다 */
+  sub?: SubEvent;
   /** 골 연출 중 흘려보낼 득점자 이름 */
   scorer?: string;
 }
 
 /** 골 연출 때 흐르는 판 한 장. tone은 CSS의 .led-strip__cell--{tone} 이다 */
 interface GoalPanel {
-  tone: 'red' | 'scorer';
+  tone: 'red' | 'scorer' | 'in' | 'out' | 'arrow-in' | 'arrow-out';
   text: string;
 }
 
@@ -71,6 +74,7 @@ export default function LedStrip({
   kickoff,
   periods,
   status,
+  sub,
   scorer,
 }: LedStripProps) {
   // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
@@ -192,8 +196,38 @@ export default function LedStrip({
     return out;
   }, [goalPanels]);
 
+  /**
+   * 교체 판 — 실물 교체판의 배치다. 들어오는 선수가 왼쪽, 나가는 선수가 오른쪽이고
+   * 가운데에 IN/OUT 표가 대각선으로 맞붙는다 (ledBoardPainter.paintSub와 같은 구성).
+   *
+   *     [ MENDOZA ][ IN ╱ OUT ][ BAENA ]
+   *
+   * **반복하지 않는다.** 3초만 서 있다 사라지는 화면이라 같은 이름이 두 번 지나가면
+   * 누가 들어오고 누가 나가는지 읽기 전에 헷갈린다.
+   */
+  const subSet = useMemo<GoalPanel[]>(() => {
+    if (!sub) return [];
+    return [
+      { tone: 'scorer', text: latinPlayer(sub.playerIn) },
+      { tone: 'arrow-in', text: '>>>' },
+      { tone: 'in', text: 'IN' },
+      { tone: 'out', text: 'OUT' },
+      { tone: 'arrow-out', text: '<<<' },
+      { tone: 'scorer', text: latinPlayer(sub.playerOut) },
+    ];
+  }, [sub]);
+
   const body =
-    boardMode === 'goal' ? (
+    boardMode === 'sub' && subSet.length ? (
+      // 흐르지 않는다 — 한 벌이 보드를 채우고 3초 뒤 스코어보드로 돌아간다
+      <div className="led-strip__sub">
+        {subSet.map((panel, i) => (
+          <span className={`led-strip__cell led-strip__cell--${panel.tone}`} key={i}>
+            <span className="led-strip__text">{panel.text}</span>
+          </span>
+        ))}
+      </div>
+    ) : boardMode === 'goal' ? (
       <div className="led-strip__track">
         {['a', 'b'].map((runKey) => (
           <span className="led-strip__run" key={runKey}>

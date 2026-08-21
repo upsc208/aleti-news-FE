@@ -11,11 +11,37 @@
  * 그 상태로 스코어보드를 세워두면 `0 ATM — ATM 0`짜리 죽은 보드가 되므로,
  * 실물 경기장이 경기 전에 그러듯 후원 판을 세워둔다.
  */
-export type LedMode = 'pre' | 'idle' | 'goal';
+export type LedMode = 'pre' | 'idle' | 'goal' | 'sub';
+
+/**
+ * 보드에 잠깐 띄울 교체 한 건 — 이름은 라틴 표기뿐이다 (FotMob이 유일한 소스).
+ *
+ * 보드는 `[들어오는 선수][IN][OUT][나가는 선수]` 네 칸만 그린다. [minute]과 [injury]는
+ * 지금 화면에 안 나가지만 서버가 주는 값이라 들고 있는다 — 나중에 표기를 늘릴 때 쓴다.
+ */
+export interface SubEvent {
+  /** `46'` / `45+2'` */
+  minute: string;
+  playerOut: string;
+  playerIn: string;
+  injury?: boolean;
+}
 
 export const BOARD_RED = '#cf1126';
 export const BOARD_BLUE = '#1668e3';
 export const BOARD_WHITE = '#ffffff';
+
+/** 교체 보드의 IN 칸 — 실물 교체판이 들어오는 선수 쪽에 쓰는 연두다 */
+export const BOARD_GREEN = '#22a447';
+
+/**
+ * 링에 감는 띠를 보이는 폭보다 이만큼 넓게 펼친다.
+ *
+ * 그래서 **텍스처 양 끝은 화면 뒤로 돌아가 안 보인다.** 반복되는 화면은 상관없지만,
+ * 한 벌만 그리는 교체 보드는 이 안쪽에 넣어야 이름이 안 잘린다
+ * (ledRingGL이 띠를 만들고, ledBoardPainter가 그 위에 그린다 — 값이 갈리면 바로 잘린다).
+ */
+export const UNROLL_RATIO = 1.15;
 /**
  * 챔피언스리그 판의 두 파랑 — 대회 고유의 밤하늘 색이다.
  *
@@ -53,7 +79,10 @@ export function resolveLedMode(
   clockText: string | null,
   clockEvaluated: boolean
 ): LedMode {
+  // 골이 먼저다 — 교체 화면이 떠 있는데 골이 터지면 골로 덮는다
   if (requested === 'goal') return 'goal';
+  // 킥오프 전이면 교체가 있을 리 없다. 순서상 pre보다 먼저 걸러 둔다
+  if (requested === 'sub' && !(clockEvaluated && clockText === null)) return 'sub';
   return clockEvaluated && clockText === null ? 'pre' : 'idle';
 }
 
@@ -152,6 +181,28 @@ export function formatMatchClock(
 }
 
 /**
+ * 지금 경기 시계가 몇 분인지 — 모르면 null.
+ *
+ * 교체가 **방금 일어난 것인지** 판단할 때 쓴다. FotMob은 캐시를 길게 잡아서
+ * (2026-08-20 종료 경기 실측 `max-age=900`) 한참 지난 교체가 뒤늦게 올 수 있는데,
+ * 그걸 방금 일어난 것처럼 보드에 띄우면 없느니만 못하다.
+ *
+ * 시계 계산은 [formatMatchClock] 하나로 두고 여기서는 분만 떼어 쓴다 — 규칙이 둘로
+ * 갈리면 보드의 시계와 이 판정이 서로 다른 분을 보게 된다.
+ */
+export function matchMinuteNow(
+  kickoffIso: string,
+  now: number,
+  periods?: MatchPeriods | null,
+  status?: string | null
+): number | null {
+  const text = formatMatchClock(kickoffIso, now, periods, status);
+  if (!text) return null;
+  const minute = Number(text.split(':')[0]);
+  return Number.isFinite(minute) ? minute : null;
+}
+
+/**
  * 이 이름이 아틀레티코인지.
  *
  * `AT 마드리드`는 네이버 표기이자 **라이브 스코어가 실제로 주는 값**이다. 이게 빠지면
@@ -177,6 +228,16 @@ export interface BoardSpec {
   homeScore: number;
   awayScore: number;
   scorer?: string;
+  /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 본다 */
+  sub?: SubEvent;
+  /**
+   * 교체 보드 등장 진행도 0~1. 이름 두 개가 바깥에서 가운데로 모이는 데 쓴다.
+   *
+   * 글자가 텍스처 안에 있어서 **다시 굽는 것 말고는 움직일 방법이 없다**(보드가 휜 링이라
+   * CSS로 덧씌울 수도 없다). 그래서 등장 0.45초 동안만 값이 바뀌고 그 뒤로는 1에 멈춘다 —
+   * 골 연출처럼 내내 도는 비용이 아니라 한 번에 끝나는 비용이다.
+   */
+  subPhase?: number;
 }
 
 /** 얕은 비교 — 필드가 전부 원시값이라 이걸로 충분하다 */
@@ -194,6 +255,10 @@ export function sameSpec(a: BoardSpec | null, b: BoardSpec): boolean {
     a.awayIsAtleti === b.awayIsAtleti &&
     a.homeScore === b.homeScore &&
     a.awayScore === b.awayScore &&
-    a.scorer === b.scorer
+    a.scorer === b.scorer &&
+    // 교체가 연달아 오면 여기서 걸러야 보드가 다시 그려진다
+    a.sub?.playerIn === b.sub?.playerIn &&
+    a.sub?.playerOut === b.sub?.playerOut &&
+    a.subPhase === b.subPhase
   );
 }
