@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PawPrint, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, Newspaper } from 'lucide-react';
 import type { RecentMatch, UpcomingMatch, HeadlineResponse } from '@/client/types.gen';
 import { sortScorers, formatKST } from './utils';
@@ -18,9 +18,41 @@ interface MatchResultCardProps {
   headlines?: HeadlineResponse[] | null;
 }
 
+/** 자동으로 다음 장으로 넘어가기까지 (ms) */
+const AUTOPLAY_MS = 7000;
+
 export default function MatchResultCard({ recentMatch, upcomingMatches, headlines }: MatchResultCardProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  /**
+   * 자동 넘김 — 사람이 한 번이라도 직접 넘기면 멈춘다.
+   *
+   * 잠깐 쉬었다 다시 도는 방식도 있지만, 그러면 읽고 있는 사람에게서 카드를 다시
+   * 빼앗는다. 페이지를 고른 것은 "이걸 보겠다"는 뜻이라 그 뜻을 그대로 둔다.
+   */
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [hovered, setHovered] = useState(false);
+
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    setAutoPlay(false);
+  }, []);
+
+  useEffect(() => {
+    // 경기 결과가 없으면 2장은 안내 문구뿐이다 — 굳이 거기로 넘길 이유가 없다
+    if (!autoPlay || hovered || isExpanded || !recentMatch) return;
+    // 움직임을 줄여달라고 해둔 사람에게는 저절로 움직이는 화면을 주지 않는다
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    const timer = setInterval(() => {
+      // 안 보이는 탭에서는 넘기지 않는다 — 돌아왔을 때 엉뚱한 장이 떠 있게 된다
+      if (document.hidden) return;
+      setCurrentPage((page) => (page === 0 ? 1 : 0));
+    }, AUTOPLAY_MS);
+
+    return () => clearInterval(timer);
+  }, [autoPlay, hovered, isExpanded, recentMatch]);
 
   // Touch swipe navigation (mobile): swipe left → next page, swipe right → previous
   const touchStartX = useRef<number | null>(null);
@@ -39,7 +71,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
     touchStartY.current = null;
     // Ignore taps and vertical scrolls; act only on a clear horizontal swipe
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-    setCurrentPage(dx < 0 ? 1 : 0);
+    goToPage(dx < 0 ? 1 : 0);
   };
 
   // If there is no data at all, show the loading/fallback container
@@ -83,6 +115,9 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         className="p-6 md:p-8 flex flex-col md:flex-row gap-8 md:gap-12 min-h-[280px] relative touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        /* 읽는 동안 카드가 넘어가지 않도록 — 마우스를 올려두면 멈춘다 */
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
         
         {/* Left side: Match Result or Headlines (70%) - Divider border styled in Atlético Navy in light mode */}
@@ -113,7 +148,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
           <div className="flex-1 flex flex-col justify-center min-h-[160px]">
             {currentPage === 0 ? (
               /* Page 1: Headlines */
-              <div className="flex flex-col gap-2.5 justify-center h-full animate-fadeIn">
+              <div className="flex flex-col gap-2.5 justify-center h-full animate-pageSlide">
                 {headlineList.map((hl, idx) => {
                   if (hl) {
                     return (
@@ -164,7 +199,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
               </div>
             ) : (
               /* Page 2: Match Result */
-              <div className="flex flex-col h-full justify-between animate-fadeIn px-3 md:px-0">
+              <div className="flex flex-col h-full justify-between animate-pageSlide px-3 md:px-0">
                 {recentMatch ? (
                   <>
                     <ScoreSection 
@@ -200,12 +235,12 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
           {/* Page Dots Indicator */}
           <div className="flex justify-center items-center gap-2 mt-6 px-6 md:px-0">
             <button
-              onClick={() => setCurrentPage(0)}
+              onClick={() => goToPage(0)}
               className={`h-1.5 rounded-full transition-all duration-300 ${currentPage === 0 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5 hover:bg-white/50'}`}
               title="1페이지 (헤드라인)"
             />
             <button
-              onClick={() => setCurrentPage(1)}
+              onClick={() => goToPage(1)}
               className={`h-1.5 rounded-full transition-all duration-300 ${currentPage === 1 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5 hover:bg-white/50'}`}
               title="2페이지 (경기 결과)"
             />
@@ -214,7 +249,12 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         </div>
 
         {/* Right side: Upcoming Matches (Page 1) or Player Ratings (Page 2) */}
-        <div className="w-full md:w-[26%] lg:w-[25%] shrink-0 md:absolute md:right-8 md:top-8 md:bottom-8 md:flex md:flex-col">
+        {/* key를 페이지에 걸어 두면 장이 바뀔 때마다 다시 마운트되면서
+            왼쪽 본문과 같은 타이밍으로 슥 들어온다 */}
+        <div
+          key={currentPage}
+          className="w-full md:w-[26%] lg:w-[25%] shrink-0 md:absolute md:right-8 md:top-8 md:bottom-8 md:flex md:flex-col animate-pageSlide"
+        >
           {currentPage === 0 ? (
             <UpcomingSection upcomingMatches={upcomingMatches} />
           ) : (
@@ -231,7 +271,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         {/* Floating Slide Navigation - Left Edge of the Entire Card */}
         {currentPage > 0 && (
           <button 
-            onClick={() => setCurrentPage(0)}
+            onClick={() => goToPage(0)}
             className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
             title="이전 페이지"
           >
@@ -242,7 +282,7 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
         {/* Floating Slide Navigation - Right Edge of the Entire Card */}
         {currentPage < 1 && (
           <button 
-            onClick={() => setCurrentPage(1)}
+            onClick={() => goToPage(1)}
             className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/25 hover:bg-black/50 border border-white/10 hover:border-white/20 text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md dark:bg-black/50 dark:hover:bg-black/75 dark:border-volt/20 dark:hover:border-volt/40 backdrop-blur-xs group"
             title="다음 페이지"
           >
