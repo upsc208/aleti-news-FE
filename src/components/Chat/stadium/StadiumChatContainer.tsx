@@ -45,7 +45,14 @@ interface StadiumChatContainerProps {
 
 
 /** 교체 화면이 보드를 잠깐 가로채는 시간. 한 건당 이만큼씩, 여러 건이면 차례로 */
-const SUB_BOARD_MS = 3000;
+const SUB_BOARD_MS = 5000;
+
+/**
+ * 탭에서 돌아왔을 때 남은 시간이 이보다 짧으면 이만큼은 세워 둔다.
+ *
+ * 남은 0.2초를 곧이곧대로 지키면 돌아오자마자 사라져 깜빡인 것으로만 보인다.
+ */
+const SUB_RESUME_MIN_MS = 1200;
 
 /**
  * ?preview=1&sub=1 로 교체 보드를 세워둘 때 쓰는 값.
@@ -216,7 +223,10 @@ export default function StadiumChatContainer({
   const [subEvent, setSubEvent] = useState<SubEvent | null>(null);
   /** 아직 못 보여준 교체들 — 한 턴에 여러 건이 도착할 수 있다 */
   const [subQueue, setSubQueue] = useState<SubEvent[]>([]);
-  const subTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 지금 서 있는 교체를 **화면에 보이는 상태로** 몇 ms 세워 뒀는지 — 탭이 숨은 동안은 안 센다 */
+  const subShownMs = useRef(0);
+  /** 탭이 뒤로 갔는지. 안 보이는 동안 보드 시간을 흘리지 않으려고 본다 */
+  const [tabHidden, setTabHidden] = useState(false);
 
   useEffect(() => {
     if (isPreview || !live) return;
@@ -263,22 +273,45 @@ export default function StadiumChatContainer({
     ]);
   }, [live, isPreview]);
 
+  useEffect(() => {
+    const sync = () => setTabHidden(document.visibilityState === 'hidden');
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+
   /** 대기열에서 하나씩 꺼내 [SUB_BOARD_MS]만큼 보드에 세운다 */
   useEffect(() => {
-    if (subEvent || subQueue.length === 0) return;
+    // 숨은 동안 꺼내면 아무도 못 본 채 시간만 흐른다. 돌아올 때까지 큐에 그대로 둔다
+    if (tabHidden || subEvent || subQueue.length === 0) return;
 
     setSubEvent(subQueue[0]);
     setSubQueue((prev) => prev.slice(1));
+    subShownMs.current = 0;
+  }, [tabHidden, subEvent, subQueue]);
 
-    subTimer.current = setTimeout(() => {
-      subTimer.current = null;
-      setSubEvent(null);
-    }, SUB_BOARD_MS);
-  }, [subEvent, subQueue]);
+  /*
+    보드를 내리는 타이머를 위 effect에서 떼어낸 이유 —
 
-  useEffect(() => () => {
-    if (subTimer.current) clearTimeout(subTimer.current);
-  }, []);
+    브라우저는 백그라운드 탭의 setTimeout을 늦추거나 아예 얼렸다가 복귀할 때 몰아서 터뜨린다.
+    한 벌짜리 5초 타이머를 그냥 걸어 두면 폰을 잠갔다 켰을 때 보드가 돌아오자마자 사라져
+    교체 한 건을 통째로 놓친다.
+
+    그래서 탭이 숨으면 그때까지 **보인** 시간만 [subShownMs]에 적고 타이머를 걷어낸다.
+    돌아오면 남은 만큼 다시 센다 — 보드 시간은 화면에 떠 있을 때만 흐른다.
+  */
+  useEffect(() => {
+    if (!subEvent || tabHidden) return;
+
+    const left = Math.max(SUB_BOARD_MS - subShownMs.current, SUB_RESUME_MIN_MS);
+    const since = Date.now();
+    const timer = setTimeout(() => setSubEvent(null), left);
+
+    return () => {
+      clearTimeout(timer);
+      subShownMs.current += Date.now() - since;
+    };
+  }, [subEvent, tabHidden]);
 
   /** 경기가 끝나고 아틀레티가 이겼으면 한 번만 축포를 띄운다 */
   const celebratedWin = useRef(false);
