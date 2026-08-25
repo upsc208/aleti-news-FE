@@ -97,6 +97,7 @@ export default function StadiumChatContainer({
     recentMatch,
     messages,
     live,
+    liveLoaded,
     onlineCount,
     isLoading,
     roomOpen,
@@ -354,18 +355,39 @@ export default function StadiumChatContainer({
   // 지금 스코어 — 서버 스냅샷이 있으면 그 값이 정답이다.
   // 골 목록에서 다시 세지 않는 이유: 자책골 가산을 백엔드가 이미 계산해 두었고,
   // 제공사가 스코어와 득점자 목록을 다르게 줄 때 스코어 쪽을 믿는 편이 맞다.
+  /**
+   * 보드가 쓰는 [match] — **live를 받아보기 전에는 비어 있다.**
+   *
+   * match(=recentMatch)는 "가장 최근에 끝난 경기"다. 이 방과 상대가 다르고, 구조상 live보다
+   * 항상 먼저 도착한다(getRecentMatch가 방 키를 정해줘야 roomInfo가 나간다). 그대로 폴백에
+   * 두면 입장할 때마다 **지난 경기 상대·점수·90:00에 눌러앉은 시계**가 잠깐 떴다 바뀐다.
+   *
+   * 그렇다고 폴백을 없앨 수는 없다. 자유 채팅방처럼 **애초에 진행 중인 경기가 없는 방**에서는
+   * 이 값이 임시가 아니라 정답이다. 그래서 지우는 게 아니라 [liveLoaded]로 때를 가른다 —
+   * 받아보기 전에는 비우고, 받아봤는데 없으면 그때 채운다.
+   *
+   * 비어 있는 동안은 킥오프도 없으니 시계가 null이 되고, 보드는 후원 화면(pre)으로 기다린다
+   * (boardModel.resolveLedMode). 틀린 값을 띄우느니 아무것도 주장하지 않는 편이 낫다.
+   *
+   * 미리보기(?preview=1)는 서버가 없어 live가 영영 안 오므로 예외다.
+   */
+  const boardMatch = isPreview || liveLoaded ? match : null;
+
   const lastGoal = goals[goals.length - 1];
-  const homeScore = live?.homeScore ?? lastGoal?.homeScore ?? match?.homeScore ?? 0;
-  const awayScore = live?.awayScore ?? lastGoal?.awayScore ?? match?.awayScore ?? 0;
+  const homeScore = live?.homeScore ?? lastGoal?.homeScore ?? boardMatch?.homeScore ?? 0;
+  const awayScore = live?.awayScore ?? lastGoal?.awayScore ?? boardMatch?.awayScore ?? 0;
 
   /**
    * 보드에 올릴 팀 이름 — **라틴 표기만 넘긴다.**
    *
    * 서버가 FotMob에서 가져온 이름이 있으면 그걸 쓰고, 없으면 boardNames의 표로 떨어진다.
-   * (match는 "가장 최근에 끝난 경기"라 지금 보는 경기와 다를 수 있어 맨 뒤 폴백이다)
+   * 맨 뒤 폴백이 [boardMatch]인 이유는 그 주석에 있다.
    */
-  const homeTeam = latinTeam(live?.homeTeam ?? match?.homeTeam ?? 'Atlético de Madrid', live?.homeTeamLatin);
-  const awayTeam = latinTeam(live?.awayTeam ?? match?.awayTeam ?? 'Rival', live?.awayTeamLatin);
+  const homeTeam = latinTeam(
+    live?.homeTeam ?? boardMatch?.homeTeam ?? 'Atlético de Madrid',
+    live?.homeTeamLatin
+  );
+  const awayTeam = latinTeam(live?.awayTeam ?? boardMatch?.awayTeam ?? 'Rival', live?.awayTeamLatin);
 
   /**
    * 보드에 흘릴 득점자. 미리보기에는 연출 추적이 없으니 마지막 골을 쓴다.
@@ -538,11 +560,11 @@ export default function StadiumChatContainer({
             awayScore,
             // 지금 보는 경기의 대회명. FotMob 라틴 → 네이버 한글 → (마지막으로) 최근 경기 순.
             // 셋 다 없거나 표에 없는 한국어면 latinCompetition이 경기장 이름으로 대신한다.
-            competition: live?.competitionLatin ?? live?.competition ?? match?.tournament,
-            venue: match?.isHome === false ? undefined : 'Riyadh Air Metropolitano',
+            competition: live?.competitionLatin ?? live?.competition ?? boardMatch?.tournament,
+            venue: boardMatch?.isHome === false ? undefined : 'Riyadh Air Metropolitano',
             // 지금 보고 있는 경기의 킥오프를 쓴다. match(=recentMatch)는 "가장 최근에 끝난
             // 경기"라 여기 쓰면 며칠 전 시각으로 세다가 90:00에 눌러앉는다.
-            kickoff: live?.kickoff ?? match?.matchDate,
+            kickoff: live?.kickoff ?? boardMatch?.matchDate,
             // 실제 전·후반 시작 시각이 오면 예정 킥오프 대신 이걸로 센다 (boardModel 참고)
             periods: live?.periods,
             // 공이 실제로 굴렀는지 — 세레머니로 킥오프가 늦어도 시계가 먼저 돌지 않게 한다

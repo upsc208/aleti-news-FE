@@ -79,6 +79,14 @@ export function useChatRoom(initialMatchId: string) {
    * 누적하지 않으므로 VAR 취소로 골이 사라져도 그대로 따라간다.
    */
   const [live, setLive] = useState<LiveMatchState | null>(null);
+  /**
+   * [live]를 **한 번이라도 받아봤는가.**
+   *
+   * live가 null인 데는 두 가지 뜻이 섞여 있다 — "아직 안 왔다"와 "이 방엔 라이브가 없다"
+   * (자유 채팅방이거나 경기 매핑 전). 둘을 구분 못 하면 보드가 아직 안 온 것을 없는 것으로
+   * 보고 지난 경기 정보로 채워, 입장할 때마다 엉뚱한 상대가 잠깐 떴다 바뀐다.
+   */
+  const [liveLoaded, setLiveLoaded] = useState<boolean>(false);
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -249,6 +257,9 @@ export function useChatRoom(initialMatchId: string) {
       console.error('Failed to fetch room info:', err);
     } finally {
       setIsLoading(false);
+      // 실패해도 올린다 — 그 시점에 우리가 아는 건 이게 전부다.
+      // 안 올리면 서버가 죽었을 때 보드가 영영 기다린다.
+      setLiveLoaded(true);
     }
   }, [matchId, roomReady, appendMessages]);
 
@@ -440,6 +451,7 @@ export function useChatRoom(initialMatchId: string) {
     recentMatch,
     messages,
     live,
+    liveLoaded,
     onlineCount,
     isLoading,
     roomOpen,
