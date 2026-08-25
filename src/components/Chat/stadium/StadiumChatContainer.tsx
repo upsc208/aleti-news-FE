@@ -101,7 +101,7 @@ export default function StadiumChatContainer({
     onlineCount,
     isLoading,
     roomOpen,
-    isConnected,
+    showDisconnected,
     errorNotice,
     setErrorNotice,
     myNickname,
@@ -636,8 +636,9 @@ export default function StadiumChatContainer({
           </div>
         )}
 
-        {/* 연결 끊김 / 정책 위반 안내 */}
-        {(!isConnected || errorNotice) && !isLoading && (
+        {/* 연결 끊김 / 정책 위반 안내.
+            끊김은 유예 뒤에 뜨지만 정책 위반은 즉시 띄운다 — 그건 다시 붙는다고 풀리지 않는다 */}
+        {(showDisconnected || errorNotice) && !isLoading && (
           <div className="stadium-notice-slot">
             <div
               role="status"

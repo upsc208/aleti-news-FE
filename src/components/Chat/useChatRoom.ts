@@ -31,6 +31,14 @@ const MAX_HISTORY = 100;
 // (비정상 종료 시 카운트가 드리프트할 수 있음 — redis-design 6.7).
 const ONLINE_POLL_MS = 30_000;
 
+/**
+ * 연결이 끊긴 것을 알리기 전에 참는 시간.
+ *
+ * 이 방들은 다른 앱(중계)과 번갈아 보는 화면이다. 앱을 오가면 소켓이 끊겼다 붙는 일이
+ * 잦은데 대부분 이 안에 다시 붙으므로, 끊기자마자 띄우면 정상적인 왕복이 사고로 보인다.
+ */
+const DISCONNECT_GRACE_MS = 1500;
+
 // 라우트 파라미터가 없을 때 쓰는 placeholder. 실제 방 키가 아니므로
 // getRecentMatch()로 진짜 matchId를 받기 전까지는 접속하지 않는다.
 const PENDING_MATCH_ID = 'recent';
@@ -351,7 +359,36 @@ export function useChatRoom(initialMatchId: string) {
     client.activate();
     stompRef.current = client;
 
+    /*
+      **앱을 오갈 때의 재연결.**
+
+      쿠팡플레이로 경기를 보다가 돌아오는 식으로 쓰는 방이다. 폰에서 브라우저를 뒤로
+      보내면 소켓이 끊기는데, 돌아왔을 때 라이브러리가 예약해 둔 재연결 차례(3초)를
+      그대로 기다리면 그동안 "끊겼어요"가 떠 있다. 게다가 그 타이머는 백그라운드에서
+      멈춰 있다가 돌아와서야 남은 시간을 마저 세므로 체감은 더 길다.
+
+      그래서 돌아온 즉시 예약을 걷어내고 새로 붙는다. deactivate()가 예약된 재연결
+      타이머를 지우므로(@stomp/stompjs Client#deactivate), 그냥 activate()를 다시
+      부르는 것으로는 안 된다 — 이미 ACTIVE라 무시된다.
+    */
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      // 붙어 있으면 끊긴 적이 없다는 뜻이다. 자리를 비운 사이 올라온 메시지만 채운다
+      if (client.connected) {
+        fetchRoomData();
+        return;
+      }
+
+      client.deactivate().then(() => {
+        // 그 사이 방을 떠났으면 되살리지 않는다
+        if (stompRef.current === client) client.activate();
+      });
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
+      document.removeEventListener('visibilitychange', onVisible);
       stompRef.current = null;
       setIsConnected(false);
       client.deactivate();
@@ -446,6 +483,44 @@ export function useChatRoom(initialMatchId: string) {
     }
   }, [router]);
 
+  /*
+    끊김 안내를 [DISCONNECT_GRACE_MS]만큼 늦춘다.
+
+    **유예는 화면으로 돌아온 시점부터 다시 센다.** 앱을 오가는 동안 소켓은 진작 끊겨
+    있는데 그때부터 재면 타이머가 백그라운드에서 만료돼, 돌아오는 순간 배너가 그대로
+    떠 있다 — 유예를 둔 뜻이 사라진다. 사용자가 보고 있는 시간만 센다.
+
+    effect 본문에서 표시를 끄지 않는 이유 — 렌더 직후 setState를 부르면 렌더가 한 번 더
+    돈다. 다시 붙으면 deps가 바뀌어 cleanup이 도니 거기서 걷으면 된다.
+  */
+  const [disconnectShown, setDisconnectShown] = useState(false);
+  useEffect(() => {
+    if (isConnected) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = (reset: boolean) => {
+      clearTimeout(timer);
+      if (reset) setDisconnectShown(false);
+      timer = setTimeout(() => setDisconnectShown(true), DISCONNECT_GRACE_MS);
+    };
+
+    arm(false);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') arm(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      setDisconnectShown(false);
+    };
+  }, [isConnected]);
+
+  /** 끊김 배너를 지금 띄워야 하는가 — 붙는 순간 곧바로 내려간다 */
+  const showDisconnected = !isConnected && disconnectShown;
+
   return {
     matchId,
     recentMatch,
@@ -456,6 +531,7 @@ export function useChatRoom(initialMatchId: string) {
     isLoading,
     roomOpen,
     isConnected,
+    showDisconnected,
     errorNotice,
     setErrorNotice,
     isFreeRoom,

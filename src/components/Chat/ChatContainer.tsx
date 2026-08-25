@@ -39,7 +39,7 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
     onlineCount,
     isLoading,
     roomOpen,
-    isConnected,
+    showDisconnected,
     errorNotice,
     setErrorNotice,
     isFreeRoom,
@@ -186,8 +186,9 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           </div>
         )}
 
-        {/* 연결 끊김 / 정책 위반 안내 — 예전에는 실패가 전부 조용히 무시됐다 */}
-        {(!isConnected || errorNotice) && !isLoading && (
+        {/* 연결 끊김 / 정책 위반 안내 — 예전에는 실패가 전부 조용히 무시됐다.
+            끊김은 유예 뒤에 뜨지만 정책 위반은 즉시 띄운다 — 그건 다시 붙는다고 풀리지 않는다 */}
+        {(showDisconnected || errorNotice) && !isLoading && (
           <div className="absolute bottom-2 inset-x-0 px-4 flex justify-center pointer-events-none">
             <div
               role="status"
