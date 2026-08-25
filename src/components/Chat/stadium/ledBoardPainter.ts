@@ -212,13 +212,19 @@ function paintSub(
 
   const narrow = usableW / texH < 13;
 
-  const fTag = texH * (narrow ? 0.44 : 0.56);
+  const fTag = texH * (narrow ? 0.36 : 0.56);
   // 대각선이 눕는 정도. 판 높이에 비례해야 어느 화면에서나 같은 기울기로 보인다
   const slant = texH * (narrow ? 0.6 : 0.75);
 
   ctx.font = font(fTag);
   const tagTextW = Math.max(ctx.measureText('IN').width, ctx.measureText('OUT').width);
-  const tagW = tagTextW * 2 + slant + texH * (narrow ? 1.0 : 2.1);
+  /*
+    표 좌우의 여백. 좁은 판에서는 이 자리를 이름과 화살표에 넘긴다 —
+    다섯 조각이 폭을 나눠 쓰는데 IN/OUT은 색(초록·빨강)과 화살표 방향으로도 읽히니
+    여기가 제일 먼저 양보할 자리다. **글자 크기(fTag)는 그대로 둔다** — 자리만 줄인다.
+  */
+  const tagPad = texH * (narrow ? 0.2 : 2.1);
+  const tagW = tagTextW * 2 + slant + tagPad;
 
   /*
     화살표는 판 위아래에 닿을락 말락 하게 세운다 — 이 보드에서 가장 큰 글자다.
@@ -226,6 +232,18 @@ function paintSub(
     **글자 크기가 아니라 실제 획 높이로 맞춘다.** `>`는 대문자보다 한참 낮게 그려지는
     글자라 이름과 같은 배수를 주면 눈에 띄게 작아진다. 그려질 높이를 재서 역산한다.
   */
+  /*
+    **좁은 판에서는 화살표를 두 개만 쓴다.**
+
+    화살표 칸은 글자 수에 비례해 폭을 먹는다. 폰에서 세 개를 유지하면 같은 칸에
+    세 글자를 욱여넣느라 화살표 자체가 작아지고(실측 0.85), 이름에 넘길 폭도 안 남는다.
+    두 개로 줄이면 화살표는 오히려 커지고(0.89) 이름 몫도 생긴다.
+
+    넓은 판(PC)은 폭이 남아 세 개가 다 크게 들어가므로 그대로 둔다.
+  */
+  const arrowIn = narrow ? '>>' : '>>>';
+  const arrowOut = narrow ? '<<' : '<<<';
+
   const ARROW_FILL = 0.94;
   let fArrow = texH * 0.9;
   ctx.font = font(fArrow);
@@ -241,25 +259,45 @@ function paintSub(
     누가 들어오고 나가는지가 화살표보다 중요하다.
   */
   setSpacing(ctx, '0em');
-  const nameMin = usableW * 0.2;
+  /*
+    **이름이 받는 폭은 사실상 이 값이 정한다.**
+
+    아래 arrowRoom이 "남는 폭에서 이름 몫을 뺀 나머지"를 전부 가져가므로, 표를 아무리
+    줄여도 그 폭은 화살표로 갈 뿐 이름은 늘 이만큼만 받는다. 폰에서 이름을 키우려면
+    여기를 올려야 한다 (실측: 0.20에서 이름 0.345, 0.28에서 0.55).
+
+    0.28을 넘기면 이름은 더 안 커지고(화살표가 최소 폭에 걸린다) 화살표만 작아진다.
+  */
+  const nameMin = usableW * (narrow ? 0.28 : 0.2);
   const arrowRoom = Math.max(texH * 0.7, (usableW - tagW) / 2 - nameMin);
 
   ctx.font = font(fArrow);
-  let arrowTextW = ctx.measureText('>>>').width;
+  let arrowTextW = ctx.measureText(arrowIn).width;
   if (arrowTextW > arrowRoom) {
     fArrow *= arrowRoom / arrowTextW;
     ctx.font = font(fArrow);
-    arrowTextW = ctx.measureText('>>>').width;
+    arrowTextW = ctx.measureText(arrowIn).width;
   }
   const arrowW = arrowTextW + texH * 0.3;
-  setSpacing(ctx, '0.2em');
+  /*
+    **좁은 판에서는 이름 자간을 좁힌다.**
+
+    이 보드의 글자는 0.2em으로 벌려 쓰는데, 일곱 글자짜리 성이면 자간만으로 1.4em을
+    쓴다 — 이름 칸의 4분의 1이다. 칸이 빠듯한 폰에서는 그 폭이 고스란히 글자 크기에서
+    빠져나간다. 자간을 좁히면 화살표에서도 표에서도 폭을 뺏지 않고 글자만 커진다.
+
+    Bebas Neue는 원래 좁고 촘촘한 서체라 이 정도로 붙여도 뭉쳐 보이지 않는다.
+    넓은 판(PC)은 폭이 남으니 원래 자간을 그대로 쓴다.
+  */
+  const nameTrack = narrow ? '0.06em' : '0.2em';
+  setSpacing(ctx, nameTrack);
 
   /*
     **내용 크기대로 묶어 가운데에 세운다.** 남는 폭을 이름 칸이 다 가져가면 글자가 칸
     한가운데 놓여 화살표와 멀어지고, 폰처럼 좁은 판에서는 칸에 맞추느라 글자만 작아진다.
     이름 칸을 글자 너비에 맞춰 잡고, 다섯 조각을 붙여 세운 뒤 통째로 가운데로 민다.
   */
-  let fName = texH * 0.82;
+  let fName = texH * 0.9;
   ctx.font = font(fName);
   let widest = Math.max(ctx.measureText(into).width, ctx.measureText(out).width);
 
@@ -295,9 +333,10 @@ function paintSub(
   // ── 왼쪽 무리: 들어오는 선수 · >>> · 초록 쐐기 ──
   ctx.save();
   ctx.translate(-shift, 0);
+  setSpacing(ctx, nameTrack);
   label(ctx, xNameIn, nameW, texH, into, BOARD_BLUE, fName);
   setSpacing(ctx, '0em');
-  label(ctx, xArrowL, arrowW, texH, '>>>', BOARD_GREEN, fArrow);
+  label(ctx, xArrowL, arrowW, texH, arrowIn, BOARD_GREEN, fArrow);
   setSpacing(ctx, '0.2em');
 
   ctx.beginPath();
@@ -334,10 +373,11 @@ function paintSub(
   ctx.strokeStyle = '#ffffff';
   ctx.stroke();
 
+  setSpacing(ctx, '0.2em');
   label(ctx, mid + slant * 0.15, tagW * 0.5, texH, 'OUT', '#ffffff', fTag);
   setSpacing(ctx, '0em');
-  label(ctx, xArrowR, arrowW, texH, '<<<', BOARD_RED, fArrow);
-  setSpacing(ctx, '0.2em');
+  label(ctx, xArrowR, arrowW, texH, arrowOut, BOARD_RED, fArrow);
+  setSpacing(ctx, nameTrack);
   label(ctx, xNameOut, nameW, texH, out, BOARD_BLUE, fName);
   ctx.restore();
 
@@ -390,7 +430,17 @@ function label(
   ctx.font = fontCss ?? font(fontPx);
   ctx.textBaseline = 'middle';
 
-  const pad = fontPx * 0.5;
+  /*
+    안쪽 여백은 글자 크기에 비례하되 **칸 폭에 비해 과하면 안 된다.**
+
+    아래 fillText의 maxW로 넘어가는 값이라, 여백이 칸에 남는 여유보다 크면 캔버스가
+    글자를 그 폭에 맞춰 가로로 눌러 버린다. 교체 보드처럼 칸을 글자 너비에 딱 맞춰 잡는
+    곳에서는 fontPx * 0.5가 늘 여유보다 커서, 이름도 화살표도 눌린 채로 그려지고 있었다
+    (폰에서 유독 작아 보이던 이유다 — 크기가 아니라 폭이 깎였다).
+
+    칸이 넉넉하면 예전과 같은 값이고, 빠듯할 때만 여백이 줄어든다.
+  */
+  const pad = Math.min(fontPx * 0.5, w * 0.12);
   const maxW = Math.max(1, w - pad);
   const y = h * yRatio;
 
@@ -559,7 +609,7 @@ function uclPanel(
 }
 
 /**
- * 라리가 칸 — 빨간 판에 흰 LALIGA, 그 옆에 흰 동그라미 안의 빨간 EA.
+ * 라리가 칸 — 흰 판에 빨간 LALIGA, 그 옆에 빨간 동그라미 안의 흰 EA.
  *
  * 실물 보드에서 리그 로고가 붙는 자리다. 로고 이미지는 상표라 못 쓰지만 글자와 동그라미로
  * 옮기는 것은 문제가 없다 — 이 파일이 구단 엠블럼 대신 약칭을 쓰는 것과 같은 이유다.
@@ -567,8 +617,8 @@ function uclPanel(
  * EA만 자간을 0으로 되돌린다. 자간은 마지막 글자 뒤에도 붙어서, 그대로 두면 가운데 정렬한
  * 글자가 동그라미 안에서 왼쪽으로 밀린다.
  *
- * 양 끝에는 흰 세로 바를 세운다. 왼쪽 이웃이 같은 빨간 구단 판이라 바가 없으면 두 판이
- * 한 덩어리로 붙어 버린다.
+ * 양 끝에 세로 바는 세우지 않는다. 좌우 이웃이 둘 다 파란 판(경기장·홈 득점)이라
+ * 흰 판이 그 자체로 갈라져 보인다 — 바를 세우면 가르는 게 아니라 조이기만 한다.
  */
 function laligaPanel(
   ctx: CanvasRenderingContext2D,
@@ -577,13 +627,8 @@ function laligaPanel(
   h: number,
   fontPx: number
 ) {
-  ctx.fillStyle = BOARD_RED;
-  ctx.fillRect(x, 0, w, h);
-
-  const bar = Math.max(3, h * PANEL_BAR);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x, 0, bar, h);
-  ctx.fillRect(x + w - bar, 0, bar, h);
+  ctx.fillRect(x, 0, w, h);
 
   const dot = h * 0.52;
   const gap = fontPx * 0.34;
@@ -595,7 +640,7 @@ function laligaPanel(
   const textW = ctx.measureText(LALIGA_WORDMARK).width;
   const startX = x + (w - (textW + gap + dot)) / 2;
 
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = BOARD_RED;
   ctx.fillText(LALIGA_WORDMARK, startX, h * 0.52, textW);
 
   const cx = startX + textW + gap + dot / 2;
@@ -605,16 +650,19 @@ function laligaPanel(
 
   setSpacing(ctx, '0');
   const eaFont = dot * 0.54;
-  ctx.fillStyle = BOARD_RED;
+  ctx.fillStyle = '#ffffff';
   ctx.font = font(eaFont);
   ctx.textAlign = 'center';
+  /*
+    **획을 덧대지 않는다.**
+
+    전에는 빨간 동그라미가 아니라 흰 동그라미에 빨간 EA였고, 어두운 글자는 밝은 바탕에서
+    실제보다 가늘어 보여서 획을 덧대 보정했다. 색을 뒤집은 지금은 정반대다 — 밝은 글자가
+    어두운 바탕에서 번져 굵어 보이므로, 덧대면 두 배로 두꺼워진다.
+
+    Bebas Neue는 400 한 종뿐이라(위 [font] 주석 참고) 이게 낼 수 있는 가장 가는 획이다.
+  */
   ctx.fillText('EA', cx, h * 0.52, dot * 0.82);
-  // 동그라미 안에서 두 글자가 가늘어 보인다 — 다른 판보다 두껍게 획을 덧댄다.
-  // 여기서 더 올리면 A의 속이 메워진다.
-  ctx.strokeStyle = BOARD_RED;
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = eaFont * 0.09;
-  ctx.strokeText('EA', cx, h * 0.52, dot * 0.82);
   setSpacing(ctx, '0.06em');
 }
 
@@ -677,12 +725,13 @@ function paintIdle(
   const league = (): Cell =>
     isLaliga
       ? {
-          // 글자 + 사이 + EA 동그라미 + 양옆 여백(흰 바와 그 안쪽 빨강).
-          // 여백을 pad 1.6배에서 3.2배로 늘렸다 — 바가 글자에 바짝 붙어 판이 답답했다.
-          w: wOf(LALIGA_WORDMARK, fLeague) + fLeague * 0.34 + texH * 0.52 + pad * 3.2,
-          bg: BOARD_RED,
+          // 글자 + 사이 + EA 동그라미 + 양옆 흰 여백.
+          // 여백은 pad 1.6배 → 3.2배 → 4.8배로 두 번 늘렸다. 판을 흰색으로 뒤집으면서
+          // 글자가 판 끝에 붙어 보이던 게 도드라져서 한 번 더 벌렸다.
+          w: wOf(LALIGA_WORDMARK, fLeague) + fLeague * 0.34 + texH * 0.52 + pad * 4.8,
+          bg: white,
           text: LALIGA_WORDMARK,
-          color: white,
+          color: BOARD_RED,
           font: fLeague,
           laliga: true,
         }
