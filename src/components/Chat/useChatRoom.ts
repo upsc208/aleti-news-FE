@@ -143,16 +143,45 @@ export function useChatRoom(initialMatchId: string) {
     }
   }, []);
 
+  /**
+   * 사용자가 직접 끈 적이 있는지.
+   *
+   * 승리 자동 재생이 이걸 본다 — 조용히 보겠다고 스피커를 끈 사람에게
+   * 경기가 끝나는 순간 응원가를 다시 트는 건 켜주는 게 아니라 들이미는 것이다.
+   */
+  const chantMutedByUser = useRef(false);
+
   const toggleChant = useCallback(() => {
     if (!audioRef.current) return;
     if (isPlayingChant) {
+      chantMutedByUser.current = true;
       audioRef.current.pause();
     } else {
+      chantMutedByUser.current = false;
       audioRef.current.play().catch((err) => {
         console.error('Failed to play chant:', err);
       });
     }
   }, [isPlayingChant]);
+
+  /**
+   * 응원가를 켠다 — 끄기는 없다. 승리처럼 방이 알아서 트는 자리에서 쓴다.
+   *
+   * 두 가지를 존중한다. 직접 끈 사람에게는 다시 틀지 않고(chantMutedByUser),
+   * 이미 흐르고 있으면 건드리지 않는다.
+   *
+   * 브라우저가 막을 수 있다. 자동 재생은 문서를 한 번이라도 클릭한 뒤에만 허용되는데,
+   * 방에 들어와 아무것도 누르지 않고 보고만 있던 사람이 여기 걸린다. 그때는 조용히
+   * 실패하고 헤더의 스피커 버튼이 꺼진 채로 남는다 — 눌러서 켜면 된다.
+   */
+  const playChant = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || chantMutedByUser.current || !audio.paused) return;
+
+    audio.play().catch((err) => {
+      console.warn('Chant autoplay blocked:', err);
+    });
+  }, []);
 
   // 메시지는 서버(Redis)가 보관한다. 브라우저에 따로 저장하지 않는다 —
   // 저장해두면 서버에 도달하지 못한 내 메시지가 보내진 것처럼 남아,
@@ -551,6 +580,7 @@ export function useChatRoom(initialMatchId: string) {
     scrollContainerRef,
     isPlayingChant,
     toggleChant,
+    playChant,
     handleBack,
   };
 }

@@ -117,6 +117,7 @@ export default function StadiumChatContainer({
     scrollContainerRef,
     isPlayingChant,
     toggleChant,
+    playChant,
     handleBack,
   } = useChatRoom(initialMatchId);
 
@@ -326,8 +327,13 @@ export default function StadiumChatContainer({
     const atletiIsHome = isAtleti(live.homeTeam);
     const ours = atletiIsHome ? live.homeScore : live.awayScore;
     const theirs = atletiIsHome ? live.awayScore : live.homeScore;
-    if (ours > theirs) celebrateWin();
-  }, [live, isPreview, celebrateWin]);
+    if (ours <= theirs) return;
+
+    celebrateWin();
+    // 색종이만으로는 심심하다 — 이긴 날은 응원가가 깔려야 경기장이 된다.
+    // 스피커를 직접 끈 사람과 자동 재생이 막힌 브라우저는 playChant가 알아서 걸러 낸다.
+    playChant();
+  }, [live, isPreview, celebrateWin, playChant]);
 
   // 미리보기에서는 닉네임 모달을 띄우지 않으므로 임시 이름으로 좌석/내 말풍선을 그린다
   const shownNickname = isPreview && !myNickname ? '나' : myNickname;
