@@ -95,6 +95,8 @@ export interface MatchPeriods {
   firstHalfStarted?: string;
   firstHalfEnded?: string;
   secondHalfStarted?: string;
+  /** 경기가 끝난 시각. 시계를 여기서 멈춘다 */
+  secondHalfEnded?: string;
 }
 
 const at = (iso?: string): number | null => {
@@ -147,6 +149,16 @@ export function formatMatchClock(
   const firstStart = at(periods?.firstHalfStarted);
   const firstEnd = at(periods?.firstHalfEnded);
   const secondStart = at(periods?.secondHalfStarted);
+  const secondEnd = at(periods?.secondHalfEnded);
+
+  // 경기 종료 — 끝난 시각에 멈춰 세운다 (95:12처럼).
+  //
+  // 이 분기가 없으면 아래 후반 계산이 계속 더해져 경기가 끝나고도 시계가 올라간다.
+  // **화면 상태가 아니라 서버 값으로 멈춘다** — 늦게 들어오거나 새로고침한 사람도
+  // 같은 값을 봐야 하기 때문이다.
+  if (secondEnd !== null && secondStart !== null && now >= secondEnd) {
+    return mmss(HALF_MS + (secondEnd - secondStart));
+  }
 
   // 후반 — 45:00부터 다시 센다. 전반 추가시간이 몇 분이었든 상관없다
   if (secondStart !== null && now >= secondStart) return mmss(HALF_MS + (now - secondStart));
