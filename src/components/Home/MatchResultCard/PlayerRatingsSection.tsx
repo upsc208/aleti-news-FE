@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Star, Award, Loader2, X, ChevronRight, Lock, Clock } from 'lucide-react';
 import { getRatings, submitRating } from '@/client/sdk.gen';
 import type { RecentMatch, PlayerRatingResponse } from '@/client/types.gen';
@@ -529,8 +530,19 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
         <ChevronRight className="text-white/50 shrink-0" size={18} />
       </button>
 
-      {/* ===== Mobile: full-screen modal ===== */}
-      {isModalOpen && (
+      {/*
+        ===== Mobile: full-screen modal =====
+
+        **body로 내보내야 한다(포털).** 이 컴포넌트가 놓인 자리는 매치 카드 안이고,
+        그 위에 animate-pageSlide가 걸린 칸이 있다. 애니메이션이 끝나도 transform이
+        남아 있어서(fill-mode) 그 칸이 fixed의 기준이 되어 버린다. 그러면 inset-0은
+        화면이 아니라 그 좁은 칸을 덮고, 카드의 overflow-hidden이 나머지를 잘라내
+        평점 팝업이 '경기 상세 정보 보기' 버튼과 겹쳐 보인다.
+        기준을 화면으로 되돌리려면 카드 바깥에서 그려야 한다.
+      */}
+      {/* isModalOpen은 클릭으로만 켜지므로 서버 렌더에서는 항상 닫혀 있다 —
+          document가 없는 시점에 포털이 열릴 일은 없다 */}
+      {isModalOpen && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -583,13 +595,14 @@ export default function PlayerRatingsSection({ recentMatch }: PlayerRatingsSecti
             )}
           </div>
 
-          {/* Fixed submit bar (rate mode only) */}
+          {/* Fixed submit bar (rate mode only) — 홈 인디케이터에 저장 버튼이 가리지 않게 */}
           {effectiveView === 'rate' && (
-            <div className="shrink-0 px-5 pt-3 pb-6 border-t border-white/10 bg-black/10 flex flex-col gap-1.5">
+            <div className="shrink-0 px-5 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-black/10 flex flex-col gap-1.5">
               {renderSubmitBar()}
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
