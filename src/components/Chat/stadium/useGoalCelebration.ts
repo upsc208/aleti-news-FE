@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const CELEBRATION_MS = 5000;
+const CELEBRATION_MS = 7000;
 
 /** 승리 연출은 골보다 길다 — 색종이가 화면을 한 번 채우고 빠지려면 이 정도는 걸린다 */
-const WIN_MS = 9000;
+const WIN_MS = 15000;
 
 /** 모션을 줄이기로 한 사용자에게는 흔들림도 진동도 주지 않는다 */
 const prefersReducedMotion = () =>
@@ -19,7 +19,7 @@ const prefersReducedMotion = () =>
  * 아직 골도 경기 종료도 알려주는 API가 없어서 지금 이 함수들을 부르는 건
  * 개발용 테스트 바뿐이지만, 이벤트 채널이 생기면 수신부에서 그대로 부르면 된다.
  *
- * 둘을 따로 두는 이유: 승리는 골이 아니다. 흔들림·섬광·조명은 6초짜리 사건에
+ * 둘을 따로 두는 이유: 승리는 골이 아니다. 흔들림·섬광·조명은 7초짜리 사건에
  * 어울리는 연출이고, 승리는 그보다 길고 잔잔해야 그동안 채팅이 읽힌다.
  */
 export function useGoalCelebration() {
