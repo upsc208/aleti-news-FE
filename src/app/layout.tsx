@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     default: "아틀레티 KR | 아틀레티코 마드리드 뉴스 포털",
     template: "%s | 아틀레티 KR"
   },
-  description: "아틀레티코 마드리드(알레띠) 팬들을 위한 최신 뉴스, 경기 정보 및 분석. 사울과 코레아가 전해주는 가장 빠른 소식.",
+  description: "아틀레티코 마드리드(알레띠) 팬들을 위한 최신 뉴스, 경기 정보 및 분석. AI가 전해주는 가장 빠른 소식.",
   keywords: ["아틀레티코 마드리드", "Atlético de Madrid", "아틀레티", "아틀레띠", "알레띠", "알레티", "Atleti", "라리가", "Laliga", "축구 뉴스", "아틀마", "마드리드", "로히블랑코", "꼬마"],
   authors: [{ name: "아틀레티 KR" }],
   creator: "아틀레티 KR",

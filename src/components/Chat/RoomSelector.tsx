@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { getUpcomingMatches } from '@/client/sdk.gen';
 import type { UpcomingMatch } from '@/client/types.gen';
-import { CalendarClock, FlaskConical, Home, MessageSquare, Plane, Radio, Trophy, Users } from 'lucide-react';
+import { CalendarClock, Home, MessageSquare, Plane, Radio, Trophy, Users } from 'lucide-react';
 
 // 백엔드 ChatService.FREE_ROOM_ID와 같은 값
 const FREE_ROOM_ID = 'free';
@@ -124,10 +124,6 @@ export default function RoomSelector() {
               <span className="inline-flex items-center gap-1 rounded-md bg-aleti-red px-2 py-0.5 text-[10px] font-black text-white">
                 <Radio size={9} className="animate-pulse" />
                 24시간 오픈
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-aleti-red/30 bg-aleti-red/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-aleti-red">
-                <FlaskConical size={9} />
-                Beta
               </span>
             </div>
             <div className="mb-1 flex items-center gap-2">

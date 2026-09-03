@@ -6,6 +6,7 @@ import { getTweet } from 'react-tweet/api';
 import TwitterEmbed from '@/components/TwitterEmbed';
 import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
+import Linkify from '@/components/Linkify';
 import { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -296,7 +297,7 @@ export default async function NewsDetailPage({
         )}
 
         <div className="prose prose-xl max-w-none text-gray-800 dark:text-gray-200 leading-[2] mb-20 whitespace-pre-wrap font-medium text-lg sm:text-xl">
-          {news.contentKo || '내용이 없습니다.'}
+          {news.contentKo ? <Linkify text={news.contentKo} /> : '내용이 없습니다.'}
         </div>
 
         {/* SNS 포스트인 경우 트윗 렌더링 */}
