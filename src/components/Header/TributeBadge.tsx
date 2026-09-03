@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import fichadoImg from '../../../public/fichado.png';
+import anfield from '../../../public/anfield.png';
 
 export default function TributeBadge() {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -23,8 +23,8 @@ export default function TributeBadge() {
         {/* Front: Image only */}
         <div className="absolute inset-0 [backface-visibility:hidden] bg-white dark:bg-[#0a0b10] rounded-2xl border border-gray-100 dark:border-volt/10 shadow-sm transition-all md:group-hover:border-aleti-red/20 dark:md:group-hover:border-volt/15 overflow-hidden z-10">
           <Image
-            src={fichadoImg}
-            alt="Fichado"
+            src={anfield}
+            alt="llorente"
             fill
             className="object-cover object-center"
             placeholder="blur"
@@ -35,7 +35,7 @@ export default function TributeBadge() {
         {/* Back: Welcome Message */}
         <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-aleti-red dark:bg-[#0a0b10] dark:border dark:border-volt/20 rounded-2xl flex items-center justify-center px-1.5 text-white dark:text-volt shadow-lg z-10">
           <span className="text-[10px] md:text-[12px] font-black tracking-normal text-center leading-none uppercase font-sans">
-            ¡BIENVENIDOS!
+            안필드의 주인이 온다
           </span>
         </div>
       </div>
