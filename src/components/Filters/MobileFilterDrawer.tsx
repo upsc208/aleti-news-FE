@@ -57,9 +57,10 @@ export default function MobileFilterDrawer({ allSources }: MobileFilterDrawerPro
             </h2>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="필터 닫기"
               className="p-2 text-gray-400 hover:text-gray-900 transition-colors"
             >
-              <X size={24} />
+              <X size={24} aria-hidden="true" />
             </button>
           </div>
 

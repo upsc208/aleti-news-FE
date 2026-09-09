@@ -61,7 +61,7 @@ export default function NewsCard({ news, showImage = false, fromPage }: NewsCard
                 <span className="text-gray-300 dark:text-gray-600" aria-hidden>
                   ·
                 </span>
-                <time className="shrink-0 whitespace-nowrap text-gray-400 dark:text-gray-500">
+                <time className="shrink-0 whitespace-nowrap text-gray-500 dark:text-gray-400">
                   {publishedAt}
                 </time>
               </>
@@ -82,7 +82,7 @@ export default function NewsCard({ news, showImage = false, fromPage }: NewsCard
             </p>
           )}
 
-          <div className="mt-4 flex items-center gap-1 text-[13px] font-semibold text-gray-400 dark:text-gray-500 transition-colors group-hover:text-aleti-red dark:group-hover:text-volt">
+          <div className="mt-4 flex items-center gap-1 text-[13px] font-semibold text-gray-500 dark:text-gray-400 transition-colors group-hover:text-aleti-red dark:group-hover:text-volt">
             자세히 보기
             <ArrowUpRight
               size={14}

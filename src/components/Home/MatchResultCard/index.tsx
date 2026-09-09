@@ -233,17 +233,29 @@ export default function MatchResultCard({ recentMatch, upcomingMatches, headline
           </div>
 
           {/* Page Dots Indicator */}
-          <div className="flex justify-center items-center gap-2 mt-6 px-6 md:px-0">
+          {/* 점 자체는 6px이라 터치 대상 최소 크기(24px)에 못 미친다.
+              보이는 크기는 그대로 두고, 버튼이 24px 히트 영역을 갖도록 감쌌다. */}
+          <div className="flex justify-center items-center gap-1 mt-6 px-6 md:px-0">
             <button
               onClick={() => goToPage(0)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${currentPage === 0 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5 hover:bg-white/50'}`}
-              title="1페이지 (헤드라인)"
-            />
+              aria-label="1페이지 (헤드라인)"
+              aria-current={currentPage === 0 ? 'true' : undefined}
+              className="flex h-6 min-w-6 items-center justify-center"
+            >
+              <span
+                className={`block h-1.5 rounded-full transition-all duration-300 ${currentPage === 0 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5'}`}
+              />
+            </button>
             <button
               onClick={() => goToPage(1)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${currentPage === 1 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5 hover:bg-white/50'}`}
-              title="2페이지 (경기 결과)"
-            />
+              aria-label="2페이지 (경기 결과)"
+              aria-current={currentPage === 1 ? 'true' : undefined}
+              className="flex h-6 min-w-6 items-center justify-center"
+            >
+              <span
+                className={`block h-1.5 rounded-full transition-all duration-300 ${currentPage === 1 ? 'bg-white dark:bg-volt w-5' : 'bg-white/30 dark:bg-white/20 w-1.5'}`}
+              />
+            </button>
           </div>
 
         </div>

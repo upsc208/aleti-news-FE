@@ -40,6 +40,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
       ) : (
         <Link
           href={createPageUrl(currentPage - 1)}
+          aria-label="이전 페이지"
           className="p-2 rounded-xl border border-gray-200 dark:border-white/[0.04] text-gray-400 hover:border-aleti-red dark:hover:border-volt/20 hover:text-aleti-red dark:hover:text-volt transition-all bg-white dark:bg-[#111318] soft-shadow"
         >
           <ChevronLeft size={20} />
@@ -77,6 +78,7 @@ export default function Pagination({ currentPage, totalPages }: PaginationProps)
       ) : (
         <Link
           href={createPageUrl(currentPage + 1)}
+          aria-label="다음 페이지"
           className="p-2 rounded-xl border border-gray-200 dark:border-[#2a3050] text-gray-400 hover:border-aleti-red hover:text-aleti-red transition-all bg-white dark:bg-[#141828] soft-shadow"
         >
           <ChevronRight size={20} />

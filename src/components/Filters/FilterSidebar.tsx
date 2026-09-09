@@ -30,7 +30,7 @@ export default function FilterSidebar({
     `}>
       <div className="flex items-center justify-between mb-8 md:hidden">
         <h3 className="text-xl font-bold text-gray-900">필터 설정</h3>
-        <button onClick={onClose} className="text-gray-400">
+        <button onClick={onClose} aria-label="필터 닫기" className="text-gray-400">
           <X size={24} />
         </button>
       </div>

@@ -11,7 +11,7 @@ export const UpcomingSection = ({ upcomingMatches }: UpcomingSectionProps) => {
 
   return (
     <div className="w-full flex flex-col pt-4 md:pt-0">
-      <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 opacity-70">
+      <div className="text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 opacity-95">
         Upcoming Matches
       </div>
 
@@ -22,11 +22,11 @@ export const UpcomingSection = ({ upcomingMatches }: UpcomingSectionProps) => {
               <span className="shrink-0 mt-0.5">vs</span>
               <span className="break-words min-w-0">{match.opponent}</span>
             </div>
-            <div className="text-[10px] md:text-xs font-medium opacity-80 uppercase tracking-widest mt-1 flex flex-wrap gap-x-1.5">
+            <div className="text-[10px] md:text-xs font-medium opacity-95 uppercase tracking-widest mt-1 flex flex-wrap gap-x-1.5">
               <span className="whitespace-nowrap">{formatKST(match.matchDate)}</span>
-              <span className="opacity-40">&middot;</span>
+              <span className="opacity-70" aria-hidden="true">&middot;</span>
               <span className="whitespace-nowrap">{match.tournament}</span>
-              <span className="opacity-40">&middot;</span>
+              <span className="opacity-70" aria-hidden="true">&middot;</span>
               <span className="whitespace-nowrap">{match.isHome ? 'HOME' : 'AWAY'}</span>
             </div>
           </div>
