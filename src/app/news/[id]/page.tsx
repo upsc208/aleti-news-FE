@@ -7,6 +7,7 @@ import TwitterEmbed from '@/components/TwitterEmbed';
 import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
 import Linkify from '@/components/Linkify';
+import RelatedNews from '@/components/RelatedNews';
 import { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -113,12 +114,10 @@ export default async function NewsDetailPage({
       
       if (rawTweetData) {
         console.log(`[DEBUG] Fetching tweet ${tweetId} for news ${id}`);
-        // console.log(`[DEBUG] Raw entities:`, JSON.stringify(rawTweetData.entities, null, 2));
 
         // react-tweet 렌더링 에러 방지 (Deep Clone 및 필수 필드 보정)
         const tweet = JSON.parse(JSON.stringify(rawTweetData));
 
-        // entities 및 extended_entities 보정
         const sanitizeEntities = (entObj: any) => {
           if (!entObj || typeof entObj !== 'object') return {};
           const result = { ...entObj };
@@ -136,7 +135,6 @@ export default async function NewsDetailPage({
             }
           });
 
-          // media 필드가 비어있을 경우 react-tweet의 특정 버전에서 인덱스 계산 에러를 유발할 수 있음
           if (result.media && result.media.length === 0) {
             delete result.media;
           }
@@ -150,7 +148,6 @@ export default async function NewsDetailPage({
           if (t.extended_entities) {
             t.extended_entities = sanitizeEntities(t.extended_entities);
           }
-          // 필수 필드 보정
           if (!t.display_text_range) {
             t.display_text_range = [0, (t.text || t.full_text || "").length];
           }
@@ -165,7 +162,6 @@ export default async function NewsDetailPage({
         }
 
         tweetData = tweet;
-        // console.log(`[DEBUG] Sanitized entities:`, JSON.stringify(tweetData.entities, null, 2));
       }
     } catch (e) {
       console.error('Failed to fetch tweet data:', e);
@@ -325,6 +321,10 @@ export default async function NewsDetailPage({
             </div>
           </div>
         )}
+
+        <Suspense fallback={null}>
+          <RelatedNews currentId={news.id} category={news.category} />
+        </Suspense>
 
         <footer className="pt-10 border-t border-gray-100 dark:border-volt/5">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
