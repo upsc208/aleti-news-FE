@@ -48,6 +48,12 @@ interface StadiumChatContainerProps {
 const SUB_BOARD_MS = 5000;
 
 /**
+ * 관리자 문구가 보드에 머무는 시간.
+ * 교체(5초)보다 길게 잡는다 — 쿠폰 번호처럼 받아 적어야 하는 내용이 올라온다.
+ */
+const MESSAGE_BOARD_MS = 20000;
+
+/**
  * 탭에서 돌아왔을 때 남은 시간이 이보다 짧으면 이만큼은 세워 둔다.
  *
  * 남은 0.2초를 곧이곧대로 지키면 돌아오자마자 사라져 깜빡인 것으로만 보인다.
@@ -99,6 +105,7 @@ export default function StadiumChatContainer({
     live,
     liveLoaded,
     onlineCount,
+    ledMessage,
     isLoading,
     roomOpen,
     showDisconnected,
@@ -281,6 +288,20 @@ export default function StadiumChatContainer({
     document.addEventListener('visibilitychange', sync);
     return () => document.removeEventListener('visibilitychange', sync);
   }, []);
+
+  /**
+   * 방금 올라온 관리자 문구. [MESSAGE_BOARD_MS] 뒤에 스스로 내려간다.
+   *
+   * 새 문구가 오면 타이머를 다시 잡는다 — 연달아 올리면 마지막 것이 그 시간만큼 남는다.
+   */
+  const [boardMessage, setBoardMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!ledMessage) return;
+    setBoardMessage(ledMessage.text);
+    const timer = setTimeout(() => setBoardMessage(null), MESSAGE_BOARD_MS);
+    return () => clearTimeout(timer);
+  }, [ledMessage]);
 
   /** 대기열에서 하나씩 꺼내 [SUB_BOARD_MS]만큼 보드에 세운다 */
   useEffect(() => {
@@ -554,12 +575,15 @@ export default function StadiumChatContainer({
         {!lightsOff && (() => {
           const boardProps = {
             // 골이 교체보다 세다 — 교체 화면이 떠 있는데 골이 터지면 골로 덮는다
+            // 골이 가장 세고, 그다음이 관리자가 직접 올린 문구다
             mode: celebrating
               ? ('goal' as const)
-              : subEvent || previewSub
-                ? ('sub' as const)
-                : ('idle' as const),
-            sub: subEvent ?? (previewSub ? PREVIEW_SUB : undefined),
+              : boardMessage
+                ? ('message' as const)
+                : subEvent || previewSub
+                  ? ('sub' as const)
+                  : ('idle' as const),
+            message: boardMessage ?? undefined,
             homeTeam,
             awayTeam,
             homeScore,

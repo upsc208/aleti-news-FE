@@ -194,7 +194,7 @@ export type ChatMessage = {
     content: string;
     sentAt?: string;
     ipHash?: string;
-    type: 'USER' | 'GOAL' | 'GOAL_CANCELLED' | 'STATUS';
+    type: 'USER' | 'GOAL' | 'GOAL_CANCELLED' | 'STATUS' | 'ADMIN' | 'LED';
     live?: LiveMatchState;
 };
 

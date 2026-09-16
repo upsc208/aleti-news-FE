@@ -35,6 +35,8 @@ interface LedStripProps {
   periods?: MatchPeriods | null;
   /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
   status?: string | null;
+  /** 관리자가 올린 문구 — `mode === 'message'`일 때만 쓰인다 */
+  message?: string;
   /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 쓰인다 */
   sub?: SubEvent;
   /** 골 연출 중 흘려보낼 득점자 이름 */
@@ -75,6 +77,7 @@ export default function LedStrip({
   periods,
   status,
   sub,
+  message,
   scorer,
 }: LedStripProps) {
   // 보드는 실물처럼 라틴 표기다 — 화면의 나머지는 한국어 그대로다 (boardNames.ts)
@@ -217,7 +220,21 @@ export default function LedStrip({
     ];
   }, [sub]);
 
+  // 관리자 문구는 한 벌이 흘러간다 — 골 연출과 같은 트랙을 쓰되 판이 하나뿐이다
+  const messageRun = message?.trim();
+
   const body =
+    boardMode === 'message' && messageRun ? (
+      <div className="led-strip__track">
+        {['a', 'b'].map((runKey) => (
+          <span className="led-strip__run" key={runKey}>
+            <span className="led-strip__cell led-strip__cell--message">
+              <span className="led-strip__text">{messageRun}</span>
+            </span>
+          </span>
+        ))}
+      </div>
+    ) :
     boardMode === 'sub' && subSet.length ? (
       // 흐르지 않는다 — 한 벌이 보드를 채우고 3초 뒤 스코어보드로 돌아간다
       <div className="led-strip__sub">

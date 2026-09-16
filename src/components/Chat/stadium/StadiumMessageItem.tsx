@@ -42,6 +42,8 @@ export default function StadiumMessageItem({
     );
   }
 
+  // 관리자 글은 서버가 종류를 찍어 보낸다. 클라이언트가 스스로 정하지 않는다.
+  const isAdmin = msg.type === 'ADMIN';
   const seat = seatFor(msg.nickname, matchId);
   const chant = isChant(msg.content);
   const time = formatTime(msg.sentAt);
@@ -97,6 +99,9 @@ export default function StadiumMessageItem({
           <span className="stadium-meta truncate text-[11px] font-black text-slate-900">
             {msg.nickname}
           </span>
+          {isAdmin && (
+            <span className="stadium-admin-badge shrink-0">운영</span>
+          )}
           <span className="stadium-meta shrink-0 text-[10px] font-semibold text-slate-600">
             {seat.label}
           </span>
@@ -108,7 +113,7 @@ export default function StadiumMessageItem({
         </div>
         <div
           className={`stadium-bubble max-w-[85%] sm:max-w-[75%] ${
-            chant ? 'stadium-bubble--chant' : ''
+            isAdmin ? 'stadium-bubble--admin' : chant ? 'stadium-bubble--chant' : ''
           }`}
         >
           {msg.content}

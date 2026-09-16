@@ -9,17 +9,16 @@
 
 const CLIENT_ID_KEY = 'atleti_chat_client_id';
 
-// 백엔드 ChatClient.HTTP_HEADER / STOMP_HEADER와 같은 이름
 export const CLIENT_ID_HTTP_HEADER = 'X-Chat-Client-Id';
 export const CLIENT_ID_STOMP_HEADER = 'x-chat-client-id';
 
-// 백엔드 ChatException.NICKNAME_TAKEN
+export const ADMIN_TOKEN_STOMP_HEADER = 'x-admin-token';
+
 export const NICKNAME_TAKEN = 'NICKNAME_TAKEN';
 
 export const nicknameKeyFor = (matchId: string) => `atleti_chat_nickname_${matchId}`;
 export const NICKNAME_FALLBACK_KEY = 'atleti_chat_nickname';
 
-/** 서버의 ChatClient.sanitize가 받아주는 형식: [A-Za-z0-9_-] 8~64자 */
 const randomId = (): string => {
   const uuid =
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'

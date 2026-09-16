@@ -5,13 +5,14 @@
  */
 
 /**
- * 보드가 그리는 세 화면.
+ * 보드가 그리는 화면들.
  *
  * `pre`는 킥오프 전이다 — 셀 시계도, 벌어질 스코어도 아직 없다.
  * 그 상태로 스코어보드를 세워두면 `0 ATM — ATM 0`짜리 죽은 보드가 되므로,
  * 실물 경기장이 경기 전에 그러듯 후원 판을 세워둔다.
+ * `message`는 관리자가 채팅에 '/'로 올린 문구다 — 경기 중 안내를 보드로 띄운다.
  */
-export type LedMode = 'pre' | 'idle' | 'goal' | 'sub';
+export type LedMode = 'pre' | 'idle' | 'goal' | 'sub' | 'message';
 
 /**
  * 보드에 잠깐 띄울 교체 한 건 — 이름은 라틴 표기뿐이다 (FotMob이 유일한 소스).
@@ -81,6 +82,8 @@ export function resolveLedMode(
 ): LedMode {
   // 골이 먼저다 — 교체 화면이 떠 있는데 골이 터지면 골로 덮는다
   if (requested === 'goal') return 'goal';
+  // 골 다음은 관리자 문구다. 교체·후원 화면보다 먼저 보여준다 — 사람이 직접 띄운 것이다
+  if (requested === 'message') return 'message';
   // 킥오프 전이면 교체가 있을 리 없다. 순서상 pre보다 먼저 걸러 둔다
   if (requested === 'sub' && !(clockEvaluated && clockText === null)) return 'sub';
   return clockEvaluated && clockText === null ? 'pre' : 'idle';
@@ -240,6 +243,8 @@ export interface BoardSpec {
   homeScore: number;
   awayScore: number;
   scorer?: string;
+  /** 관리자가 올린 문구 — `mode === 'message'`일 때만 본다 */
+  message?: string;
   /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 본다 */
   sub?: SubEvent;
   /**
@@ -268,6 +273,7 @@ export function sameSpec(a: BoardSpec | null, b: BoardSpec): boolean {
     a.homeScore === b.homeScore &&
     a.awayScore === b.awayScore &&
     a.scorer === b.scorer &&
+    a.message === b.message &&
     // 교체가 연달아 오면 여기서 걸러야 보드가 다시 그려진다
     a.sub?.playerIn === b.sub?.playerIn &&
     a.sub?.playerOut === b.sub?.playerOut &&

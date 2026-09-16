@@ -1,11 +1,7 @@
 'use client';
 
 /**
- * 채팅방의 동작 전부 — 접속, 닉네임, 메시지 수신/전송, 응원가 재생.
- *
- * 자유 채팅방(ChatContainer)과 경기 채팅방(StadiumChatContainer)은
- * 화면이 완전히 다르지만 동작은 같다. 화면을 두 벌로 나누면서 이 로직까지
- * 복사하면 한쪽만 고쳐지는 버그가 반드시 생기므로 여기 한 곳에 모아둔다.
+ * 채팅방의 동작 전부 관여 — 접속, 닉네임, 메시지 수신/전송, 응원가 재생.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -21,14 +17,12 @@ import {
   chatClientHeaders,
   getChatClientId,
   nicknameKeyFor,
+  ADMIN_TOKEN_STOMP_HEADER,
 } from './chatIdentity';
+import { getAdminToken } from '@/lib/adminSession';
 
-// 서버가 방마다 최근 100건을 24시간 보관한다(redis-design 6.2). 화면도 같은 상한을 쓴다.
 const MAX_HISTORY = 100;
 
-// 접속자 수는 /topic/presence/{matchId}로 즉시 밀려온다.
-// 이 폴링은 어긋난 값을 되맞추는 안전망일 뿐이라 느려도 된다
-// (비정상 종료 시 카운트가 드리프트할 수 있음 — redis-design 6.7).
 const ONLINE_POLL_MS = 30_000;
 
 /**
@@ -59,7 +53,7 @@ const messageKey = (m: ChatMessage) =>
  *
  * `type`이 없는 메시지는 이 필드가 생기기 전에 저장된 옛 기록이라 사람 것으로 본다.
  */
-const isHumanMessage = (m: ChatMessage) => !m.type || m.type === 'USER';
+const isHumanMessage = (m: ChatMessage) => !m.type || m.type === 'USER' || m.type === 'ADMIN';
 
 /** 서버가 거절 사유와 함께 내려주는 {error, code}를 꺼낸다 (ChatController.kt) */
 const readRejection = (body: unknown): { message: string; code: string } => {
@@ -96,6 +90,11 @@ export function useChatRoom(initialMatchId: string) {
    */
   const [liveLoaded, setLiveLoaded] = useState<boolean>(false);
   const [onlineCount, setOnlineCount] = useState<number>(1);
+  /**
+   * 관리자가 "/"로 보낸 전광판 문구. 보드에 한 번 흘리고 사라진다.
+   * 같은 문구를 다시 보내도 보드가 반응하도록 받은 시각을 함께 들고 있는다.
+   */
+  const [ledMessage, setLedMessage] = useState<{ text: string; at: number } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Nickname State
@@ -316,11 +315,16 @@ export function useChatRoom(initialMatchId: string) {
     // SockJS 핸드셰이크에는 커스텀 헤더를 실을 수 없어서 CONNECT 프레임으로 보낸다.
     // 서버는 이 값으로 닉네임 주인을 판정한다 (WebSocketConfig.configureClientInboundChannel).
     const clientId = getChatClientId();
+    // 관리자로 로그인해 둔 브라우저면 토큰이 있다. 없으면 평소와 똑같이 붙는다.
+    const adminToken = getAdminToken();
 
     const client = new StompClient({
       // 백엔드가 .withSockJS()로 등록했으므로 raw WebSocket이 아니라 SockJS로 붙어야 한다
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      connectHeaders: clientId ? { [CLIENT_ID_STOMP_HEADER]: clientId } : {},
+      connectHeaders: {
+        ...(clientId ? { [CLIENT_ID_STOMP_HEADER]: clientId } : {}),
+        ...(adminToken ? { [ADMIN_TOKEN_STOMP_HEADER]: adminToken } : {}),
+      },
       reconnectDelay: 3000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -347,6 +351,12 @@ export function useChatRoom(initialMatchId: string) {
             // 「채팅 라인」과 「스코어보드 갱신」을 동시에 처리하는 구조라,
             // 보드를 위해 따로 요청할 필요가 없다 (백엔드 설계 6장).
             if (msg.live) setLive(msg.live);
+
+            // 전광판 문구는 채팅 줄이 아니다 — 보드로 보내고 목록에는 넣지 않는다
+            if (msg.type === 'LED') {
+              if (msg.content) setLedMessage({ text: msg.content, at: Date.now() });
+              return;
+            }
 
             // 봇 메시지는 여기서 걸러진다 (appendMessages 안의 isHumanMessage)
             appendMessages([msg]);
@@ -557,6 +567,7 @@ export function useChatRoom(initialMatchId: string) {
     live,
     liveLoaded,
     onlineCount,
+    ledMessage,
     isLoading,
     roomOpen,
     isConnected,

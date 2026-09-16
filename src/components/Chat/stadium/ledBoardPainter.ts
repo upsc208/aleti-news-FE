@@ -145,6 +145,9 @@ export function paintBoard(
 
   const texH = Math.max(16, Math.round(cssH * TEX_SCALE));
   if (spec.mode === 'goal') return paintGoal(canvas, ctx, spec, texH);
+  if (spec.mode === 'message' && spec.message) {
+    return paintMessage(canvas, ctx, spec.message, texH);
+  }
   if (spec.mode === 'sub' && spec.sub) {
     return paintSub(canvas, ctx, spec.sub, spec.subPhase ?? 1, unrollCssW, texH);
   }
@@ -997,6 +1000,36 @@ function paintPre(
  * 그래서 마지막 픽셀과 첫 픽셀의 색이 이어져야 한다 — 빨간 판 양끝이 흰색으로
  * 빠지고 득점자 판이 흰색이라 이음매가 보이지 않는다.
  */
+/**
+ * 관리자 문구 — 남색 판에 흰 글씨 한 벌.
+ *
+ * 골처럼 터지지 않고 교체처럼 담담하게 간다. 글자 크기를 골(0.86)보다 낮춰 잡는 이유는
+ * 한글이 섞이기 때문이다 — 라틴 대문자와 달리 한글은 네모칸을 꽉 채워서 같은 크기로는 판에 닿는다.
+ */
+function paintMessage(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  message: string,
+  texH: number
+): BoardPaint {
+  const fontPx = texH * 0.62;
+  const pad = texH * 0.9;
+
+  setSpacing(ctx, '0.08em');
+  ctx.font = font(fontPx);
+  const textW = ctx.measureText(message).width;
+  const texW = Math.min(MAX_TEX_W, Math.round(textW + pad * 2));
+
+  canvas.width = texW;
+  canvas.height = texH;
+  setSpacing(ctx, '0.08em'); // 캔버스 크기를 바꾸면 컨텍스트 상태가 초기화된다
+  ctx.clearRect(0, 0, texW, texH);
+
+  panel(ctx, 0, texW, texH, BOARD_BLUE, message, '#ffffff', fontPx);
+
+  return { periodCssW: texW / TEX_SCALE };
+}
+
 function paintGoal(
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,

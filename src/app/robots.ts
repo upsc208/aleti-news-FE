@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/private/', // 예시: 비공개 페이지가 있다면 추가
+      disallow: ['/admin', '/admin/'],
     },
     sitemap: 'https://atleti.kr/sitemap.xml',
   };

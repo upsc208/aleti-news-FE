@@ -8,6 +8,7 @@ import { getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
 import Linkify from '@/components/Linkify';
 import RelatedNews from '@/components/RelatedNews';
+import AdminArticleActions from '@/components/AdminArticleActions';
 import { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -321,6 +322,8 @@ export default async function NewsDetailPage({
             </div>
           </div>
         )}
+
+        <AdminArticleActions id={news.id} title={news.titleKo || '제목 없음'} />
 
         <Suspense fallback={null}>
           <RelatedNews currentId={news.id} category={news.category} />

@@ -32,6 +32,8 @@ interface LedRingProps {
   periods?: MatchPeriods | null;
   /** 서버가 주는 경기 상태(`경기전`·`경기중`·`전반종료`…). 공이 굴렀는지 판정에 쓴다 */
   status?: string | null;
+  /** 관리자가 올린 문구 — `mode === 'message'`일 때만 쓰인다 */
+  message?: string;
   /** 교체 화면에 그릴 내용 — `mode === 'sub'`일 때만 쓰인다 */
   sub?: SubEvent;
   scorer?: string;
@@ -64,6 +66,7 @@ export default function LedRing({
   periods,
   status,
   sub,
+  message,
   scorer,
   onUnavailable,
 }: LedRingProps) {
@@ -172,11 +175,12 @@ export default function LedRing({
       homeScore,
       awayScore,
       scorer,
+      message,
       sub,
       subPhase,
     };
   }, [
-    boardMode, competition, venue, clockText, sub, subPhase,
+    boardMode, competition, venue, clockText, sub, subPhase, message,
     homeTeam, awayTeam, homeScore, awayScore, scorer,
   ]);
 
