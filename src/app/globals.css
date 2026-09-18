@@ -1137,10 +1137,10 @@ html {
 
 /* 골 — 보드가 흐르기 시작한다. 판은 득점자(파랑)와 GOOOOOOOOOOL!!!!(빨강) 두 장뿐이다.
    깜빡임 같은 필터는 걸지 않는다 — 바뀌는 건 판의 내용과 자간뿐이다 */
-/* 관리자 문구 — 남색 판 위 흰 글씨. 쿠폰 번호를 읽을 수 있게 골보다 느리게 흐른다 */
+/* 관리자 문구 — 흰 판 위 빨간 글씨. 쿠폰 번호를 읽을 수 있게 골보다 느리게 흐른다 */
 .led-strip__cell--message {
-  background: var(--aleti-navy);
-  color: #ffffff;
+  background: #ffffff;
+  color: #cf1126;
   padding-inline: 2.5rem;
 }
 

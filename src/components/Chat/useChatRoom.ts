@@ -19,7 +19,7 @@ import {
   nicknameKeyFor,
   ADMIN_TOKEN_STOMP_HEADER,
 } from './chatIdentity';
-import { getAdminToken } from '@/lib/adminSession';
+import { adminHeaders, getAdminToken } from '@/lib/adminSession';
 
 const MAX_HISTORY = 100;
 
@@ -223,7 +223,8 @@ export function useChatRoom(initialMatchId: string) {
       const res = await reserveNickname({
         path: { matchId },
         body: { nickname: savedNick },
-        headers: chatClientHeaders(),
+        // 관리자면 토큰도 함께 — 서버가 "운영자" 같은 이름을 허용할지 여기서 판단한다
+        headers: { ...chatClientHeaders(), ...adminHeaders() },
       }).catch(() => null);
       if (cancelled || !res) return;              // 네트워크 장애면 그냥 두고 전송 시점에 판단
       if (res.response?.ok) return;

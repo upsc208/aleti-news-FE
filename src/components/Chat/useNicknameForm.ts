@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { reserveNickname } from '@/client/sdk.gen';
 import { chatClientHeaders } from './chatIdentity';
+import { adminHeaders } from '@/lib/adminSession';
 
 /** 성공 표시를 보여주고 방으로 넘어가기까지의 여유 */
 const HANDOFF_MS = 450;
@@ -77,7 +78,8 @@ export function useNicknameForm({
           path: { matchId },
           body: { nickname: trimmed },
           // 닉네임 주인 판정은 IP가 아니라 이 값으로 한다 (chatIdentity.ts)
-          headers: chatClientHeaders(),
+          // 관리자면 토큰도 함께 — 서버가 "운영자" 같은 이름을 허용할지 여기서 판단한다
+          headers: { ...chatClientHeaders(), ...adminHeaders() },
         });
 
         if (res.error || !res.response?.ok) {

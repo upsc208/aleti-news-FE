@@ -1001,9 +1001,9 @@ function paintPre(
  * 빠지고 득점자 판이 흰색이라 이음매가 보이지 않는다.
  */
 /**
- * 관리자 문구 — 남색 판에 흰 글씨 한 벌.
+ * 관리자 문구 — 흰 판에 빨간 글씨 한 벌.
  *
- * 골처럼 터지지 않고 교체처럼 담담하게 간다. 글자 크기를 골(0.86)보다 낮춰 잡는 이유는
+ * 평상시 보드(빨간 판)와 반대 색이라 눈에 띈다. 글자 크기를 골(0.86)보다 낮춰 잡는 이유는
  * 한글이 섞이기 때문이다 — 라틴 대문자와 달리 한글은 네모칸을 꽉 채워서 같은 크기로는 판에 닿는다.
  */
 function paintMessage(
@@ -1025,7 +1025,7 @@ function paintMessage(
   setSpacing(ctx, '0.08em'); // 캔버스 크기를 바꾸면 컨텍스트 상태가 초기화된다
   ctx.clearRect(0, 0, texW, texH);
 
-  panel(ctx, 0, texW, texH, BOARD_BLUE, message, '#ffffff', fontPx);
+  panel(ctx, 0, texW, texH, '#ffffff', message, BOARD_RED, fontPx);
 
   return { periodCssW: texW / TEX_SCALE };
 }
