@@ -553,36 +553,13 @@ html {
   background: rgba(191, 9, 33, 0.18);
 }
 
-/* ── 360도 LED 보드 ───────────────────────────────── */
-/*
-   실제 메트로폴리타노 링을 그대로 옮긴다:
-     · 흰 바탕이 기본이고 그 사이에 밝은 파랑·빨강 패널이 섞여 돌아간다 (검은 보드가 아니다)
-     · 양 팀 구단명은 흰 판, 스코어·경기 시계는 파란 판
-     · 한 바퀴에 스코어 패널(크레스트 · 득점 · 경기 시계 · 크레스트)이 두어 번 지나간다
-     · 초고화질 패널이라 도트도 주사선도 보이지 않는다 — 인쇄물처럼 선명하다
-
-   질감은 일부러 전부 뺐다: 그라디언트(볼록해 보임), 광택 스윕, 그림자.
-   실제 보드는 평평한 단색 판이다.
-
-   경기 내내 돌아가는 배경이다. 골에만 켜면 그냥 팝업으로 읽힌다.
-   =================================================== */
+/* 360도 LED 보드(CSS) — 흰 바탕에 파랑·빨강 판이 섞인 평평한 단색 보드. 화면은 data-mode(pre·idle·goal·sub·message)로 갈린다 */
 .led-strip {
-  /* 남색이 아니라 밝은 로열블루다 */
   --led-blue: #1668e3;
   --led-red: #cf1126;
-  /* LG 칸의 글자색 — boardModel.LG_PINK와 같은 값 */
   --led-lg: #a50034;
-  /* 후원 판 남색 — boardModel.ATLETI_NAVY와 같은 값 */
   --led-navy: #223a84;
 
-  /*
-    보드 서체 — Bebas Neue.
-    좁고 높은 대문자 전용 서체라 실물 경기장 LED 보드의 글자에 가장 가깝다.
-    프로젝트가 이미 next/font로 싣고 있어서(layout.tsx) 추가 비용이 0이다.
-
-    한글 글리프가 없다 — boardNames.ts 표에서 빠진 팀 이름이 새어 나올 수 있으므로
-    뒤에 시스템 한글 글꼴을 받쳐 둔다.
-  */
   --led-font: var(--font-bebas-neue), "Apple SD Gothic Neo", "Malgun Gothic",
     "Noto Sans KR", sans-serif;
 
@@ -590,20 +567,8 @@ html {
   flex-shrink: 0;
   overflow: hidden;
   height: 3.25rem;
-  /* 마스크로 잘려나간 자리로 경기장 사진이 그대로 비쳐야 한다 */
   background: transparent;
 
-  /*
-    360도 링을 아래에서 올려다보는 시점.
-    보드 아래쪽이 눈에 가까워 크게 휘어 올라오고, 위쪽은 멀어서 거의 평평하다.
-    좌우 끝은 가까워 두껍고(100%), 맞은편인 가운데는 멀어 얇다(60%).
-
-    윗변 살짝 / 아랫변 깊게 — 위아래를 똑같이 깎으면 그냥 잘록한 띠가 되고
-    3D로 읽히지 않는다. 잘려나간 아래 공간으로 경기장이 보이는 것도 이 형태의 몫이다.
-
-    가운데를 60%보다 더 얇게 깎으면 그 자리의 글자(시계·스코어)가 위아래로 잘린다.
-    실루엣만으로 더 휘게 만드는 건 여기가 한계다.
-  */
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,5 100,0 L100,20 Q50,9 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0,0 Q50,5 100,0 L100,20 Q50,9 0,20 Z' fill='%23fff'/%3E%3C/svg%3E");
   -webkit-mask-size: 100% 100%;
@@ -611,10 +576,6 @@ html {
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 
-  /* 아랫면이 앞으로 기울어 나온다 — 보드를 아래에서 올려다보므로
-     아래쪽이 가깝고 위쪽이 뒤로 물러난다.
-     원근을 짧게 잡을수록 물러난 윗변이 좌우로도 좁아져 사다리꼴이 뚜렷해진다.
-     560px 아래로 내리면 글자가 뭉개지기 시작한다. */
   perspective: 560px;
 }
 
@@ -624,8 +585,6 @@ html {
   }
 }
 
-/* 실제 기울기는 안쪽에 건다 — .led-strip에 직접 걸면 mask가 기울어진 뒤에
-   적용돼 실루엣이 어긋난다 */
 .led-strip__tilt {
   position: absolute;
   inset: 0;
@@ -633,9 +592,6 @@ html {
   transform-origin: 50% 100%;
 }
 
-/* 평상시 — 정지 배치. 시계를 화면 정중앙에 세우기 위해 가운데 정렬한다.
-   폭이 모자라면 좌우로 똑같이 넘쳐 잘리므로, 좁은 화면에서도 시계는 가운데에 남고
-   양 끝 칸만 화면 밖으로 밀린다 (링이 옆으로 이어지는 것처럼 보인다). */
 .led-strip__static {
   display: flex;
   justify-content: center;
@@ -647,9 +603,6 @@ html {
   flex-shrink: 0;
 }
 
-/* 남는 폭을 나눠 갖는 양 끝 칸. 둘의 폭이 같아야 가운데가 어긋나지 않는다.
-   폭이 모자라면 글자를 바깥쪽으로 흘려보내 화면 밖으로 이어지는 것처럼 자른다 —
-   가운데 정렬로 두면 양끝이 동시에 잘려 오타처럼 읽힌다. */
 .led-strip__cell--fill {
   flex: 1 1 0;
   min-width: 0;
@@ -664,7 +617,6 @@ html {
   justify-content: flex-start;
 }
 
-/* 골 연출에서만 쓰는 흐르는 트랙 */
 .led-strip__track {
   display: flex;
   width: max-content;
@@ -679,7 +631,6 @@ html {
   align-items: stretch;
 }
 
-/* 문구 하나가 보드 패널 하나 */
 .led-strip__cell {
   display: flex;
   align-items: center;
@@ -688,28 +639,21 @@ html {
   padding-inline: 0.875rem;
 }
 
-/* 아틀레티 이름과 응원 구호가 올라가는 빨간 칸 */
 .led-strip__cell--red {
   background: var(--led-red);
   color: #fff;
 }
 
-/* 스코어·시계·경기장 이름이 올라가는 파란 칸 */
 .led-strip__cell--blue {
   background: var(--led-blue);
   color: #fff;
 }
 
-/* 대회명이 올라가는 흰 칸 — 바탕이 흰색이라 양옆 구분 칸을 생략한다 */
 .led-strip__cell--white {
   background: #ffffff;
   color: var(--led-red);
 }
 
-/* ── 킥오프 전 보드의 세 판 ──
-   판마다 글자 크기·자간·여백이 다르다. 셋을 똑같이 두면 위계가 없어 그냥 색 줄무늬로
-   읽힌다 — WebGL 보드도 같은 위계로 굽는다 (ledBoardPainter.paintPre).
-   구단이 가장 크고, 후원 문구는 가장 작되 자간을 가장 넓게 벌린다. */
 .led-strip__cell--venue {
   background: var(--led-blue);
   color: #fff;
@@ -720,10 +664,6 @@ html {
   letter-spacing: 0.09em;
 }
 
-/* 항공사 이름(RIYADH AIR)만 다른 서체다 — 실물 보드에서도 이 자리는 항공사 워드마크라
-   경기장 이름과 서체가 갈린다. 보드 서체(좁고 높은 Bebas Neue) 옆에 폭이 넓은 일반
-   산세리프를 두면 두 이름이 확실히 구분된다.
-   대문자 높이가 Bebas보다 낮아서 크기를 0.7배로 맞춰야 글자 키가 같아진다. */
 .led-strip__strong {
   font-family: var(--font-el-messiri), Tahoma, Verdana, "Segoe UI", Helvetica, Arial, sans-serif;
   font-weight: 600;
@@ -736,13 +676,9 @@ html {
   letter-spacing: 0.05em;
 }
 
-/* VISIT / RWANDA 두 줄을 바짝 붙여 쌓는다 — 실물 워드마크가 그 모양이다. */
 .led-strip__cell--sponsor {
-  /* 워드마크처럼 양옆을 비운다 — 이 칸은 글자보다 여백이 훨씬 넓다 */
   padding-inline: 4.5rem;
   flex-direction: column;
-  /* 세로로 쌓으면 justify-content가 세로축을 맡는다 — 안 주면 두 줄이 위로 붙어
-     마스크로 깎인 윗변에 첫 줄이 잘린다 */
   justify-content: center;
   gap: 0;
   background: #ffffff;
@@ -755,28 +691,21 @@ html {
   letter-spacing: 0.1em;
 }
 
-/* LG 칸 — 보드 높이와 같은 정사각형, 흰 바탕. 테두리는 두르지 않는다.
-   앞뒤가 빨강·파랑 판이라 테두리 없이도 네모가 그대로 읽힌다. */
 .led-strip__cell--lg {
   flex: 0 0 auto;
   justify-content: center;
-  width: 3.875rem;
-  padding-inline: 0;
+  padding-inline: 1.125rem;
   background: #ffffff;
   color: var(--led-lg);
 }
 
-/* LG 워드마크는 두껍고 폭이 넓으며 두 글자가 거의 붙어 있다 — 보드 서체(좁고 가는
-   Bebas Neue)와 정반대라 이 칸만 굵은 기하학적 산세리프로 뽑는다.
-   로고 자체는 쓰지 않는다. 상표라 라이선스 없이 못 쓴다. */
 .led-strip__cell--lg .led-strip__text {
   font-family: "Arial Black", "Arial Bold", Arial, "Helvetica Neue", Helvetica, sans-serif;
   font-weight: 900;
-  font-size: 1.25rem;
-  letter-spacing: -0.02em;
+  font-size: 1.125rem;
+  letter-spacing: 0.01em;
 }
 
-/* 구단 판 */
 .led-strip__cell--club {
   padding-inline: 1.125rem;
   background: var(--led-red);
@@ -801,26 +730,16 @@ html {
     font-size: 1.25rem;
   }
 
-  .led-strip__cell--lg {
-    width: 4.125rem;
-  }
-
   .led-strip__cell--lg .led-strip__text {
-    font-size: 1.375rem;
+    font-size: 1.1875rem;
   }
 }
 
-/* 골 연출의 득점자 판 — 흰 바탕에 파란 글자.
-   위 --white를 그대로 못 쓴다. 저건 평상시 대회명 칸이 쓰고 있고 글자가 붉은색이라,
-   색을 바꾸면 골이 아닐 때의 보드까지 같이 바뀐다. */
 .led-strip__cell--scorer {
   background: #ffffff;
   color: var(--led-blue);
 }
 
-/* 교체 판의 IN·OUT 표 — 실물 교체판과 같은 색이다.
-   들어오는 쪽이 연두, 나가는 쪽이 빨강. 이름 칸은 골 보드와 같은 --scorer(흰·파랑)를
-   그대로 쓴다 (ledBoardPainter.paintSub와 같은 구성). */
 .led-strip__cell--in {
   background: #22a447;
   color: #ffffff;
@@ -831,8 +750,6 @@ html {
   color: #ffffff;
 }
 
-/* 화살표 — 흰 바탕에 각자 자기 편 색으로. 들어오는 쪽은 연두, 나가는 쪽은 빨강이라
-   색만 봐도 어느 쪽이 어느 방향인지 읽힌다 (ledBoardPainter.paintSub와 같은 기준). */
 .led-strip__cell--arrow-in,
 .led-strip__cell--arrow-out {
   background: #ffffff;
@@ -846,9 +763,6 @@ html {
   color: var(--led-red);
 }
 
-/* IN·OUT은 이름 옆에 붙는 표라 이름보다 작고 칸도 좁다.
-   두 칸이 `/`처럼 대각으로 맞붙는다 — 서로 반대 방향으로 잘라 맞물리게 한다.
-   맞물리는 폭(1.1rem)만큼 음수 마진으로 당겨야 사이에 흰 틈이 안 생긴다. */
 .led-strip[data-mode='sub'] .led-strip__cell--in,
 .led-strip[data-mode='sub'] .led-strip__cell--out {
   padding-inline: 1.35rem;
@@ -866,9 +780,6 @@ html {
   padding-left: 1.9rem;
 }
 
-/* 두 색 사이의 흰 사선 — 캔버스 보드(ledBoardPainter.paintSub)와 같은 선이다.
-   초록과 빨강이 맞닿으면 경계가 탁해 보이는데, 흰 선을 끼우면 `/`가 한 획으로 읽힌다.
-   빨강 칸이 이미 사선으로 잘려 있으므로 그 잘린 변을 따라 얇게 덧댄다. */
 .led-strip[data-mode='sub'] .led-strip__cell--out::before {
   content: '';
   position: absolute;
@@ -882,9 +793,6 @@ html {
   font-size: 0.9375rem;
 }
 
-/* 구단 칸과 스코어 사이의 리그 칸 — 흰 바탕에 붉은 글자.
-   예전에는 여기가 빈 흰 칸이었다. 실물 보드는 이 자리에 대회 로고가 들어가지만
-   로고는 상표라 못 쓰고, 대회명을 글자로 적는 건 지시적 사용이라 문제가 없다. */
 .led-strip__cell--league {
   background: #ffffff;
   color: var(--led-red);
@@ -894,10 +802,6 @@ html {
   font-size: 0.9375rem;
 }
 
-/* 챔피언스리그 판 — 대회 고유의 밤하늘에 흰 글자.
-   파랑 하나로 채우면 옆의 스코어 판과 구분이 안 된다. 짙은 남색을 깔고 글자 뒤에서
-   밝은 파랑이 번지게 두 번 칠한다 (WebGL 보드의 uclPanel과 같은 그림).
-   어두운 판이라 양 끝의 흰 바도 라리가 칸과 같이 세운다. */
 .led-strip__cell--ucl {
   padding-inline: 1.5rem;
   border-inline: 6px solid #ffffff;
@@ -907,8 +811,6 @@ html {
   color: #ffffff;
 }
 
-/* 판을 끊어주는 흰 세로 바 — 경기장 판이 구단 판과 닿는 면에 선다.
-   비슷한 톤의 판이 맞닿으면 한 덩어리로 붙어 보인다 (WebGL 보드의 PANEL_BAR). */
 .led-strip__cell--bar-left {
   border-left: 6px solid #ffffff;
 }
@@ -917,14 +819,9 @@ html {
   border-right: 6px solid #ffffff;
 }
 
-/* 라리가 칸 — 빨간 판에 흰 LALIGA, 그 옆에 흰 동그라미 안의 빨간 EA.
-   실물 보드에서 리그 로고가 붙는 자리다. 로고 이미지는 상표라 못 쓰지만 글자와
-   동그라미로 옮기는 것은 문제가 없다 (WebGL 보드의 laligaPanel()과 같은 그림). */
 .led-strip__cell--laliga {
-  /* 양옆 빨간 여백 — 기본 칸(0.875rem)의 두 배다. 바가 글자에 붙으면 판이 답답하다 */
   padding-inline: 1.75rem;
   gap: 0.375rem;
-  /* 양 끝의 흰 세로 바 — 왼쪽 이웃이 같은 빨간 구단 판이라, 없으면 두 판이 붙어 버린다 */
   border-inline: 3px solid #ffffff;
   background: var(--led-red);
   color: #fff;
@@ -935,7 +832,6 @@ html {
 }
 
 .led-strip__ea {
-  /* 동그라미 안에서 두 글자가 가늘어 보인다 — 획을 덧대 굵힌다 (laligaPanel과 같은 처리) */
   -webkit-text-stroke: 0.6px currentColor;
   display: inline-flex;
   align-items: center;
@@ -968,14 +864,11 @@ html {
   }
 }
 
-/* 양 팀 표기가 올라가는 흰 칸 */
 .led-strip__cell--code {
   padding-inline: 0.625rem;
   background: #ffffff;
 }
 
-/* Bebas Neue는 400 한 종뿐이다. 900을 주면 브라우저가 가짜로 굵혀 획이 뭉갠다 —
-   대신 좁은 서체인 만큼 크기를 한 단계씩 올려 판을 채운다. */
 .led-strip__text,
 .led-strip__code,
 .led-strip__num,
@@ -999,8 +892,6 @@ html {
 .led-strip__code.is-atleti { color: var(--led-red); }
 .led-strip__code.is-rival { color: var(--led-blue); }
 
-/* 실제 보드는 글자가 판 높이를 거의 채운다. 자간을 줄여야 그만큼 키워도
-   문구가 칸 밖으로 넘치지 않는다. */
 .led-strip__text {
   font-size: 1.0625rem;
   line-height: 1;
@@ -1016,15 +907,12 @@ html {
   }
 }
 
-/* ── 스코어 묶음 ── 파랑·흰 칸이 교차하는 사진 한가운데의 그 구간 */
 .led-strip__score {
   display: flex;
   align-items: stretch;
   height: 100%;
 }
 
-/* 시계를 기준으로 좌우가 정확히 대칭이어야 하므로 칸 폭을 고정한다.
-   ATM(3자)과 RB(2자)처럼 약칭 길이가 달라도 가운데가 밀리지 않는다. */
 .led-strip__score .led-strip__cell {
   padding-inline: 0.375rem;
   justify-content: center;
@@ -1036,8 +924,6 @@ html {
   }
 }
 
-/* 폰에서는 스코어 묶음이 화면 폭의 절반을 넘지 않도록 한 단계 줄인다.
-   여기가 커지면 양옆 칸이 통째로 화면 밖으로 밀린다. */
 .led-strip__cell--num { min-width: 2.125rem; }
 .led-strip__cell--code { min-width: 2.75rem; }
 .led-strip__cell--clock { min-width: 4.5rem; }
@@ -1066,10 +952,6 @@ html {
   .led-strip__clock { font-size: 1.4375rem; }
 }
 
-/* 픽셀 격자 — 보드가 LED임을 알려주는 유일한 질감.
-   화소 간격이 좁을수록 고화질로 읽힌다. 2px까지 좁히면 격자가 차지하는 면적이
-   늘어나 화면이 탁해지므로, 간격을 좁힌 만큼 농도를 같이 낮춘다.
-   더 굵거나 진해지면 곧바로 저해상도 전광판처럼 보인다. */
 .led-strip__pixels {
   position: absolute;
   inset: 0;
@@ -1079,9 +961,6 @@ html {
     repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.032) 0 1px, transparent 1px 2px);
 }
 
-/* 입체감 — 보드를 아래에서 올려다보므로 윗면은 뒤로 물러나 그늘이 지고,
-   앞으로 나온 아랫단은 그라운드에서 올라오는 빛을 받는다.
-   마스크로 잘린 호를 그대로 따라가므로 띠가 휜 판으로 읽힌다. */
 .led-strip__form {
   position: absolute;
   inset: 0;
@@ -1096,12 +975,6 @@ html {
   );
 }
 
-/* 거리감 — 링의 맞은편(화면 가운데)이 가장 멀어서 어둡게 가라앉는다.
-   좌우 끝은 가까워 밝다. 이 명암이 없으면 그냥 평평한 띠를 오려낸 것처럼 보인다.
-
-   CSS transform은 평면만 매핑하므로 가운데 글자를 실제로 좁힐 수가 없다.
-   원근 압축을 못 하는 대신 명암을 깊게 줘서 거리로 읽히게 한다 —
-   지금 이 보드가 곡면으로 보이는 이유의 절반이 이 층이다. */
 .led-strip__depth {
   position: absolute;
   inset: 0;
@@ -1123,21 +996,14 @@ html {
     transform: translateX(0);
   }
   to {
-    /* 같은 목록을 두 벌 깔았으므로 -50%가 정확히 한 바퀴다 */
     transform: translateX(-50%);
   }
 }
 
-/* 킥오프 전 — 같은 트랙을 아주 느리게 돌린다.
-   골(10초)과 같은 속도로 돌리면 경기 시작 전부터 화면이 부산해진다.
-   한 벌이 지나가는 데 45초쯤 걸리는 속도가 WebGL 보드(42px/초)와 얼추 맞는다. */
 .led-strip[data-mode='pre'] .led-strip__track {
   animation-duration: 45s;
 }
 
-/* 골 — 보드가 흐르기 시작한다. 판은 득점자(파랑)와 GOOOOOOOOOOL!!!!(빨강) 두 장뿐이다.
-   깜빡임 같은 필터는 걸지 않는다 — 바뀌는 건 판의 내용과 자간뿐이다 */
-/* 관리자 문구 — 흰 판 위 빨간 글씨. 쿠폰 번호를 읽을 수 있게 골보다 느리게 흐른다 */
 .led-strip__cell--message {
   background: #ffffff;
   color: #cf1126;
@@ -1152,8 +1018,6 @@ html {
   animation-duration: 10s;
 }
 
-/* 교체 — 흐르지 않는다. 한 벌이 보드를 채우고 3초 뒤 스코어보드로 돌아간다.
-   이름 칸이 남는 폭을 나눠 갖고, 가운데 IN/OUT 표만 내용 크기로 선다. */
 .led-strip__sub {
   display: flex;
   width: 100%;
@@ -1177,8 +1041,6 @@ html {
   letter-spacing: 0.2em;
 }
 
-/* 골과 달리 1fr을 안 쓴다 — 네 칸의 폭이 서로 달라야 한다(이름은 넓게, 표는 좁게).
-   내용에 맞춰 늘어나게 두고 아래에서 칸별로 여백만 잡는다 */
 .led-strip[data-mode='sub'] .led-strip__cell {
   justify-content: center;
   padding-inline: 1.75rem;
@@ -1188,25 +1050,17 @@ html {
   letter-spacing: 0.2em;
 }
 
-/* 두 판의 폭을 같게 맞춘다.
-   min-width를 손으로 재서 박으면 글꼴 크기(640px에서 커진다)와 득점자 이름 길이가
-   바뀔 때마다 어긋난다. 대신 grid의 1fr에 맡긴다 — 폭이 내용에 맞춰지는
-   컨테이너(width: max-content)에서 1fr 트랙은 전부 '가장 넓은 칸'의 폭을 갖는다.
-   즉 GOOOOOOOL 판이 기준이 되고 득점자 판이 거기에 맞춰 늘어난다. */
 .led-strip[data-mode='goal'] .led-strip__run {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
 }
 
-/* 늘어난 칸 안에서 글자는 가운데. 좌우 여백은 아래 그라데이션이 설 자리이기도 하다 */
 .led-strip[data-mode='goal'] .led-strip__cell {
   justify-content: center;
   padding-inline: 1.75rem;
 }
 
-/* 득점자 이름은 판 높이를 거의 채운다 — 골이 터진 순간 남아야 할 것은 이름이다.
-   (WebGL 보드의 paintGoal과 같은 크기 근거 — 악센트가 잘리지 않는 상한) */
 .led-strip[data-mode='goal'] .led-strip__cell--scorer .led-strip__text {
   font-size: 2.5rem;
   line-height: 1;
@@ -1218,19 +1072,10 @@ html {
   }
 }
 
-/* 득점자 이름은 함성 판보다 한 단계 더 두껍게.
-   font-weight는 이미 900이라 올릴 곳이 없다(게다가 시스템 글꼴 스택이라 기기에 따라
-   900이 없으면 굵게에서 멈춘다). 글자 외곽에 획을 덧대 굵기를 만든다 —
-   획 색을 글자와 같게 둬야 테두리가 아니라 굵기로 읽힌다. */
 .led-strip[data-mode='goal'] .led-strip__cell--scorer .led-strip__text {
   -webkit-text-stroke: 0.7px var(--led-blue);
 }
 
-/* 흰 판과 빨간 판이 맞닿는 자리를 그라데이션으로 잇는다.
-   흰 판은 단색으로 두고 빨간 판 양끝에서만 흰색으로 빠지게 하면,
-   경계를 넘어가는 색이 한 번만 변해서 이음매가 보이지 않는다.
-   빠지는 폭을 padding과 같은 1.75rem으로 맞춰야 글자가 시작되는 지점에서
-   빨강이 이미 단색이다 — 더 넓게 잡으면 G가 분홍 위에 얹힌다. */
 .led-strip[data-mode='goal'] .led-strip__cell--red {
   background: linear-gradient(
     90deg,
@@ -1241,9 +1086,7 @@ html {
   );
 }
 
-/* ── WebGL LED 링 보드 ───────────────────────────────
-   LedStrip(CSS 보드)과 같은 자리에 들어가는 대체품. 높이도 같아야 화면이 안 흔들린다.
-   실루엣·기울기·명암을 전부 셰이더가 그리므로 mask도 perspective도 필요 없다. */
+/* ── WebGL LED 링 보드 — LedStrip과 같은 자리·높이에 들어가는 대체품 ── */
 .led-ring {
   position: relative;
   flex-shrink: 0;
@@ -1262,13 +1105,8 @@ html {
   height: 100%;
 }
 
-/* ── 교체 보드 연출 ──────────────────────────────────
-   **텍스처는 건드리지 않는다.** 보드 그림을 매 프레임 다시 구우면 4096px짜리 캔버스를
-   초당 수십 번 올리게 되고, 그건 8/15에 "골 연출 중 채팅이 늦게 뜨던" 문제를 다시
-   불러온다 (aleti-news-BE/docs/round1.md). 여기서는 요소만 움직인다 —
-   transform·opacity라 컴포지터가 맡고 다시 칠하지 않는다. */
+/* ── 교체 보드 연출 — 텍스처는 건드리지 않고 요소(transform·opacity)만 움직인다 ── */
 
-/* 실물 교체판이 올라오듯 한 번 들어온다 */
 .led-ring[data-mode='sub'] {
   animation: led-sub-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1284,7 +1122,6 @@ html {
   }
 }
 
-/* 모션을 줄이기로 한 사용자에게는 들어오는 동작도 없다 */
 @media (prefers-reduced-motion: reduce) {
   .led-ring[data-mode='sub'] {
     animation: none;
