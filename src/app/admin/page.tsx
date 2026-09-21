@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { checkAdminSession, clearAdminToken } from '@/lib/adminSession';
 
-/** 로그인한 관리자가 보는 첫 화면 */
+/* 로그인한 관리자가 보는 첫 화면(설명용) */
 export default function AdminHomePage() {
   const router = useRouter();
   const [state, setState] = useState<'checking' | 'ok'>('checking');
@@ -25,10 +25,10 @@ export default function AdminHomePage() {
 
         <ul className="mb-8 space-y-2 text-gray-700 dark:text-gray-300">
           <li>
-            기사 페이지에서 <span className="font-bold">삭제</span> 버튼이 보입니다.
+            아이디∙비밀번호 <span className="font-bold">타인 공유 금지</span> 및 유저 밴/게시물 삭제는 규정 위반 시에만 신중하게 처리 부탁드립니다.
           </li>
           <li>
-            채팅방에서 보낸 글은 관리자 색으로 표시되고, <span className="font-bold">/문구</span>를 입력하면 전광판에 올라갑니다.
+            기사 페이지에서 <span className="font-bold">삭제</span> 버튼이 보이며, 채팅방 글은 관리자 색으로 표시되고 <span className="font-bold">/문구</span> 입력 시 전광판에 노출됩니다.
           </li>
         </ul>
 

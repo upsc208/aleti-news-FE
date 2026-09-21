@@ -4,9 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { adminHeaders, API_BASE_URL, checkAdminSession } from '@/lib/adminSession';
 
-/**
- * 기사 페이지의 관리자 도구
- */
+/* 기사 페이지의 관리자 도구 */
 export default function AdminArticleActions({ id, title }: { id: number; title: string }) {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);

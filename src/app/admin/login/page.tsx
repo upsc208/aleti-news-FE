@@ -4,9 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { loginAdmin } from '@/lib/adminSession';
 
-/**
- * 관리자 로그인 화면
- */
+/* 관리자 로그인 화면*/
 export default function AdminLoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');

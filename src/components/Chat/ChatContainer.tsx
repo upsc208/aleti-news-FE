@@ -15,6 +15,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import Link from 'next/link';
+import AdminChatPanel from './admin/AdminChatPanel';
 
 interface ChatContainerProps {
   initialMatchId?: string;
@@ -28,7 +29,6 @@ const QUICK_CHANTS = [
   '🔴⚪ ROJIBLANCO!',
 ];
 
-// 이모지 단독 버튼은 text-xs로 두면 너무 작아서 크게 렌더한다
 const isEmojiOnly = (chant: string) => !/[a-zA-Z가-힣]/.test(chant);
 
 export default function ChatContainer({ initialMatchId = 'recent' }: ChatContainerProps) {
@@ -61,16 +61,9 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
 
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto bg-white text-gray-900 overflow-hidden shadow-none sm:shadow-lg border-0 sm:border-x border-gray-200 animate-fadeIn">
-      {/* 1. Header Banner (Vibrant Atletico Red 360-degree LED board Style) */}
-      {/*
-        헤더 컨테이너 자체가 26/27 홈킷 스트라이프다.
-        흰 줄 위에서는 흰 글씨가 사라지므로, 안의 요소들은 각자 남색/흰색 판을 깔고 올라간다
-        (유니폼에 붙은 패치처럼). 하단 남색 라인은 셔츠 칼라.
-      */}
       <div className="chat-header-kit text-white px-3 py-2.5 sm:px-4 sm:py-3.5 shrink-0 shadow-sm border-b-2 border-aleti-navy relative">
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 relative z-10">
-          {/* Back & Match Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
@@ -83,8 +76,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
             </button>
 
             <div className="flex flex-col min-w-0 items-start">
-              {/* 줄무늬 위에 그냥 흰 글씨를 올리면 흰 줄 구간에서 사라진다 —
-                  가슴 스폰서 블록처럼 남색 패치를 깔고 그 위에 얹는다 */}
               <h1 className="kit-patch max-w-full truncate rounded-lg px-2.5 py-1 text-xs font-black leading-tight tracking-tight sm:text-base md:text-lg">
                 {isFreeRoom
                   ? '자유 채팅방'
@@ -97,7 +88,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
 
           {/* Online Counter */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Music/Chant Player Toggle */}
             <button
               type="button"
               onClick={toggleChant}
@@ -121,12 +111,12 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
               <Users size={12} className="sm:w-3.5 sm:h-3.5 shrink-0" />
               <span className="tabular-nums text-white">{onlineCount}<span className="hidden xs:inline">명</span></span>
             </div>
+            <AdminChatPanel matchId={matchId} />
           </div>
         </div>
       </div>
 
 
-      {/* 2. Messages List Feed (White Background with Metropolitano roof structural watermark) */}
       <div
         className="flex-1 min-h-0 relative isolate bg-white"
         style={{
@@ -139,7 +129,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           backgroundRepeat: 'no-repeat',
         }}
       >
-        {/* House rules — ambient notice pinned behind the feed via negative z-index */}
         <div className="absolute top-0 inset-x-0 -z-10 px-4 sm:px-6 pt-3 sm:pt-4 text-center text-[11px] font-medium text-gray-300 pointer-events-none">
           혐오 표현·광고·계좌번호 등은 삼가주세요
         </div>
@@ -170,7 +159,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           )}
         </div>
 
-        {/* 방이 아직 안 열림 — 경기 채팅방은 킥오프 1시간 전부터 종료 3시간 후까지만 열린다 */}
         {!roomOpen && !isLoading && !errorNotice && (
           <div className="absolute bottom-2 inset-x-0 px-4 flex justify-center pointer-events-none">
             <div className="pointer-events-auto max-w-md w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold shadow-lg border bg-gray-50 border-gray-200 text-gray-700">
@@ -186,8 +174,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           </div>
         )}
 
-        {/* 연결 끊김 / 정책 위반 안내 — 예전에는 실패가 전부 조용히 무시됐다.
-            끊김은 유예 뒤에 뜨지만 정책 위반은 즉시 띄운다 — 그건 다시 붙는다고 풀리지 않는다 */}
         {(showDisconnected || errorNotice) && !isLoading && (
           <div className="absolute bottom-2 inset-x-0 px-4 flex justify-center pointer-events-none">
             <div
@@ -219,10 +205,8 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
       </div>
 
 
-      {/* 3. Quick Chant Buttons */}
       <div className="px-3 py-2 bg-aleti-navy border-t border-white/15 overflow-x-auto whitespace-nowrap shrink-0 flex items-center gap-1.5 no-scrollbar">
         <span className="text-[10px] font-black uppercase text-white/75 flex items-center gap-1 mr-1 shrink-0">
-          {/* 남색 배경에서 aleti-red는 대비가 낮아 아이콘만 밝게 둔다 */}
           <Flame size={12} className="text-white/75" />
           빠른 응원:
         </span>
@@ -240,7 +224,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         ))}
       </div>
 
-      {/* 4. Bottom Input Bar */}
       <div className="p-3 sm:p-4 bg-aleti-navy border-t border-white/15 shrink-0">
         <form
           onSubmit={(e) => {
@@ -260,8 +243,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
                   : '닉네임을 먼저 설정해 주세요'
               }
               maxLength={200}
-              /* iOS는 16px 미만 입력창에 포커스가 가면 화면을 확대한다.
-                 모바일에서만 16px(text-base)로 올려 확대를 막고, 데스크톱은 기존 크기를 유지한다 */
               className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-300 rounded-xl text-base sm:text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-aleti-red focus:ring-1 focus:ring-aleti-red transition"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-400">
@@ -279,8 +260,6 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
           </button>
         </form>
 
-        {/* 언제든 이름을 바꿀 수 있는 통로. 이게 없으면 저장된 닉네임이 막혔을 때
-            사용자가 스스로 빠져나올 방법이 없다 */}
         <div className="mt-2 text-center">
           <button
             type="button"
@@ -292,14 +271,12 @@ export default function ChatContainer({ initialMatchId = 'recent' }: ChatContain
         </div>
       </div>
 
-      {/* 5. Nickname Setup Modal */}
       <NicknameModal
         isOpen={isNicknameModalOpen}
         matchId={matchId}
         currentNickname={myNickname}
         initialError={nicknameError}
         onSuccess={handleNicknameSuccess}
-        /* 이름을 아직 안 정했어도 닫을 수 있다 — 읽기만 하러 온 사람도 있다 */
         onClose={closeNicknameModal}
       />
     </div>
