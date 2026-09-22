@@ -1,10 +1,8 @@
 'use client';
 
-/**
- * 관리자 로그인 토큰을 브라우저에 들고 있는 곳.
- */
 const TOKEN_KEY = 'atleti-admin-token';
 
+/* 관리자 로그인 토큰을 브라우저에 들고 있는 곳 */
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://api.atleti.kr').replace(/\/$/, '');
 
 export function getAdminToken(): string | null {
@@ -29,13 +27,13 @@ export function clearAdminToken() {
   }
 }
 
-/** 관리자 API를 부를 때 붙이는 헤더 */
+// 관리자 API를 부를 때 붙이는 헤더
 export function adminHeaders(): Record<string, string> {
   const token = getAdminToken();
   return token ? { 'X-Admin-Token': token } : {};
 }
 
-/** 토큰이 아직 살아 있는지 서버에 물어본다 */
+// 토큰이 아직 살아 있는지 서버에 확인
 export async function checkAdminSession(): Promise<boolean> {
   if (!getAdminToken()) return false;
   try {
@@ -47,6 +45,7 @@ export async function checkAdminSession(): Promise<boolean> {
   }
 }
 
+// 로그인에 성공하면 받은 토큰을 저장
 export async function loginAdmin(username: string, password: string): Promise<string> {
   const response = await fetch(`${API_BASE_URL}/api/admin/auth/login`, {
     method: 'POST',
