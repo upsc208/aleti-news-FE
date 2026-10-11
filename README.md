@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ATLETI NEWS Frontend
 
-## Getting Started
+아틀레티코 마드리드 뉴스·커뮤니티 플랫폼 ([atleti.kr](https://atleti.kr))의 프론트엔드입니다.
 
-First, run the development server:
+## 🛠 Tech Stack
+- **Next.js 16 · React 19 · TypeScript 5**
+- **Tailwind CSS 4**
+- **WebSocket** (매치 채팅 실시간 통신)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
+- **SSR 뉴스 페이지**: 기사마다 고유 주소를 부여하고 서버에서 HTML을 완성해 검색엔진이 페이지 단위로 수집하도록 구현
+- **실시간 매치 채팅방**: 메시지와 라이브 스코어를 WebSocket으로 받아 표시
+- **테마 디자인**: 아틀레티코 마드리드 홈·어웨이 유니폼 컬러를 활용한 라이트·다크 모드
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 Design Decisions
+- 뉴스는 검색 노출이 목적이라 **SSR**, 채팅은 1초 단위로 바뀌는 데이터라 **CSR**로 화면별로 렌더링 방식을 나눴습니다.
+- 채팅 화면은 모바일 발열과 배터리를 고려해 WebGPU 대신 **WebGL2**로 연출을 구현했습니다.
