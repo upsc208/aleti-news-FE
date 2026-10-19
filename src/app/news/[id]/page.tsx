@@ -1,7 +1,7 @@
 import Image from 'next/image';
-import Link from 'next/link';
-import { ChevronLeft, User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
-import { Suspense } from 'react';
+import { notFound, unstable_rethrow } from 'next/navigation';
+import { User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';
+import { Suspense, cache } from 'react';
 import { getTweet } from 'react-tweet/api';
 import TwitterEmbed from '@/components/TwitterEmbed';
 import { getNewsDetail } from '@/client/sdk.gen';
@@ -9,81 +9,75 @@ import ShareButton from '@/components/ShareButton';
 import Linkify from '@/components/Linkify';
 import RelatedNews from '@/components/RelatedNews';
 import AdminArticleActions from '@/components/AdminArticleActions';
+import BackToListLink from '@/components/BackToListLink';
+import ViewCounter from '@/components/ViewCounter';
 import { Metadata } from 'next';
+
+// 기사는 올라간 뒤 거의 바뀌지 않아 하루 동안 캐시, 삭제는 revalidateNews로 바로 반영
+export const revalidate = 86400;
+
+// 빌드 때는 만들지 않고 처음 요청될 때 만든 뒤 캐시
+export async function generateStaticParams() {
+  return [];
+}
+
+// 없는 기사만 404로 캐시하고, 백엔드 장애는 에러로 던져 캐시에 남기지 않음
+const fetchNews = cache(async (id: string) => {
+  // '07', '7.0' 같은 별칭 주소가 캐시를 따로 만들지 않게 정규 형식만 허용
+  if (!/^[1-9]\d{0,15}$/.test(id)) notFound();
+  const newsId = Number(id);
+
+  const { data, response } = await getNewsDetail({ path: { id: newsId } });
+  if (response?.status === 404) notFound();
+  if (!data) throw new Error(`Failed to fetch news detail for id ${id} (status ${response?.status})`);
+  return data;
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  // 메타데이터 실패는 기본 제목으로 넘기고, 404만 그대로 던짐
+  let news;
   try {
-    const response = await getNewsDetail({
-      path: { id: parseInt(id) }
-    });
-    const news = response.data;
-    
-    if (!news) return { title: '뉴스를 찾을 수 없습니다' };
-
-    const title = news.titleKo || '뉴스 상세';
-    const contentPreview = news.contentKo ? news.contentKo.substring(0, 150) : '';
-    const description = news.summaryKo || contentPreview || '아틀레티코 마드리드(알레띠) 최신 뉴스';
-
-    return {
-      title,
-      description,
-      alternates: {
-        canonical: `/news/${id}`,
-      },
-      openGraph: {
-        title,
-        description,
-        images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
-        type: 'article',
-        publishedTime: news.publishedAt || undefined,
-        authors: news.authorName ? [news.authorName] : ['아틀레티 KR'],
-        url: `https://atleti.kr/news/${id}`,
-        siteName: '아틀레티 KR',
-        locale: 'ko_KR',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
-      },
-    };
+    news = await fetchNews(id);
   } catch (error) {
+    unstable_rethrow(error);
     console.error(`Metadata generation failed for id ${id}:`, error);
     return { title: '뉴스 상세' };
   }
+
+  const title = news.titleKo || '뉴스 상세';
+  const contentPreview = news.contentKo ? news.contentKo.substring(0, 150) : '';
+  const description = news.summaryKo || contentPreview || '아틀레티코 마드리드(알레띠) 최신 뉴스';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/news/${id}`,
+    },
+    openGraph: {
+      title,
+      description,
+      images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
+      type: 'article',
+      publishedTime: news.publishedAt || undefined,
+      authors: news.authorName ? [news.authorName] : ['아틀레티 KR'],
+      url: `https://atleti.kr/news/${id}`,
+      siteName: '아틀레티 KR',
+      locale: 'ko_KR',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: news.imageUrl ? [news.imageUrl] : ['/icon.png'],
+    },
+  };
 }
 
-export default async function NewsDetailPage({ 
-  params,
-  searchParams: searchParamsPromise
-}: { 
-  params: Promise<{ id: string }>,
-  searchParams: Promise<{ fromPage?: string }>
-}) {
+export default async function NewsDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const searchParams = await searchParamsPromise;
-  const fromPage = searchParams.fromPage;
-
-  let news;
-  try {
-    const response = await getNewsDetail({
-      path: { id: parseInt(id) }
-    });
-    news = response.data;
-  } catch (error) {
-    console.error(`Failed to fetch news detail for id ${id}:`, error);
-  }
-
-  if (!news) {
-    return (
-      <div className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">뉴스를 찾을 수 없습니다.</h1>
-        <Link href="/" className="text-aleti-red dark:text-volt font-bold underline">홈으로 돌아가기</Link>
-      </div>
-    );
-  }
+  const news = await fetchNews(id);
 
   // AI 요약이 문자열로 들어올 경우 리스트로 변환
   const summaryPoints = news.summaryKo ? news.summaryKo.split('\n').filter(p => p && p.trim()) : [];
@@ -97,7 +91,8 @@ export default async function NewsDetailPage({
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
+        timeZone: 'Asia/Seoul'
       }) + ' KST';
     }
   } catch (e) {
@@ -200,13 +195,7 @@ export default async function NewsDetailPage({
       {/* Sticky Back Bar */}
       <div className="sticky top-16 sm:top-20 z-40 w-full bg-white/80 dark:bg-[#0d0e14]/90 backdrop-blur-md border-b border-gray-100 dark:border-volt/5">
         <div className="container mx-auto px-4 h-12 flex items-center">
-          <Link 
-            href={fromPage ? `/?page=${fromPage}#news-${id}` : `/#news-${id}`}
-            className="flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-aleti-red dark:hover:text-volt transition-colors"
-          >
-            <ChevronLeft size={16} />
-            목록으로 돌아가기
-          </Link>
+          <BackToListLink id={news.id} />
         </div>
       </div>
 
@@ -323,6 +312,7 @@ export default async function NewsDetailPage({
           </div>
         )}
 
+        <ViewCounter id={news.id} />
         <AdminArticleActions id={news.id} title={news.titleKo || '제목 없음'} />
 
         <Suspense fallback={null}>
