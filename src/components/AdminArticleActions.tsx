@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { adminHeaders, API_BASE_URL, checkAdminSession } from '@/lib/adminSession';
+import { adminHeaders, API_BASE_URL, checkAdminSession, getAdminToken } from '@/lib/adminSession';
+import { revalidateNews } from '@/lib/revalidateNews';
 
 /* 기사 페이지의 관리자 도구 */
 export default function AdminArticleActions({ id, title }: { id: number; title: string }) {
@@ -26,10 +27,13 @@ export default function AdminArticleActions({ id, title }: { id: number; title: 
         method: 'DELETE',
         headers: adminHeaders(),
       });
-      if (!response.ok) {
+      // 404는 이미 지워진 기사라 캐시 비우기만 다시 시도
+      if (!response.ok && response.status !== 404) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data?.error || '삭제하지 못했습니다.');
       }
+      const cleared = await revalidateNews(id, getAdminToken()).catch(() => false);
+      if (!cleared) throw new Error('기사는 지웠지만 페이지 캐시를 비우지 못했습니다. 다시 눌러 주세요.');
       router.push('/');
       router.refresh();
     } catch (e) {

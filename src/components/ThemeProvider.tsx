@@ -18,10 +18,8 @@ export const useTheme = () => useContext(ThemeContext);
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const saved = localStorage.getItem('atleti-theme') as Theme;
     if (saved) {
       setTheme(saved);
@@ -39,11 +37,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     document.documentElement.classList.toggle('dark', next === 'dark');
   };
 
-  // Prevent hydration mismatch flash
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Provider로 감싼 모양을 처음부터 유지해야 마운트 후 페이지 전체가 다시 마운트되지 않음
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
