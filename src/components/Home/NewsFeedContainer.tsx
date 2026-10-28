@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import SourceFilter from '@/components/Filters/SourceFilter';
+import type { NewsSource } from '@/client/types.gen';
 
 interface NewsFeedContainerProps {
-  sourcesData: any[];
+  sourcesData: NewsSource[];
   children: React.ReactNode;
 }
 
@@ -31,7 +32,9 @@ export default function NewsFeedContainer({ sourcesData, children }: NewsFeedCon
               </h3>
             </div>
             
-            <SourceFilter allSources={sourcesData} />
+            <Suspense fallback={null}>
+              <SourceFilter allSources={sourcesData} />
+            </Suspense>
           </div>
         </div>
       </div>

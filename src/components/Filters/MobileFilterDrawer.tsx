@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Filter, X } from 'lucide-react';
 import { NewsSource } from '@/client/types.gen';
 import SourceFilter from './SourceFilter';
@@ -66,7 +66,9 @@ export default function MobileFilterDrawer({ allSources }: MobileFilterDrawerPro
 
           {/* Filter Content - Scrollable Area */}
           <div className="flex-grow overflow-y-auto px-6 py-4">
-            <SourceFilter allSources={allSources} />
+            <Suspense fallback={null}>
+              <SourceFilter allSources={allSources} />
+            </Suspense>
           </div>
 
           {/* Footer - Fixed at bottom */}
