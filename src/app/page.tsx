@@ -9,6 +9,12 @@ import Hero from '@/components/Home/Hero';
 import Pagination from '@/components/Pagination';
 import { Filter, Newspaper, Sparkles } from 'lucide-react';
 import MatchResultCard from '@/components/Home/MatchResultCard';
+import type { Metadata } from 'next';
+
+// 필터·페이지가 붙은 주소가 전부 홈의 중복으로 잡히지 않게 한 곳을 가리킨다
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 export default async function Home({
   searchParams: searchParamsPromise,

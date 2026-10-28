@@ -4,7 +4,7 @@ import { User, Calendar, MessageSquare, Newspaper, ExternalLink } from 'lucide-r
 import { Suspense, cache } from 'react';
 import { getTweet } from 'react-tweet/api';
 import TwitterEmbed from '@/components/TwitterEmbed';
-import { getNewsDetail } from '@/client/sdk.gen';
+import { getNews, getNewsDetail } from '@/client/sdk.gen';
 import ShareButton from '@/components/ShareButton';
 import Linkify from '@/components/Linkify';
 import RelatedNews from '@/components/RelatedNews';
@@ -13,12 +13,26 @@ import BackToListLink from '@/components/BackToListLink';
 import ViewCounter from '@/components/ViewCounter';
 import { Metadata } from 'next';
 
-// 기사는 올라간 뒤 거의 바뀌지 않아 하루 동안 캐시, 삭제는 revalidateNews로 바로 반영
-export const revalidate = 86400;
+// 기사 본문은 올라간 뒤 바뀌지 않아 만료를 두지 않는다. 삭제는 revalidateNews가 즉시 반영
+export const revalidate = false;
 
-// 빌드 때는 만들지 않고 처음 요청될 때 만든 뒤 캐시
+// 배포하면 ISR 캐시가 비므로, 트래픽이 몰리는 최신 기사는 빌드 때 만들어 정적 자산으로 둔다
+// 백엔드가 한 번에 100건까지만 주므로 3페이지로 나눠 받는다
+const PRERENDER_PAGES = 3;
+const PRERENDER_PAGE_SIZE = 100;
+
 export async function generateStaticParams() {
-  return [];
+  try {
+    const pages = await Promise.all(
+      Array.from({ length: PRERENDER_PAGES }, (_, page) =>
+        getNews({ query: { page, size: PRERENDER_PAGE_SIZE } } as never)
+      )
+    );
+    return pages.flatMap(({ data }) => (data?.content ?? []).map((news) => ({ id: String(news.id) })));
+  } catch {
+    // 빌드 때 백엔드가 죽어 있어도 배포는 되어야 한다. 나머지는 요청 시 생성
+    return [];
+  }
 }
 
 // 없는 기사만 404로 캐시하고, 백엔드 장애는 에러로 던져 캐시에 남기지 않음
